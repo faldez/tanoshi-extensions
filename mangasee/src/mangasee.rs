@@ -2,8 +2,17 @@ use anyhow::Result;
 use serde_urlencoded;
 use tanoshi::scraping::Scraping;
 use tanoshi::manga::{
-    Chapter, Manga, Params, SortOrderParam, SortByParam
+    Source, Chapter, Manga, Params, SortOrderParam, SortByParam
 };
+
+#[no_mangle]
+pub extern "C" fn get_source_detail() -> Source {
+   Source {
+       id: 0,
+       name: "mangasee".to_string(),
+       url: "https://mangaseeonline.us".to_string(),
+   }
+}
 
 #[no_mangle]
 pub extern "C" fn get_mangas(url: &String, param: Params, cookies: Vec<String>) -> Result<Vec<Manga>> {

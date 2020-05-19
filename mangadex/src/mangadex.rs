@@ -1,13 +1,21 @@
-use serde_json::json;
 use serde_urlencoded;
 use ureq;
 use anyhow::Result;
 
 use tanoshi::scraping::Scraping;
 use tanoshi::manga::{
-    Chapter, Manga, Params, SortByParam, SortOrderParam
+    Source, Chapter, Manga, Params, SortByParam, SortOrderParam
 };
 use tanoshi::mangadex::MangadexLogin;
+
+#[no_mangle]
+pub extern "C" fn get_source_detail() -> Source {
+   Source {
+       id: 0,
+       name: "mangadex".to_string(),
+       url: "https://mangadex.org".to_string(),
+   }
+}
 
 #[no_mangle]
 pub extern "C" fn get_mangas(url: &String, param: Params, cookies: Vec<String>) -> Result<Vec<Manga>> {
