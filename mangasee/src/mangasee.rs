@@ -1,54 +1,32 @@
 use anyhow::Result;
 use serde_urlencoded;
-use tanoshi::scraping::Scraping;
-use tanoshi::manga::{
-    Source, Chapter, Manga, Params, SortOrderParam, SortByParam
-};
-
-#[no_mangle]
-pub extern "C" fn get_source_detail() -> Source {
-   Source {
-       id: 0,
-       name: "mangasee".to_string(),
-       url: "https://mangaseeonline.us".to_string(),
-   }
-}
-
-#[no_mangle]
-pub extern "C" fn get_mangas(url: &String, param: Params, cookies: Vec<String>) -> Result<Vec<Manga>> {
-    Mangasee::get_mangas(url, param, cookies)
-}
-
-#[no_mangle]
-pub extern "C" fn get_manga_info(url: &String) -> Result<Manga> {
-    Mangasee::get_manga_info(url)
-}
-
-#[no_mangle]
-pub extern "C" fn get_chapters(url: &String) -> Result<Vec<Chapter>> {
-    Mangasee::get_chapters(url)
-}
-
-#[no_mangle]
-pub extern "C" fn get_pages(url: &String) -> Result<Vec<String>> {
-    Mangasee::get_pages(url)
-}
+use tanoshi_lib::extensions::Extension;
+use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
 pub struct Mangasee {}
 
-impl Scraping for Mangasee {
-    fn get_mangas(url: &String, param: Params, _: Vec<String>) -> Result<Vec<Manga>> {
+impl Extension for Mangasee {
+    fn info(&self) -> Source {
+        Source {
+            id: 0,
+            name: "mangasee".to_string(),
+            url: "https://mangaseeonline.us".to_string(),
+            need_login: true,
+        }
+    }
+
+    fn get_mangas(&self, url: &String, param: Params, _: Vec<String>) -> Result<Vec<Manga>> {
         let mut mangas: Vec<Manga> = Vec::new();
 
         let sort_by = match param.sort_by.unwrap() {
             SortByParam::Views => "popularity",
             SortByParam::LastUpdated => "dateUpdated",
-            _ => "dateUpdated"
+            _ => "dateUpdated",
         };
 
         let sort_order = match param.sort_order.unwrap() {
             SortOrderParam::Asc => "ascending",
-            SortOrderParam::Desc => "descending"
+            SortOrderParam::Desc => "descending",
         };
 
         let params = vec![
@@ -90,7 +68,7 @@ impl Scraping for Mangasee {
         Ok(mangas)
     }
 
-    fn get_manga_info(url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, url: &String) -> Result<Manga> {
         let mut m = Manga::default();
 
         let resp = ureq::get(url.as_str()).call();
@@ -140,7 +118,7 @@ impl Scraping for Mangasee {
         Ok(m)
     }
 
-    fn get_chapters(url: &String) -> Result<Vec<Chapter>> {
+    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
         let mut chapters: Vec<Chapter> = Vec::new();
         let resp = ureq::get(url.as_str()).call();
         let html = resp.into_string().unwrap();
@@ -158,7 +136,9 @@ impl Scraping for Mangasee {
             let time_sel = scraper::Selector::parse("time[class*=\"SeriesTime\"]").unwrap();
             for time_el in element.select(&time_sel) {
                 let date_str = time_el.value().attr("datetime").unwrap();
-                chapter.uploaded = chrono::NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%dT%H:%M:%S%:z").unwrap()
+                chapter.uploaded =
+                    chrono::NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%dT%H:%M:%S%:z")
+                        .unwrap()
             }
 
             chapters.push(chapter);
@@ -167,7 +147,7 @@ impl Scraping for Mangasee {
         Ok(chapters)
     }
 
-    fn get_pages(url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
         let mut pages = Vec::new();
         let resp = ureq::get(url.as_str()).call();
         let html = resp.into_string().unwrap();

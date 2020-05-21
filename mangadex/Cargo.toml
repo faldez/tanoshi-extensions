@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["dylib"]
 
 [dependencies]
-tanoshi = {git = "https://github.com/fadhlika/tanoshi", branch = "master"}
+tanoshi-lib = {git = "https://github.com/fadhlika/tanoshi-lib", branch = "master"}
 anyhow = "1"
 ureq = "1"
 scraper = "0.12"
