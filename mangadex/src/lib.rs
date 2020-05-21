@@ -1,4 +1,9 @@
 pub mod mangadex;
-pub use mangadex::{
-    get_source_detail, get_mangas, get_manga_info, get_chapters, get_pages
-};
+use mangadex::Mangadex;
+use tanoshi_lib::extensions::PluginRegistrar;
+
+tanoshi_lib::export_plugin!(register);
+
+extern "C" fn register(registrar: &mut dyn PluginRegistrar) {
+    registrar.register_function("mangadex", Box::new(Mangadex{ /* fields */ }));
+}

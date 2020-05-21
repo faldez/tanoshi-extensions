@@ -1,4 +1,9 @@
 pub mod mangasee;
-pub use mangasee::{
-    get_source_detail, get_mangas, get_manga_info, get_chapters, get_pages
-};
+use mangasee::Mangasee;
+use tanoshi_lib::extensions::PluginRegistrar;
+
+tanoshi_lib::export_plugin!(register);
+
+extern "C" fn register(registrar: &mut dyn PluginRegistrar) {
+    registrar.register_function("mangasee", Box::new(Mangasee{ /* fields */ }));
+}
