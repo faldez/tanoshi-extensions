@@ -15,7 +15,7 @@ impl Extension for Mangasee {
         }
     }
 
-    fn get_mangas(&self, url: &String, param: Params, _: Vec<String>) -> Result<Vec<Manga>> {
+    fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
         let mut mangas: Vec<Manga> = Vec::new();
 
         let sort_by = match param.sort_by.unwrap() {
