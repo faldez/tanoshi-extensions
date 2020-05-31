@@ -78,7 +78,7 @@ impl Extension for Mangadex {
         &self,
         url: &String,
         param: tanoshi_lib::manga::Params,
-        cookies: Vec<String>,
+        auth: String,
     ) -> Result<Vec<tanoshi_lib::manga::Manga>> {
         let mut mangas: Vec<tanoshi_lib::manga::Manga> = Vec::new();
 
@@ -103,7 +103,7 @@ impl Extension for Mangadex {
         let urlencoded = serde_urlencoded::to_string(params).unwrap();
 
         let resp = ureq::get(format!("{}/search?{}", url.clone(), urlencoded).as_str())
-            .set("Cookie", &cookies.join("; "))
+            .set("Cookie", &auth)
             .call();
 
         let html = resp.into_string().unwrap();

@@ -1,11 +1,9 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use fancy_regex::Regex;
 use std::io::BufReader;
 use std::{fs, io};
 use tanoshi_lib::extensions::Extension;
-use tanoshi_lib::manga::{
-    Source, Chapter, Manga, Params
-};
+use tanoshi_lib::manga::{Chapter, Manga, Params, Source};
 
 pub struct Local {}
 
@@ -19,7 +17,7 @@ impl Extension for Local {
         }
     }
 
-    fn get_mangas(&self, url: &String, _param: Params, _cookies: Vec<String>) -> Result<Vec<Manga>> {
+    fn get_mangas(&self, url: &String, _param: Params, _auth: String) -> Result<Vec<Manga>> {
         let local_path = std::env::var("MANGA_PATH").expect("MANGA_PATH not set");
         let entries = fs::read_dir(url.clone())
             .expect("error read directory")
