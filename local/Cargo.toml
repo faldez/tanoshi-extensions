@@ -11,7 +11,7 @@ crate-type = ["dylib"]
 [dependencies]
 zip = "0.5"
 fancy-regex = {version = "0.3"}
-tanoshi-lib = {git = "https://github.com/fadhlika/tanoshi-lib", branch = "master"}
+tanoshi-lib = {git = "https://github.com/faldez/tanoshi-lib", branch = "master"}
 anyhow = "1"
 ureq = "1"
 scraper = "0.12"
