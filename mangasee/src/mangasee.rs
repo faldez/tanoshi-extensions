@@ -11,7 +11,7 @@ impl Extension for Mangasee {
             id: 0,
             name: "mangasee".to_string(),
             url: "https://mangaseeonline.us".to_string(),
-            need_login: true,
+            version: std::env!("PLUGIN_VERSION").to_string(),
         }
     }
 
