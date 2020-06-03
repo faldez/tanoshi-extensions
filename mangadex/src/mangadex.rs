@@ -254,7 +254,8 @@ impl Extension for Mangadex {
             .collect::<Vec<String>>();
 
         Ok(tanoshi_lib::manga::SourceLoginResult {
-            name: "mangadex".to_string(),
+            source_id: 0,
+            source_name: "mangadex".to_string(),
             auth_type: "cookies".to_string(),
             value: cookies.join("; "),
         })
