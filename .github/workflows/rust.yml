@@ -14,4 +14,15 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --release
+    - name: Copy plugins
+      run: mkdir -p library && cp target/release/*.so library/
+    - name: Git Commit and Push
+      uses: github-actions-x/commit@v2.6
+      with:
+        # Github Token with commit access
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # Override branch to push to
+        push-branch: repo
+        force-add: true
+        files: library/
