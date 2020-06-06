@@ -6,7 +6,7 @@ use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, So
 pub struct Mangasee {}
 
 impl Extension for Mangasee {
-    fn info(&mut self) -> Source {
+    fn info(&self) -> Source {
         Source {
             id: 0,
             name: "mangasee".to_string(),
@@ -15,7 +15,7 @@ impl Extension for Mangasee {
         }
     }
 
-    fn get_mangas(&mut self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
+    fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
         let mut mangas: Vec<Manga> = Vec::new();
 
         let sort_by = match param.sort_by.unwrap() {
@@ -68,7 +68,7 @@ impl Extension for Mangasee {
         Ok(mangas)
     }
 
-    fn get_manga_info(&mut self, url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, url: &String) -> Result<Manga> {
         let mut m = Manga::default();
 
         let resp = ureq::get(url.as_str()).call();
@@ -118,7 +118,7 @@ impl Extension for Mangasee {
         Ok(m)
     }
 
-    fn get_chapters(&mut self, url: &String) -> Result<Vec<Chapter>> {
+    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
         let mut chapters: Vec<Chapter> = Vec::new();
         let resp = ureq::get(url.as_str()).call();
         let html = resp.into_string().unwrap();
@@ -147,7 +147,7 @@ impl Extension for Mangasee {
         Ok(chapters)
     }
 
-    fn get_pages(&mut self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
         let mut pages = Vec::new();
         let resp = ureq::get(url.as_str()).call();
         let html = resp.into_string().unwrap();
