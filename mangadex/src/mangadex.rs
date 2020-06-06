@@ -65,7 +65,7 @@ pub struct GetPagesResponse {
 pub struct Mangadex {}
 
 impl Extension for Mangadex {
-    fn info(&mut self) -> tanoshi_lib::manga::Source {
+    fn info(&self) -> tanoshi_lib::manga::Source {
         tanoshi_lib::manga::Source {
             id: 0,
             name: "mangadex".to_string(),
@@ -75,7 +75,7 @@ impl Extension for Mangadex {
     }
 
     fn get_mangas(
-        &mut self,
+        &self,
         url: &String,
         param: tanoshi_lib::manga::Params,
         auth: String,
@@ -131,7 +131,7 @@ impl Extension for Mangadex {
         Ok(mangas)
     }
 
-    fn get_manga_info(&mut self, url: &String) -> Result<tanoshi_lib::manga::Manga> {
+    fn get_manga_info(&self, url: &String) -> Result<tanoshi_lib::manga::Manga> {
         let resp = ureq::get(url.as_str()).call();
         let mangadex_resp: GetMangaResponse = serde_json::from_reader(resp.into_reader()).unwrap();
 
@@ -167,7 +167,7 @@ impl Extension for Mangadex {
         Ok(m)
     }
 
-    fn get_chapters(&mut self, url: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
+    fn get_chapters(&self, url: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
         let mut chapters: Vec<tanoshi_lib::manga::Chapter> = Vec::new();
 
         let resp = ureq::get(url.as_str()).call();
@@ -194,7 +194,7 @@ impl Extension for Mangadex {
         Ok(chapters)
     }
 
-    fn get_pages(&mut self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
         let mut pages = Vec::new();
 
         let resp = ureq::get(url.as_str()).call();
@@ -211,7 +211,7 @@ impl Extension for Mangadex {
     }
 
     fn login(
-        &mut self,
+        &self,
         login: tanoshi_lib::manga::SourceLogin,
     ) -> Result<tanoshi_lib::manga::SourceLoginResult> {
         let boundary = "__TANOSHI__";

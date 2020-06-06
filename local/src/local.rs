@@ -5,20 +5,23 @@ use std::{fs, io};
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, Source};
 
-pub struct Local {}
+#[derive(Default)]
+pub struct Local {
+    pub url: String,
+}
 
 impl Extension for Local {
-    fn info(&mut self) -> Source {
+    fn info(&self) -> Source {
         Source {
             id: 0,
             name: "local".to_string(),
-            url: std::env::var("MANGA_PATH").unwrap_or("./manga".to_string()),
+            url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
         }
     }
 
-    fn get_mangas(&mut self, url: &String, _param: Params, _auth: String) -> Result<Vec<Manga>> {
-        let local_path = std::env::var("MANGA_PATH").expect("MANGA_PATH not set");
+    fn get_mangas(&self, url: &String, _param: Params, _auth: String) -> Result<Vec<Manga>> {
+        let local_path = self.url.clone();
         let entries = fs::read_dir(url.clone())
             .expect("error read directory")
             .filter(|res| res.as_ref().unwrap().file_type().unwrap().is_dir())
@@ -48,12 +51,12 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_manga_info(&mut self, _url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, _url: &String) -> Result<Manga> {
         Ok(Manga::default())
     }
 
-    fn get_chapters(&mut self, url: &String) -> Result<Vec<Chapter>> {
-        let local_path = std::env::var("MANGA_PATH").expect("MANGA_PATH not set");
+    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+        let local_path = self.url.clone();
         let re = Regex::new(r"(?<=v)(\d+)|(?<=volume)\s*(\d+)|(?<=vol)\s*(\d+)|(?<=ch)(\d+)|(?<=chapter)\s*(\d+)|(\d+)").unwrap();
         let entries = fs::read_dir(url)?
             .filter(|res| {
@@ -89,7 +92,7 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_pages(&mut self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
         let file = fs::File::open(&url).unwrap();
         let reader = BufReader::new(file);
 
@@ -102,7 +105,7 @@ impl Extension for Local {
         Ok(pages)
     }
 
-    fn get_page(&mut self, url: &String, bytes: &mut Vec<u8>) -> Result<String> {
+    fn get_page(&self, url: &String, bytes: &mut Vec<u8>) -> Result<String> {
         let path = std::path::Path::new(url);
         let dir = path.parent().unwrap().to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
