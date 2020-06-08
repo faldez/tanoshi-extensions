@@ -3,7 +3,7 @@ use fancy_regex::Regex;
 use std::io::BufReader;
 use std::{fs, io};
 use tanoshi_lib::extensions::Extension;
-use tanoshi_lib::manga::{Chapter, Manga, Params, Source};
+use tanoshi_lib::manga::{Chapter, Image, Manga, Params, Source};
 
 #[derive(Default)]
 pub struct Local {
@@ -105,21 +105,21 @@ impl Extension for Local {
         Ok(pages)
     }
 
-    fn get_page(&self, url: &String, bytes: &mut Vec<u8>) -> Result<String> {
+    fn get_page(&self, url: &String, _image: Image) -> Result<Vec<u8>> {
         let path = std::path::Path::new(url);
         let dir = path.parent().unwrap().to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
-        let file_ext = path.extension().unwrap().to_str().unwrap();
 
         let file = fs::File::open(&dir)?;
         let reader = BufReader::new(file);
 
         let mut archive = zip::ZipArchive::new(reader)?;
         let mut zip_file = archive.by_name(file_name)?;
-        if io::copy(&mut zip_file, bytes).is_err() {
+        let mut bytes = vec![];
+        if io::copy(&mut zip_file, &mut bytes).is_err() {
             return Err(anyhow!("error write image"));
         }
 
-        Ok(format!("image/{}", file_ext.to_string()))
+        Ok(bytes)
     }
 }
