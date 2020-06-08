@@ -105,8 +105,8 @@ impl Extension for Local {
         Ok(pages)
     }
 
-    fn get_page(&self, url: &String, _image: Image) -> Result<Vec<u8>> {
-        let path = std::path::Path::new(url);
+    fn get_page(&self, image: Image) -> Result<Vec<u8>> {
+        let path = std::path::Path::new(&image.url);
         let dir = path.parent().unwrap().to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
 
