@@ -14,6 +14,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build
         run: cargo build --release
+      - name: Generat index.json
+        run: cargo run generate_json --release
       - name: Copy plugins
         run: mkdir -p library && cp target/release/*.so library/
       - name: Commit files
@@ -21,7 +23,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git rm -rf .
-          git add library/*.so -f
+          git add index.json library/*.so -f
           git commit -m "auto commit"
       - name: Git Commit and Push
         uses: ad-m/github-push-action@v0.6.0
