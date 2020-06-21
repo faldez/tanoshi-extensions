@@ -7,7 +7,7 @@ use tanoshi_lib::extensions::Extension;
 
 fn main() -> Result<()> {
     let mut exts = extension::Extensions::new();
-    for entry in std::fs::read_dir(if !cfg!(not(target = "windows")) {
+    for entry in std::fs::read_dir(if !cfg!(target_os = "windows") {
         "target\release"
     } else {
         "target/release"
