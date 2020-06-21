@@ -7,14 +7,62 @@ on:
     branches: [master]
 
 jobs:
-  build:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --release
+      - name: Generate index.json
+        run: cargo run generate_json --release
+      - name: Copy plugins
+        run: mkdir -p library && cp target\release\*.dll library\
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git rm -rf .
+          git add index.json library\*.dll -f
+          git commit -m "auto commit"
+      - name: Git Commit and Push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: repo-windows
+          force: true
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --release
+      - name: Generate index.json
+        run: cargo run generate_json --release
+      - name: Copy plugins
+        run: mkdir -p library && cp target/release/*.dylib library/
+      - name: Commit files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git rm -rf .
+          git add index.json library/*.dylib -f
+          git commit -m "auto commit"
+      - name: Git Commit and Push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: repo-macos
+          force: true
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
       - name: Build
         run: cargo build --release
-      - name: Generat index.json
+      - name: Generate index.json
         run: cargo run generate_json --release
       - name: Copy plugins
         run: mkdir -p library && cp target/release/*.so library/
@@ -29,5 +77,5 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: repo
+          branch: repo-linux
           force: true
