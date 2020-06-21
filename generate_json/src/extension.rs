@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Result};
 //use local::Local;
 use lib::Library;
-use std::{collections::HashMap, env, ffi::OsStr, fs, io, sync::Arc};
+use std::{collections::HashMap, ffi::OsStr, sync::Arc};
 use tanoshi_lib::extensions::{Extension, PluginDeclaration};
 use tanoshi_lib::manga::{Chapter, Image, Manga, Params, Source, SourceLogin, SourceLoginResult};
 
