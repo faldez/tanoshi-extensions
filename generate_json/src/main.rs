@@ -7,7 +7,11 @@ use tanoshi_lib::extensions::Extension;
 
 fn main() -> Result<()> {
     let mut exts = extension::Extensions::new();
-    for entry in std::fs::read_dir("target/release")?
+    for entry in std::fs::read_dir(if !cfg!(not(target = "windows")) {
+        "target/release"
+    } else {
+        "target\release"
+    })?
     .into_iter()
     .filter(move |path| {
         if let Ok(p) = path {
@@ -24,13 +28,6 @@ fn main() -> Result<()> {
         return false;
     }) {
         let path = entry?.path();
-        let mut name = path
-            .file_stem()
-            .unwrap_or_default()
-            .to_str()
-            .unwrap_or_default()
-            .to_string()
-            .replace("lib", "");
         unsafe {
             exts.load(path, None)?;
         }
