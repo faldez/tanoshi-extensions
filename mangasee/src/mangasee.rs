@@ -95,12 +95,12 @@ impl Extension for Mangasee {
             }
         }
 
-        /* let selector = scraper::Selector::parse("a[href*=\"genre\"]").unwrap();
+        let selector = scraper::Selector::parse("a[href*=\"genre\"]").unwrap();
         for element in document.select(&selector) {
             for text in element.text() {
                 m.genre.push(String::from(text));
             }
-        } */
+        }
 
         let selector = scraper::Selector::parse(".PublishStatus").unwrap();
         for element in document.select(&selector) {
