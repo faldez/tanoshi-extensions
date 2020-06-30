@@ -1,6 +1,6 @@
 [package]
 name = "mangasee"
-version = "1.2.2"
+version = "1.2.3"
 authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
 edition = "2018"
 
