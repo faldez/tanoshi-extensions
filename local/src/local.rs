@@ -30,7 +30,7 @@ impl Extension for Local {
                     id: 0,
                     title: e.file_name().to_str().unwrap().to_string(),
                     author: "".to_string(),
-                    //genre: vec![],
+                    genre: vec![],
                     status: "".to_string(),
                     description: "".to_string(),
                     path: e

@@ -1,11 +1,108 @@
+use std::collections::HashMap;
+
 use anyhow::Result;
+use bimap::BiMap;
+use serde::{Deserialize, Serialize};
 use serde_urlencoded;
+use tanoshi_lib::extensions::Extension;
 use ureq;
 
-use tanoshi_lib::extensions::Extension;
+lazy_static! {
+    static ref STATUS: BiMap<i64, &'static str> = {
+        let mut m = BiMap::new();
+        m.insert(1, "Ongoing");
+        m.insert(2, "Completed");
+        m.insert(3, "Cancelled");
+        m.insert(4, "Hiatus");
+        m
+    };
 
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+    static ref GENRES: BiMap<i64, &'static str> = {
+        let mut m = BiMap::new();
+        m.insert(9, "Ecchi");
+        m.insert(49, "Gore");
+        m.insert(50, "Sexual Violence");
+        m.insert(32, "Smut");
+        m.insert(1, "4-Koma");
+        m.insert(42, "Adaptation");
+        m.insert(43, "Anthology");
+        m.insert(4, "Award Winning");
+        m.insert(7, "Doujinshi");
+        m.insert(48, "Fan Colored");
+        m.insert(45, "Full Color");
+        m.insert(36, "Long Strip");
+        m.insert(47, "Official Colored");
+        m.insert(21, "Oneshot");
+        m.insert(46, "User Created");
+        m.insert(44, "Web Comic");
+        m.insert(2, "Action");
+        m.insert(3, "Adventure");
+        m.insert(5, "Comedy");
+        m.insert(51, "Crime");
+        m.insert(8, "Drama");
+        m.insert(10, "Fantasy");
+        m.insert(13, "Historical");
+        m.insert(14, "Horror");
+        m.insert(41, "Isekai");
+        m.insert(52, "Magical Girls");
+        m.insert(17, "Mecha");
+        m.insert(18, "Medical");
+        m.insert(20, "Mystery");
+        m.insert(53, "Philosophical");
+        m.insert(22, "Psychological");
+        m.insert(23, "Romance");
+        m.insert(25, "Sci-Fi");
+        m.insert(28, "Shoujo Ai");
+        m.insert(30, "Shounen Ai");
+        m.insert(31, "Slice of Life");
+        m.insert(33, "Sports");
+        m.insert(54, "Superhero");
+        m.insert(55, "Thriller");
+        m.insert(35, "Tragedy");
+        m.insert(56, "Wuxia");
+        m.insert(37, "Yaoi");
+        m.insert(38, "Yuri");
+        m.insert(57, "Aliens");
+        m.insert(58, "Animals");
+        m.insert(6, "Cooking");
+        m.insert(59, "Crossdressing");
+        m.insert(61, "Delinquents");
+        m.insert(60, "Demons");
+        m.insert(62, "Genderswap");
+        m.insert(63, "Ghosts");
+        m.insert(11, "Gyaru");
+        m.insert(12, "Harem");
+        m.insert(83, "Incest");
+        m.insert(65, "Loli");
+        m.insert(84, "Mafia");
+        m.insert(66, "Magic");
+        m.insert(16, "Martial Arts");
+        m.insert(67, "Military");
+        m.insert(64, "Monster Girls");
+        m.insert(68, "Monsters");
+        m.insert(19, "Music");
+        m.insert(69, "Ninja");
+        m.insert(70, "Office Workers");
+        m.insert(71, "Police");
+        m.insert(72, "Post-Apocalyptic");
+        m.insert(73, "Reincarnation");
+        m.insert(74, "Reverse Harem");
+        m.insert(75, "Samurai");
+        m.insert(24, "School Life");
+        m.insert(76, "Shota");
+        m.insert(34, "Supernatural");
+        m.insert(77, "Survival");
+        m.insert(78, "Time Travel");
+        m.insert(80, "Traditional Games");
+        m.insert(79, "Vampires");
+        m.insert(40, "Video Games");
+        m.insert(81, "Virtual Reality");
+        m.insert(82, "Zombies");
+        m
+    };
+}
+
+
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct MangadexLogin {
     pub login_username: String,
@@ -19,6 +116,7 @@ pub struct GetMangaResponse {
     pub manga: Manga,
     pub status: String,
 }
+
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GetChapterResponse {
     pub chapter: HashMap<String, Chapter>,
@@ -98,6 +196,7 @@ impl Extension for Mangadex {
             ("title".to_owned(), param.keyword.to_owned()),
             ("p".to_owned(), param.page.to_owned()),
             ("s".to_owned(), Some(s.to_string())),
+            ("tags".to_owned(), param.genres.map(|t| t.join(","))),
         ];
 
         let urlencoded = serde_urlencoded::to_string(params).unwrap();
@@ -144,18 +243,13 @@ impl Extension for Mangadex {
             true => description_split[1].to_string(),
             false => description_split[0].to_string(),
         };
+        let genres = mangadex_resp.manga.genres.iter().map(|genre| GENRES.get_by_left(genre).unwrap().to_string()).collect();
         let m = tanoshi_lib::manga::Manga {
             id: 0,
             title: mangadex_resp.manga.title,
             author: mangadex_resp.manga.author,
-            //genre: vec![],
-            status: match mangadex_resp.manga.status {
-                1 => "Ongoing".to_string(),
-                2 => "Completed".to_string(),
-                3 => "Cancelled".to_string(),
-                4 => "Hiatus".to_string(),
-                _ => "Ongoing".to_string(),
-            },
+            genre: genres,
+            status: STATUS.get_by_left(&mangadex_resp.manga.status).unwrap_or(&"Ongoing").to_string(),
             description,
             path: "".to_string(),
             thumbnail_url: format!("https://mangadex.org{}", mangadex_resp.manga.cover_url),
