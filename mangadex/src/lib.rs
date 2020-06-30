@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate lazy_static;
+
 pub mod mangadex;
 use mangadex::Mangadex;
 use tanoshi_lib::extensions::PluginRegistrar;
