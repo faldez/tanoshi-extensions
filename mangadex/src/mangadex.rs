@@ -114,13 +114,52 @@ pub struct MangadexLogin {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct GetMangaResponse {
     pub manga: Manga,
+    pub chapter: HashMap<String, Chapter>,
     pub status: String,
 }
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct GetChapterResponse {
-    pub chapter: HashMap<String, Chapter>,
-    pub status: String,
+impl Into<Vec<tanoshi_lib::manga::Chapter>> for GetMangaResponse {
+    fn into(self) ->Vec<tanoshi_lib::manga::Chapter> {
+        self.chapter.iter().map(|(id, chapter)| if chapter.lang_code == "gb".to_string() {
+            Some(tanoshi_lib::manga::Chapter {
+                id: 0,
+                manga_id: 0,
+                vol: if chapter.volume == "" {None} else {Some(chapter.volume.clone())},
+                no: if chapter.chapter == "" {None} else {Some(chapter.chapter.clone())},
+                title: if chapter.title == "" {None} else {Some(chapter.title.clone())},
+                url: format!("/api/chapter/{}", id),
+                read: None,
+                uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
+            })
+        } else {None}).filter_map(|ch| ch).collect()
+    }
+}
+
+impl Into<tanoshi_lib::manga::Manga> for GetMangaResponse {
+    fn into(self) -> tanoshi_lib::manga::Manga {
+        let description_split = self
+            .manga
+            .description
+            .split("\r\n")
+            .collect::<Vec<_>>();
+        let description = match description_split[0].to_string().starts_with("[b][u]") {
+            true => description_split[1].to_string(),
+            false => description_split[0].to_string(),
+        };
+        tanoshi_lib::manga::Manga {
+            id: 0,
+            title: self.manga.title.into(),
+            author: vec![self.manga.author, self.manga.artist],
+            genre: self.manga.genres.iter().map(|genre| GENRES.get_by_left(genre).unwrap().to_string()).collect(),
+            status: STATUS.get_by_left(&self.manga.status).map(|s| s.to_string()),
+            description: Some(description),
+            path: "".to_string(),
+            thumbnail_url: format!("https://mangadex.org{}", self.manga.cover_url),
+            last_read: None,
+            last_page: None,
+            is_favorite: false,
+        }
+    }
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -137,6 +176,8 @@ pub struct Manga {
     pub lang_flag: String,
     pub hentai: i64,
 }
+
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Chapter {
@@ -158,6 +199,13 @@ pub struct GetPagesResponse {
     pub server: String,
     pub page_array: Vec<String>,
     pub status: String,
+}
+
+impl Into<Vec<String>> for GetPagesResponse {
+    fn into(self) -> Vec<String> {
+        let host = self.server;
+        self.page_array.iter().map(|p| format!("{}{}", host, p)).collect()
+    }
 }
 
 pub struct Mangadex {}
@@ -232,76 +280,23 @@ impl Extension for Mangadex {
 
     fn get_manga_info(&self, url: &String) -> Result<tanoshi_lib::manga::Manga> {
         let resp = ureq::get(url.as_str()).call();
-        let mangadex_resp: GetMangaResponse = serde_json::from_reader(resp.into_reader()).unwrap();
+        let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
 
-        let description_split = mangadex_resp
-            .manga
-            .description
-            .split("\r\n")
-            .collect::<Vec<_>>();
-        let description = match description_split[0].to_string().starts_with("[b][u]") {
-            true => description_split[1].to_string(),
-            false => description_split[0].to_string(),
-        };
-        let genres = mangadex_resp.manga.genres.iter().map(|genre| GENRES.get_by_left(genre).unwrap().to_string()).collect();
-        let m = tanoshi_lib::manga::Manga {
-            id: 0,
-            title: mangadex_resp.manga.title,
-            author: mangadex_resp.manga.author,
-            genre: genres,
-            status: STATUS.get_by_left(&mangadex_resp.manga.status).unwrap_or(&"Ongoing").to_string(),
-            description,
-            path: "".to_string(),
-            thumbnail_url: format!("https://mangadex.org{}", mangadex_resp.manga.cover_url),
-            last_read: None,
-            last_page: None,
-            is_favorite: false,
-        };
-
-        Ok(m)
+        Ok(mangadex_resp.into())
     }
 
     fn get_chapters(&self, url: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
-        let mut chapters: Vec<tanoshi_lib::manga::Chapter> = Vec::new();
-
         let resp = ureq::get(url.as_str()).call();
-        let mangadex_resp: GetChapterResponse =
-            serde_json::from_reader(resp.into_reader()).unwrap();
+        let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
 
-        for (id, chapter) in mangadex_resp.chapter {
-            if chapter.lang_code == "gb".to_string() {
-                chapters.push(tanoshi_lib::manga::Chapter {
-                    id: 0,
-                    manga_id: 0,
-                    no: match chapter.chapter.as_str() {
-                        "" => "0".to_string(),
-                        _ => chapter.chapter,
-                    },
-                    title: chapter.title,
-                    url: format!("/api/chapter/{}", id),
-                    read: 0,
-                    uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
-                })
-            }
-        }
-
-        Ok(chapters)
+        Ok(mangadex_resp.into())
     }
 
     fn get_pages(&self, url: &String) -> Result<Vec<String>> {
-        let mut pages = Vec::new();
-
         let resp = ureq::get(url.as_str()).call();
-        let mangadex_resp: GetPagesResponse = serde_json::from_reader(resp.into_reader()).unwrap();
+        let mangadex_resp = resp.into_json_deserialize::<GetPagesResponse>().unwrap();
 
-        for page in mangadex_resp.page_array {
-            pages.push(format!(
-                "{}{}/{}",
-                mangadex_resp.server, mangadex_resp.hash, page
-            ));
-        }
-
-        Ok(pages)
+        Ok(mangadex_resp.into())
     }
 
     fn login(
