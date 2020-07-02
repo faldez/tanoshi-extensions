@@ -1,7 +1,103 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde_urlencoded;
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
+
+use chrono::NaiveDateTime;
+use serde::de::Deserializer;
+use serde::de::{self, Unexpected};
+use std::fmt;
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Dir {
+    /// Link
+    pub i: String,
+    /// Title
+    pub s: String,
+    /// Official translation
+    pub o: String,
+    /// Scan status
+    pub ss: String,
+    /// Publish status
+    pub ps: String,
+    /// Type
+    pub t: String,
+    /// View ?
+    pub v: String,
+    /// vm
+    pub vm: String,
+    /// Year of published
+    pub y: String,
+    /// Authors
+    pub a: Vec<String>,
+    /// Alternative names
+    pub al: Vec<String>,
+    /// Latest
+    pub l: String,
+    /// Last chapter
+    pub lt: i64,
+    /// Last chapter
+    #[serde(deserialize_with = "date_or_zero")]
+    pub ls: NaiveDateTime,
+    /// Genres
+    pub g: Vec<String>,
+    /// Hentai?
+    pub h: bool,
+}
+
+struct DateOrZeroVisitor;
+
+impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
+    type Value = NaiveDateTime;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("an integer or a string")
+    }
+
+    fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(NaiveDateTime::from_timestamp(v as i64, 0))
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        if let Ok(dt) = NaiveDateTime::parse_from_str(v, "%Y-%m-%dT%H:%M:%S%z") {
+            Ok(dt)
+        } else {
+            Err(E::invalid_value(Unexpected::Str(v), &self))
+        }
+    }
+}
+
+fn date_or_zero<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(DateOrZeroVisitor)
+}
+
+impl Into<Manga> for &Dir {
+    fn into(self) -> Manga {
+        Manga {
+            id: 0,
+            title: self.s.clone(),
+            author: self.a.clone(),
+            genre: self.g.clone(),
+            status: Some(self.ss.clone()),
+            description: None,
+            path: format!("/manga/{}", self.i),
+            thumbnail_url: format!("https://cover.mangabeast01.com/cover/{}.jpg", self.i),
+            last_read: None,
+            last_page: None,
+            is_favorite: false,
+        }
+    }
+}
 
 pub struct Mangasee {}
 
@@ -10,64 +106,72 @@ impl Extension for Mangasee {
         Source {
             id: 0,
             name: "mangasee".to_string(),
-            url: "https://mangaseeonline.us".to_string(),
+            url: "https://mangasee123.com".to_string(),
             version: std::env!("PLUGIN_VERSION").to_string(),
         }
     }
 
     fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
-        let mut mangas: Vec<Manga> = Vec::new();
-
-        let sort_by = match param.sort_by.unwrap() {
-            SortByParam::Views => "popularity",
-            SortByParam::LastUpdated => "dateUpdated",
-            _ => "dateUpdated",
-        };
-
-        let sort_order = match param.sort_order.unwrap() {
-            SortOrderParam::Asc => "ascending",
-            SortOrderParam::Desc => "descending",
-        };
-
-        let params = vec![
-            ("keyword".to_owned(), param.keyword.to_owned()),
-            ("page".to_owned(), param.page.to_owned()),
-            ("sortBy".to_owned(), Some(sort_by.to_string())),
-            ("sortOrder".to_owned(), Some(sort_order.to_string())),
-        ];
-
-        let urlencoded = serde_urlencoded::to_string(params).unwrap();
-
-        let resp = ureq::post(format!("{}/search/request.php", url).as_str())
-            .set(
-                "Content-Type",
-                "application/x-www-form-urlencoded; charset=utf-8",
-            )
-            .send_string(&urlencoded);
+        let resp = ureq::get(format!("{}/search", url).as_str()).call();
 
         let html = resp.into_string().unwrap();
-        let document = scraper::Html::parse_document(&html);
-
-        let selector = scraper::Selector::parse(".requested .row").unwrap();
-        for row in document.select(&selector) {
-            let mut manga = Manga::default();
-
-            let sel = scraper::Selector::parse("img").unwrap();
-            for el in row.select(&sel) {
-                manga.thumbnail_url = el.value().attr("src").unwrap().to_owned();
+        let mut dirs = if let Some(i) = html.find("vm.Directory =") {
+            let dir = &html[i + 15..];
+            if let Some(i) = dir.find("}];") {
+                let vm_dir = &dir[..i + 2];
+                match serde_json::from_str::<Vec<Dir>>(vm_dir) {
+                    Ok(dirs) => dirs,
+                    Err(e) => return Err(anyhow!(e)),
+                }
+            } else {
+                return Err(anyhow!("error get manga"));
             }
+        } else {
+            return Err(anyhow!("error get manga"));
+        };
 
-            let sel = scraper::Selector::parse(".resultLink").unwrap();
-            for el in row.select(&sel) {
-                manga.title = el.inner_html();
-                manga.path = el.value().attr("href").unwrap().to_owned();
-            }
-            mangas.push(manga);
+        let sort_by = param.sort_by.unwrap_or(SortByParam::Views);
+        let sort_order = param.sort_order.unwrap_or(SortOrderParam::Asc);
+
+        if let Some(keyword) = param.keyword {
+            dirs.retain(|d| d.s.to_lowercase().contains(&keyword))
         }
 
-        Ok(mangas)
+        match sort_by {
+            SortByParam::Views => {
+                dirs.sort_by(|a, b| {
+                    let v_a = a.v.parse::<i32>().unwrap();
+                    let v_b = b.v.parse::<i32>().unwrap();
+                    match sort_order {
+                        SortOrderParam::Asc => v_a.cmp(&v_b),
+                        SortOrderParam::Desc => v_b.cmp(&v_a),
+                    }
+                });
+            }
+            SortByParam::Comment => {}
+            SortByParam::LastUpdated => {
+                dirs.sort_by(|a, b| match sort_order {
+                    SortOrderParam::Asc => a.lt.cmp(&b.lt),
+                    SortOrderParam::Desc => b.lt.cmp(&a.lt),
+                });
+            }
+            SortByParam::Title => {}
+        }
+
+        let page = param
+            .page
+            .map(|p| p.parse::<usize>().ok().unwrap_or(1))
+            .unwrap_or(1);
+        let offset = (page - 1) * 20;
+        let mangas = match dirs.len() {
+            0..=20 => &dirs,
+            _ => &dirs[offset..offset + 20],
+        };
+
+        return Ok(mangas.iter().map(|d| d.into()).collect());
     }
 
+    /// Get the rest of details unreachable from `get_mangas`
     fn get_manga_info(&self, url: &String) -> Result<Manga> {
         let mut m = Manga::default();
 
@@ -76,42 +180,10 @@ impl Extension for Mangasee {
 
         let document = scraper::Html::parse_document(&html);
 
-        let selector = scraper::Selector::parse(".leftImage img").unwrap();
-        for element in document.select(&selector) {
-            let src = element.value().attr("src").unwrap();
-            m.thumbnail_url = String::from(src);
-        }
-
-        let selector = scraper::Selector::parse("h1[class=\"SeriesName\"]").unwrap();
-        for element in document.select(&selector) {
-            m.title = element.inner_html();
-        }
-
-        let selector = scraper::Selector::parse("a[href*=\"author\"]").unwrap();
-
+        let selector = scraper::Selector::parse("body > div.container.MainContainer > div > div > div > div > div:nth-child(1) > div.col-md-9.col-sm-8.top-5 > ul > li:nth-child(10) > span").unwrap();
         for element in document.select(&selector) {
             for text in element.text() {
-                m.author = String::from(text);
-            }
-        }
-
-        let selector = scraper::Selector::parse("a[href*=\"genre\"]").unwrap();
-        for element in document.select(&selector) {
-            for text in element.text() {
-                m.genre.push(String::from(text));
-            }
-        }
-
-        let selector = scraper::Selector::parse(".PublishStatus").unwrap();
-        for element in document.select(&selector) {
-            let status = element.value().attr("status").unwrap();
-            m.status = String::from(status);
-        }
-
-        let selector = scraper::Selector::parse(".description").unwrap();
-        for element in document.select(&selector) {
-            for text in element.text() {
-                m.description = String::from(text);
+                m.description = Some(String::from(text));
             }
         }
 
@@ -128,7 +200,7 @@ impl Extension for Mangasee {
         for element in document.select(&selector) {
             let mut chapter = Chapter::default();
 
-            chapter.no = String::from(element.value().attr("chapter").unwrap());
+            chapter.no = element.value().attr("chapter").map(|c| String::from(c));
 
             let link = element.value().attr("href").unwrap();
             chapter.url = link.replace("-page-1", "");
