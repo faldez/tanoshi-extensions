@@ -1,14 +1,13 @@
-use anyhow::{anyhow, Result};
-use serde_urlencoded;
-use tanoshi_lib::extensions::Extension;
-use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
+use std::fmt;
 
+use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
-use std::fmt;
+use tanoshi_lib::extensions::Extension;
+use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dir {
     /// Link
@@ -99,6 +98,81 @@ impl Into<Manga> for &Dir {
     }
 }
 
+#[derive(Debug, Clone, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DirChapter {
+    #[serde(skip)]
+    pub index_name: String,
+    #[serde(rename(deserialize = "Chapter"))]
+    pub chapter: String,
+    #[serde(rename(deserialize = "Type"))]
+    pub type_field: String,
+    #[serde(rename(deserialize = "Date"), deserialize_with = "parse_date")]
+    pub date: NaiveDateTime,
+    #[serde(rename(deserialize = "ChapterName"))]
+    pub chapter_name: Option<String>,
+}
+
+struct DateVisitor;
+
+impl<'de> de::Visitor<'de> for DateVisitor {
+    type Value = NaiveDateTime;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        if let Ok(dt) = NaiveDateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S") {
+            Ok(dt)
+        } else {
+            Err(E::invalid_value(Unexpected::Str(v), &self))
+        }
+    }
+}
+
+fn parse_date<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    deserializer.deserialize_any(DateVisitor)
+}
+
+impl Into<Chapter> for &DirChapter {
+    fn into(self) -> Chapter {
+        let mut chapter = self.chapter.clone();
+        chapter.remove(0);
+        chapter.insert_str(chapter.len() - 1, ".");
+        let number = chapter.parse::<f32>().ok().map(|n| n.to_string());
+
+        let mut ch = Chapter {
+            id: 0,
+            manga_id: 0,
+            vol: None,
+            no: None,
+            title: None,
+            url: format!(
+                "/read-online/{}-chapter-{}.html",
+                &self.index_name,
+                number.clone().unwrap()
+            ),
+            read: None,
+            uploaded: self.date,
+        };
+
+        if self.type_field == "Volume" {
+            ch.vol = number
+        } else {
+            ch.no = number
+        };
+
+        ch
+    }
+}
+
 pub struct Mangasee {}
 
 impl Extension for Mangasee {
@@ -112,22 +186,37 @@ impl Extension for Mangasee {
     }
 
     fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
-        let resp = ureq::get(format!("{}/search", url).as_str()).call();
+        let base64_url = base64::encode(&url);
+        let cache_path = dirs::home_dir()
+            .unwrap()
+            .join(".tanoshi")
+            .join("cache")
+            .join(base64_url);
 
-        let html = resp.into_string().unwrap();
-        let mut dirs = if let Some(i) = html.find("vm.Directory =") {
-            let dir = &html[i + 15..];
-            if let Some(i) = dir.find("}];") {
-                let vm_dir = &dir[..i + 2];
-                match serde_json::from_str::<Vec<Dir>>(vm_dir) {
-                    Ok(dirs) => dirs,
-                    Err(e) => return Err(anyhow!(e)),
+        let vm_dir = match std::fs::read(&cache_path) {
+            Ok(content) => String::from_utf8(content).unwrap(),
+            Err(_) => {
+                let resp = ureq::get(format!("{}/search", url).as_str()).call();
+                let html = resp.into_string().unwrap();
+
+                if let Some(i) = html.find("vm.Directory =") {
+                    let dir = &html[i + 15..];
+                    if let Some(i) = dir.find("}];") {
+                        let vm_dir = &dir[..i + 2];
+                        let _ = std::fs::write(&cache_path, &vm_dir);
+                        vm_dir.to_string()
+                    } else {
+                        return Err(anyhow!("error get manga"));
+                    }
+                } else {
+                    return Err(anyhow!("list not found"));
                 }
-            } else {
-                return Err(anyhow!("error get manga"));
             }
-        } else {
-            return Err(anyhow!("error get manga"));
+        };
+
+        let mut dirs = match serde_json::from_str::<Vec<Dir>>(&vm_dir) {
+            Ok(dirs) => dirs,
+            Err(e) => return Err(anyhow!(e)),
         };
 
         let sort_by = param.sort_by.unwrap_or(SortByParam::Views);
@@ -173,48 +262,95 @@ impl Extension for Mangasee {
 
     /// Get the rest of details unreachable from `get_mangas`
     fn get_manga_info(&self, url: &String) -> Result<Manga> {
-        let mut m = Manga::default();
+        let base64_url = base64::encode(&url);
+        let cache_path = dirs::home_dir()
+            .unwrap()
+            .join(".tanoshi")
+            .join("cache")
+            .join(base64_url);
+        let description = match std::fs::read(&cache_path) {
+            Ok(content) => String::from_utf8(content).ok(),
+            Err(_) => {
+                let resp = ureq::get(url.as_str()).call();
+                let html = resp.into_string().unwrap();
 
-        let resp = ureq::get(url.as_str()).call();
-        let html = resp.into_string().unwrap();
-
-        let document = scraper::Html::parse_document(&html);
-
-        let selector = scraper::Selector::parse("body > div.container.MainContainer > div > div > div > div > div:nth-child(1) > div.col-md-9.col-sm-8.top-5 > ul > li:nth-child(10) > span").unwrap();
-        for element in document.select(&selector) {
-            for text in element.text() {
-                m.description = Some(String::from(text));
+                if let Some(i) = html.find("vm.Chapters =") {
+                    let dir = &html[i + 15..];
+                    if let Some(i) = dir.find("}];") {
+                        let vm_dir = &dir[..i + 2];
+                        let _ = std::fs::write(&cache_path, &vm_dir);
+                        Some(vm_dir.to_string())
+                    } else {
+                        return Err(anyhow!("error get manga"));
+                    }
+                } else {
+                    return Err(anyhow!("list not found"));
+                }
             }
-        }
+        };
 
-        Ok(m)
+        Ok(Manga {
+            description,
+            ..Default::default()
+        })
     }
 
     fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
-        let mut chapters: Vec<Chapter> = Vec::new();
-        let resp = ureq::get(url.as_str()).call();
-        let html = resp.into_string().unwrap();
-
-        let document = scraper::Html::parse_document(&html);
-        let selector = scraper::Selector::parse(".mainWell .chapter-list a[chapter]").unwrap();
-        for element in document.select(&selector) {
-            let mut chapter = Chapter::default();
-
-            chapter.no = element.value().attr("chapter").map(|c| String::from(c));
-
-            let link = element.value().attr("href").unwrap();
-            chapter.url = link.replace("-page-1", "");
-
-            let time_sel = scraper::Selector::parse("time[class*=\"SeriesTime\"]").unwrap();
-            for time_el in element.select(&time_sel) {
-                let date_str = time_el.value().attr("datetime").unwrap();
-                chapter.uploaded =
-                    chrono::NaiveDateTime::parse_from_str(&date_str, "%Y-%m-%dT%H:%M:%S%:z")
-                        .unwrap()
+        let base64_url = base64::encode(&url);
+        let cache_path = dirs::home_dir()
+            .unwrap()
+            .join(".tanoshi")
+            .join("cache")
+            .join(base64_url);
+        let html = match std::fs::read(&cache_path) {
+            Ok(content) => String::from_utf8(content).unwrap(),
+            Err(_) => {
+                let resp = ureq::get(url.as_str()).call();
+                let html = resp.into_string().unwrap();
+                if let Some(i) = html.find("vm.IndexName =") {
+                    let dir = &html[i..];
+                    if let Some(i) = dir.find("}];") {
+                        let vm_dir = &dir[..i + 2];
+                        let _ = std::fs::write(&cache_path, &vm_dir);
+                        vm_dir.to_string()
+                    } else {
+                        return Err(anyhow!("error get chapters"));
+                    }
+                } else {
+                    return Err(anyhow!("list not found"));
+                }
             }
+        };
 
-            chapters.push(chapter);
-        }
+        let index_name = if html.starts_with("vm.IndexName =") {
+            let name = &html[15..];
+            if let Some(i) = name.find(";") {
+                &name[1..i - 1]
+            } else {
+                return Err(anyhow!("IndexName not found"));
+            }
+        } else {
+            return Err(anyhow!("IndexName not found"));
+        };
+
+        let vm_dir = if let Some(i) = html.find("vm.Chapters =") {
+            &html[i + 13..]
+        } else {
+            return Err(anyhow!("list not found"));
+        };
+
+        let ch_dirs: Vec<DirChapter> = match serde_json::from_str::<Vec<DirChapter>>(&vm_dir) {
+            Ok(dirs) => dirs
+                .iter()
+                .map(|d| DirChapter {
+                    index_name: index_name.to_string(),
+                    ..d.clone()
+                })
+                .collect(),
+            Err(e) => return Err(anyhow!(e)),
+        };
+
+        let chapters = ch_dirs.iter().map(|c| c.into()).collect();
 
         Ok(chapters)
     }
