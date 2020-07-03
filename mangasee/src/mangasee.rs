@@ -296,7 +296,7 @@ impl Extension for Mangasee {
     }
 
     fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
-        let base64_url = base64::encode(&url);
+        let base64_url = base64::encode(format!("chapter:{}",&url));
         let cache_path = dirs::home_dir()
             .unwrap()
             .join(".tanoshi")
@@ -405,14 +405,21 @@ impl Extension for Mangasee {
             }
         }
 
-        let page = ch.page.unwrap().parse().unwrap();
+        let mut zeroes = "".to_string();
+        for i in  ch.chapter[1..ch.chapter.len()-2].chars() {
+            if i == '0' {
+                zeroes.push_str("0");
+            }
+        }
+
+        let page = ch.page.unwrap().parse::<i32>().unwrap() + 1;
 
         let mut pages = Vec::new();
         for i in 1..page {
             let mut page = url.clone();
             page = page.replace("mangasee123.com", &host);
             page = page.replace("read-online", "manga");
-            page = page.replace("-chapter-", "/0");
+            page = page.replace("-chapter-", &format!("/{}", zeroes));
             page = page.replace(".html", "-");
             pages.push(format!("{}{:03}.png", page, i));
         }
