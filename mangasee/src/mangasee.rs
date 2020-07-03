@@ -2,11 +2,10 @@ use std::fmt;
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
-use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
+use serde::de::Deserializer;
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
-use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -56,15 +55,15 @@ impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
-    where
-        E: de::Error,
+        where
+            E: de::Error,
     {
         Ok(NaiveDateTime::from_timestamp(v as i64, 0))
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
+        where
+            E: de::Error,
     {
         if let Ok(dt) = NaiveDateTime::parse_from_str(v, "%Y-%m-%dT%H:%M:%S%z") {
             Ok(dt)
@@ -75,8 +74,8 @@ impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
 }
 
 fn date_or_zero<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
-where
-    D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
 {
     deserializer.deserialize_any(DateOrZeroVisitor)
 }
@@ -126,8 +125,8 @@ impl<'de> de::Visitor<'de> for DateVisitor {
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-    where
-        E: de::Error,
+        where
+            E: de::Error,
     {
         if let Ok(dt) = NaiveDateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S") {
             Ok(dt)
@@ -138,8 +137,8 @@ impl<'de> de::Visitor<'de> for DateVisitor {
 }
 
 fn parse_date<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
-where
-    D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
 {
     deserializer.deserialize_any(DateVisitor)
 }
@@ -277,18 +276,16 @@ impl Extension for Mangasee {
                 let resp = ureq::get(url.as_str()).call();
                 let html = resp.into_string().unwrap();
 
-                if let Some(i) = html.find("vm.Chapters =") {
-                    let dir = &html[i + 15..];
-                    if let Some(i) = dir.find("}];") {
-                        let vm_dir = &dir[..i + 2];
-                        let _ = std::fs::write(&cache_path, &vm_dir);
-                        Some(vm_dir.to_string())
-                    } else {
-                        return Err(anyhow!("error get manga"));
+                let document = scraper::Html::parse_document(&html);
+
+                let mut desc = None;
+                let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]").unwrap();
+                for element in document.select(&selector) {
+                    for text in element.text() {
+                        desc = Some(String::from(text));
                     }
-                } else {
-                    return Err(anyhow!("list not found"));
                 }
+                desc
             }
         };
 
@@ -372,7 +369,7 @@ impl Extension for Mangasee {
                 let html = resp.into_string().unwrap();
 
                 if let Some(i) = html.find("vm.CurChapter = {") {
-                    let dir = &html[i+16..];
+                    let dir = &html[i + 16..];
                     if let Some(i) = dir.find("vm.CHAPTERS = ") {
                         let vm_dir = &dir[..i];
                         let _ = std::fs::write(&cache_path, &vm_dir);
@@ -387,13 +384,13 @@ impl Extension for Mangasee {
         };
 
         let mut host: String = "".to_string();
-        let mut ch: DirChapter = DirChapter{
+        let mut ch: DirChapter = DirChapter {
             index_name: "".to_string(),
             chapter: "".to_string(),
             type_field: "".to_string(),
-            date: NaiveDateTime::from_timestamp(0,0),
+            date: NaiveDateTime::from_timestamp(0, 0),
             chapter_name: None,
-            page: None
+            page: None,
         };
 
         if let Some(i) = html.find(";") {
@@ -401,7 +398,7 @@ impl Extension for Mangasee {
             let path = &html[i..];
             ch = serde_json::from_str(ch_str).unwrap();
             if let Some(i) = path.find("vm.CurPathName = \"") {
-                let path = &path[i+18..];
+                let path = &path[i + 18..];
                 if let Some(i) = path.find("\";") {
                     host = String::from(&path[..i]);
                 }

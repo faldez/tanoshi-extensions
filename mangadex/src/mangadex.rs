@@ -204,7 +204,8 @@ pub struct GetPagesResponse {
 impl Into<Vec<String>> for GetPagesResponse {
     fn into(self) -> Vec<String> {
         let host = self.server;
-        self.page_array.iter().map(|p| format!("{}{}", host, p)).collect()
+        let hash = self.hash;
+        self.page_array.iter().map(|p| format!("{}{}/{}", host, hash, p)).collect()
     }
 }
 
