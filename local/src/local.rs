@@ -29,10 +29,10 @@ impl Extension for Local {
                 res.map(|e| Manga {
                     id: 0,
                     title: e.file_name().to_str().unwrap().to_string(),
-                    author: "".to_string(),
+                    author: vec![],
                     genre: vec![],
-                    status: "".to_string(),
-                    description: "".to_string(),
+                    status: None,
+                    description: None,
                     path: e
                         .path()
                         .to_str()
@@ -75,8 +75,8 @@ impl Extension for Local {
                     let mut ch = Chapter::default();
                     let file_name = e.file_name().to_str().unwrap().to_string();
                     let mat = re.find(file_name.as_str()).unwrap();
-                    ch.no = mat.unwrap().as_str().to_string();
-                    ch.title = file_name;
+                    ch.no = mat.map(|m| m.as_str().to_string());
+                    ch.title = Some(file_name);
                     ch.url = e
                         .path()
                         .to_str()

@@ -57,9 +57,9 @@ impl Extensions {
         &self.extensions
     }
 
-    pub fn get(&self, name: &String) -> Option<&ExtensionProxy> {
+    /* pub fn get(&self, name: &String) -> Option<&ExtensionProxy> {
         self.extensions.get(name)
-    }
+    } */
 
     pub unsafe fn load<P: AsRef<OsStr>>(
         &mut self,
