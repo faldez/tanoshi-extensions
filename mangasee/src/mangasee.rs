@@ -6,6 +6,7 @@ use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
+use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -111,6 +112,8 @@ pub struct DirChapter {
     pub date: NaiveDateTime,
     #[serde(rename(deserialize = "ChapterName"))]
     pub chapter_name: Option<String>,
+    #[serde(rename(deserialize = "Page"))]
+    pub page: Option<String>,
 }
 
 struct DateVisitor;
@@ -356,16 +359,67 @@ impl Extension for Mangasee {
     }
 
     fn get_pages(&self, url: &String) -> Result<Vec<String>> {
-        let mut pages = Vec::new();
-        let resp = ureq::get(url.as_str()).call();
-        let html = resp.into_string().unwrap();
+        let base64_url = base64::encode(&url);
+        let cache_path = dirs::home_dir()
+            .unwrap()
+            .join(".tanoshi")
+            .join("cache")
+            .join(base64_url);
+        let html = match std::fs::read(&cache_path) {
+            Ok(content) => String::from_utf8(content).unwrap(),
+            Err(_) => {
+                let resp = ureq::get(url.as_str()).call();
+                let html = resp.into_string().unwrap();
 
-        let document = scraper::Html::parse_document(&html);
+                if let Some(i) = html.find("vm.CurChapter = {") {
+                    let dir = &html[i+16..];
+                    if let Some(i) = dir.find("vm.CHAPTERS = ") {
+                        let vm_dir = &dir[..i];
+                        let _ = std::fs::write(&cache_path, &vm_dir);
+                        vm_dir.to_string()
+                    } else {
+                        return Err(anyhow!("error get pages"));
+                    }
+                } else {
+                    return Err(anyhow!("list not found"));
+                }
+            }
+        };
 
-        let selector = scraper::Selector::parse(".fullchapimage img").unwrap();
-        for element in document.select(&selector) {
-            pages.push(String::from(element.value().attr("src").unwrap()));
+        let mut host: String = "".to_string();
+        let mut ch: DirChapter = DirChapter{
+            index_name: "".to_string(),
+            chapter: "".to_string(),
+            type_field: "".to_string(),
+            date: NaiveDateTime::from_timestamp(0,0),
+            chapter_name: None,
+            page: None
+        };
+
+        if let Some(i) = html.find(";") {
+            let ch_str = &html[..i];
+            let path = &html[i..];
+            ch = serde_json::from_str(ch_str).unwrap();
+            if let Some(i) = path.find("vm.CurPathName = \"") {
+                let path = &path[i+18..];
+                if let Some(i) = path.find("\";") {
+                    host = String::from(&path[..i]);
+                }
+            }
         }
+
+        let page = ch.page.unwrap().parse().unwrap();
+
+        let mut pages = Vec::new();
+        for i in 1..page {
+            let mut page = url.clone();
+            page = page.replace("mangasee123.com", &host);
+            page = page.replace("read-online", "manga");
+            page = page.replace("-chapter-", "/0");
+            page = page.replace(".html", "-");
+            pages.push(format!("{}{:03}.png", page, i));
+        }
+
         Ok(pages)
     }
 }
