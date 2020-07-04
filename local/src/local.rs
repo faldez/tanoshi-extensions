@@ -56,8 +56,10 @@ impl Extension for Local {
     }
 
     fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+        let vol_re = Regex::new(r"(?i)(?<=v)(\d+)|(?<=volume)\s*(\d+)|(?<=vol)\s*(\d+)").unwrap();
+        let ch_re = Regex::new(r"(?i)(?<=ch)(\d+)|(?<=chapter)\s*(\d+)").unwrap();
+
         let local_path = self.url.clone();
-        let re = Regex::new(r"(?<=v)(\d+)|(?<=volume)\s*(\d+)|(?<=vol)\s*(\d+)|(?<=ch)(\d+)|(?<=chapter)\s*(\d+)|(\d+)").unwrap();
         let entries = fs::read_dir(url)?
             .filter(|res| {
                 res.as_ref().unwrap().file_type().unwrap().is_file()
@@ -74,7 +76,9 @@ impl Extension for Local {
                 res.map(|e| {
                     let mut ch = Chapter::default();
                     let file_name = e.file_name().to_str().unwrap().to_string();
-                    let mat = re.find(file_name.as_str()).unwrap();
+                    let mat = vol_re.find(file_name.as_str()).unwrap();
+                    ch.vol = mat.map(|m| m.as_str().to_string());
+                    let mat = ch_re.find(file_name.as_str()).unwrap();
                     ch.no = mat.map(|m| m.as_str().to_string());
                     ch.title = Some(file_name);
                     ch.url = e
