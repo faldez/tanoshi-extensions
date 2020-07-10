@@ -2,8 +2,9 @@ use std::fmt;
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
-use serde::de::{self, Unexpected};
+use rayon::prelude::*;
 use serde::de::Deserializer;
+use serde::de::{self, Unexpected};
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
@@ -55,15 +56,15 @@ impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
     }
 
     fn visit_u64<E>(self, v: u64) -> Result<Self::Value, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         Ok(NaiveDateTime::from_timestamp(v as i64, 0))
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         if let Ok(dt) = NaiveDateTime::parse_from_str(v, "%Y-%m-%dT%H:%M:%S%z") {
             Ok(dt)
@@ -74,8 +75,8 @@ impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
 }
 
 fn date_or_zero<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     deserializer.deserialize_any(DateOrZeroVisitor)
 }
@@ -125,8 +126,8 @@ impl<'de> de::Visitor<'de> for DateVisitor {
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
-        where
-            E: de::Error,
+    where
+        E: de::Error,
     {
         if let Ok(dt) = NaiveDateTime::parse_from_str(v, "%Y-%m-%d %H:%M:%S") {
             Ok(dt)
@@ -137,8 +138,8 @@ impl<'de> de::Visitor<'de> for DateVisitor {
 }
 
 fn parse_date<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
-    where
-        D: Deserializer<'de>,
+where
+    D: Deserializer<'de>,
 {
     deserializer.deserialize_any(DateVisitor)
 }
@@ -259,7 +260,7 @@ impl Extension for Mangasee {
             _ => &dirs[offset..offset + 20],
         };
 
-        return Ok(mangas.iter().map(|d| d.into()).collect());
+        return Ok(mangas.par_iter().map(|d| d.into()).collect());
     }
 
     /// Get the rest of details unreachable from `get_mangas`
@@ -296,7 +297,7 @@ impl Extension for Mangasee {
     }
 
     fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
-        let base64_url = base64::encode(format!("chapter:{}",&url));
+        let base64_url = base64::encode(format!("chapter:{}", &url));
         let cache_path = dirs::home_dir()
             .unwrap()
             .join(".tanoshi")
@@ -341,7 +342,7 @@ impl Extension for Mangasee {
 
         let ch_dirs: Vec<DirChapter> = match serde_json::from_str::<Vec<DirChapter>>(&vm_dir) {
             Ok(dirs) => dirs
-                .iter()
+                .par_iter()
                 .map(|d| DirChapter {
                     index_name: index_name.to_string(),
                     ..d.clone()
@@ -350,7 +351,7 @@ impl Extension for Mangasee {
             Err(e) => return Err(anyhow!(e)),
         };
 
-        let chapters = ch_dirs.iter().map(|c| c.into()).collect();
+        let chapters = ch_dirs.par_iter().map(|c| c.into()).collect();
 
         Ok(chapters)
     }
@@ -406,7 +407,7 @@ impl Extension for Mangasee {
         }
 
         let mut zeroes = "".to_string();
-        for i in  ch.chapter[1..ch.chapter.len()-2].chars() {
+        for i in ch.chapter[1..ch.chapter.len() - 2].chars() {
             if i == '0' {
                 zeroes.push_str("0");
             }
