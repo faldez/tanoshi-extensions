@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use bimap::BiMap;
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_urlencoded;
 use tanoshi_lib::extensions::Extension;
@@ -16,7 +17,6 @@ lazy_static! {
         m.insert(4, "Hiatus");
         m
     };
-
     static ref GENRES: BiMap<i64, &'static str> = {
         let mut m = BiMap::new();
         m.insert(9, "Ecchi");
@@ -102,7 +102,6 @@ lazy_static! {
     };
 }
 
-
 #[derive(Deserialize, Serialize, Debug, Clone, Default)]
 pub struct MangadexLogin {
     pub login_username: String,
@@ -119,29 +118,45 @@ pub struct GetMangaResponse {
 }
 
 impl Into<Vec<tanoshi_lib::manga::Chapter>> for GetMangaResponse {
-    fn into(self) ->Vec<tanoshi_lib::manga::Chapter> {
-        self.chapter.iter().map(|(id, chapter)| if chapter.lang_code == "gb".to_string() {
-            Some(tanoshi_lib::manga::Chapter {
-                id: 0,
-                manga_id: 0,
-                vol: if chapter.volume == "" {None} else {Some(chapter.volume.clone())},
-                no: if chapter.chapter == "" {None} else {Some(chapter.chapter.clone())},
-                title: if chapter.title == "" {None} else {Some(chapter.title.clone())},
-                url: format!("/api/chapter/{}", id),
-                read: None,
-                uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
+    fn into(self) -> Vec<tanoshi_lib::manga::Chapter> {
+        self.chapter
+            .par_iter()
+            .map(|(id, chapter)| {
+                if chapter.lang_code == "gb".to_string() {
+                    Some(tanoshi_lib::manga::Chapter {
+                        id: 0,
+                        manga_id: 0,
+                        vol: if chapter.volume == "" {
+                            None
+                        } else {
+                            Some(chapter.volume.clone())
+                        },
+                        no: if chapter.chapter == "" {
+                            None
+                        } else {
+                            Some(chapter.chapter.clone())
+                        },
+                        title: if chapter.title == "" {
+                            None
+                        } else {
+                            Some(chapter.title.clone())
+                        },
+                        url: format!("/api/chapter/{}", id),
+                        read: None,
+                        uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
+                    })
+                } else {
+                    None
+                }
             })
-        } else {None}).filter_map(|ch| ch).collect()
+            .filter_map(|ch| ch)
+            .collect()
     }
 }
 
 impl Into<tanoshi_lib::manga::Manga> for GetMangaResponse {
     fn into(self) -> tanoshi_lib::manga::Manga {
-        let description_split = self
-            .manga
-            .description
-            .split("\r\n")
-            .collect::<Vec<_>>();
+        let description_split = self.manga.description.split("\r\n").collect::<Vec<_>>();
         let description = match description_split[0].to_string().starts_with("[b][u]") {
             true => description_split[1].to_string(),
             false => description_split[0].to_string(),
@@ -150,8 +165,15 @@ impl Into<tanoshi_lib::manga::Manga> for GetMangaResponse {
             id: 0,
             title: self.manga.title.into(),
             author: vec![self.manga.author, self.manga.artist],
-            genre: self.manga.genres.iter().map(|genre| GENRES.get_by_left(genre).unwrap().to_string()).collect(),
-            status: STATUS.get_by_left(&self.manga.status).map(|s| s.to_string()),
+            genre: self
+                .manga
+                .genres
+                .par_iter()
+                .map(|genre| GENRES.get_by_left(genre).unwrap().to_string())
+                .collect(),
+            status: STATUS
+                .get_by_left(&self.manga.status)
+                .map(|s| s.to_string()),
             description: Some(description),
             path: "".to_string(),
             thumbnail_url: format!("https://mangadex.org{}", self.manga.cover_url),
@@ -176,8 +198,6 @@ pub struct Manga {
     pub lang_flag: String,
     pub hentai: i64,
 }
-
-
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Chapter {
@@ -205,7 +225,10 @@ impl Into<Vec<String>> for GetPagesResponse {
     fn into(self) -> Vec<String> {
         let host = self.server;
         let hash = self.hash;
-        self.page_array.iter().map(|p| format!("{}{}/{}", host, hash, p)).collect()
+        self.page_array
+            .par_iter()
+            .map(|p| format!("{}{}/{}", host, hash, p))
+            .collect()
     }
 }
 
