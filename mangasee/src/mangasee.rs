@@ -5,7 +5,7 @@ use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
-use tanoshi_lib::extensions::Extension;
+use tanoshi_lib::extensions::{tanoshi_cache_dir, tanoshi_dir, Extension};
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
@@ -188,15 +188,21 @@ impl Extension for Mangasee {
         }
     }
 
-    fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
+    fn get_mangas(
+        &self,
+        url: &String,
+        param: Params,
+        refresh: bool,
+        _: String,
+    ) -> Result<Vec<Manga>> {
         let base64_url = base64::encode(&url);
-        let cache_path = dirs::home_dir()
-            .unwrap()
-            .join(".tanoshi")
-            .join("cache")
-            .join(base64_url);
+        let path = tanoshi_cache_dir!(base64_url);
 
-        let vm_dir = match std::fs::read(&cache_path) {
+        if refresh {
+            let _ = std::fs::remove_file(&path);
+        }
+
+        let vm_dir = match std::fs::read(&path) {
             Ok(content) => String::from_utf8(content).unwrap(),
             Err(_) => {
                 let resp = ureq::get(format!("{}/search", url).as_str()).call();
@@ -206,7 +212,7 @@ impl Extension for Mangasee {
                     let dir = &html[i + 15..];
                     if let Some(i) = dir.find("}];") {
                         let vm_dir = &dir[..i + 2];
-                        let _ = std::fs::write(&cache_path, &vm_dir);
+                        let _ = std::fs::write(&path, &vm_dir);
                         vm_dir.to_string()
                     } else {
                         return Err(anyhow!("error get manga"));
@@ -264,13 +270,14 @@ impl Extension for Mangasee {
     }
 
     /// Get the rest of details unreachable from `get_mangas`
-    fn get_manga_info(&self, url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, url: &String, refresh: bool) -> Result<Manga> {
         let base64_url = base64::encode(&url);
-        let cache_path = dirs::home_dir()
-            .unwrap()
-            .join(".tanoshi")
-            .join("cache")
-            .join(base64_url);
+        let cache_path = tanoshi_cache_dir!(base64_url);
+
+        if refresh {
+            let _ = std::fs::remove_file(&cache_path);
+        }
+
         let description = match std::fs::read(&cache_path) {
             Ok(content) => String::from_utf8(content).ok(),
             Err(_) => {
@@ -283,6 +290,7 @@ impl Extension for Mangasee {
                 let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]").unwrap();
                 for element in document.select(&selector) {
                     for text in element.text() {
+                        let _ = std::fs::write(&cache_path, &text);
                         desc = Some(String::from(text));
                     }
                 }
@@ -296,13 +304,14 @@ impl Extension for Mangasee {
         })
     }
 
-    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+    fn get_chapters(&self, url: &String, refresh: bool) -> Result<Vec<Chapter>> {
         let base64_url = base64::encode(format!("chapter:{}", &url));
-        let cache_path = dirs::home_dir()
-            .unwrap()
-            .join(".tanoshi")
-            .join("cache")
-            .join(base64_url);
+        let cache_path = tanoshi_cache_dir!(base64_url);
+
+        if refresh {
+            let _ = std::fs::remove_file(&cache_path);
+        }
+
         let html = match std::fs::read(&cache_path) {
             Ok(content) => String::from_utf8(content).unwrap(),
             Err(_) => {
@@ -356,13 +365,14 @@ impl Extension for Mangasee {
         Ok(chapters)
     }
 
-    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String, refresh: bool) -> Result<Vec<String>> {
         let base64_url = base64::encode(&url);
-        let cache_path = dirs::home_dir()
-            .unwrap()
-            .join(".tanoshi")
-            .join("cache")
-            .join(base64_url);
+        let cache_path = tanoshi_cache_dir!(base64_url);
+
+        if refresh {
+            let _ = std::fs::remove_file(&cache_path);
+        }
+
         let html = match std::fs::read(&cache_path) {
             Ok(content) => String::from_utf8(content).unwrap(),
             Err(_) => {

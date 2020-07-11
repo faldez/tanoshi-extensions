@@ -20,7 +20,13 @@ impl Extension for Local {
         }
     }
 
-    fn get_mangas(&self, url: &String, _param: Params, _auth: String) -> Result<Vec<Manga>> {
+    fn get_mangas(
+        &self,
+        url: &String,
+        _param: Params,
+        _refresh: bool,
+        _auth: String,
+    ) -> Result<Vec<Manga>> {
         let local_path = self.url.clone();
         let entries = fs::read_dir(url.clone())
             .expect("error read directory")
@@ -51,11 +57,11 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_manga_info(&self, _url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, _url: &String, _refresh: bool) -> Result<Manga> {
         Ok(Manga::default())
     }
 
-    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+    fn get_chapters(&self, url: &String, _refresh: bool) -> Result<Vec<Chapter>> {
         let vol_re = Regex::new(r"(?i)(?<=v)(\d+)|(?<=volume)\s*(\d+)|(?<=vol)\s*(\d+)").unwrap();
         let ch_re = Regex::new(r"(?i)(?<=ch)(\d+)|(?<=chapter)\s*(\d+)").unwrap();
 
@@ -96,7 +102,7 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String, _refresh: bool) -> Result<Vec<String>> {
         let file = fs::File::open(&url).unwrap();
         let reader = BufReader::new(file);
 
@@ -109,7 +115,7 @@ impl Extension for Local {
         Ok(pages)
     }
 
-    fn get_page(&self, image: Image) -> Result<Vec<u8>> {
+    fn get_page(&self, image: Image, _refresh: bool) -> Result<Vec<u8>> {
         let path = std::path::Path::new(&image.url);
         let dir = path.parent().unwrap().to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
