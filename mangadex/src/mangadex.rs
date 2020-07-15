@@ -248,7 +248,6 @@ impl Extension for Mangadex {
         &self,
         url: &String,
         param: tanoshi_lib::manga::Params,
-        _refresh: bool,
         auth: String,
     ) -> Result<Vec<tanoshi_lib::manga::Manga>> {
         let mut mangas: Vec<tanoshi_lib::manga::Manga> = Vec::new();
@@ -303,25 +302,21 @@ impl Extension for Mangadex {
         Ok(mangas)
     }
 
-    fn get_manga_info(&self, url: &String, _refresh: bool) -> Result<tanoshi_lib::manga::Manga> {
+    fn get_manga_info(&self, url: &String) -> Result<tanoshi_lib::manga::Manga> {
         let resp = ureq::get(url.as_str()).call();
         let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
 
         Ok(mangadex_resp.into())
     }
 
-    fn get_chapters(
-        &self,
-        url: &String,
-        _refresh: bool,
-    ) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
+    fn get_chapters(&self, url: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
         let resp = ureq::get(url.as_str()).call();
         let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
 
         Ok(mangadex_resp.into())
     }
 
-    fn get_pages(&self, url: &String, _refresh: bool) -> Result<Vec<String>> {
+    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
         let resp = ureq::get(url.as_str()).call();
         let mangadex_resp = resp.into_json_deserialize::<GetPagesResponse>().unwrap();
 
