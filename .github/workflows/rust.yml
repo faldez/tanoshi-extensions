@@ -24,7 +24,7 @@ jobs:
         run: |
           cd repo-windows
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"\
+          git config --local user.name "GitHub Action"
           git add index.json library\*.dll
           git commit -m "auto commit"
       - name: Git Commit and Push
@@ -51,7 +51,7 @@ jobs:
         run: |
           cd repo-macos
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"\
+          git config --local user.name "GitHub Action"
           git add index.json library/*.dylib
           git commit -m "auto commit"
       - name: Git Commit and Push
@@ -78,7 +78,7 @@ jobs:
         run: |
           cd repo-linux
           git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"\
+          git config --local user.name "GitHub Action"
           git add index.json library/*.so
           git commit -m "auto commit"
       - name: Git Commit and Push
