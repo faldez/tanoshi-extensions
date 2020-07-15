@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-tanoshi-lib = {version = "0.9", features = ["extensions"]}
+tanoshi-lib = {path="/Users/fadhlika/Repos/tanoshi/tanoshi-lib", features = ["extensions"]}
 anyhow = "1"
 ureq = {version="1", features=["json"]}
 scraper = "0.12"

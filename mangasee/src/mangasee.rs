@@ -5,7 +5,7 @@ use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
-use tanoshi_lib::extensions::{tanoshi_cache_dir, tanoshi_dir, Extension};
+use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
@@ -188,38 +188,21 @@ impl Extension for Mangasee {
         }
     }
 
-    fn get_mangas(
-        &self,
-        url: &String,
-        param: Params,
-        refresh: bool,
-        _: String,
-    ) -> Result<Vec<Manga>> {
-        let base64_url = base64::encode(&url);
-        let path = tanoshi_cache_dir!(base64_url);
+    fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
+        let vm_dir = {
+            let resp = ureq::get(format!("{}/search", url).as_str()).call();
+            let html = resp.into_string().unwrap();
 
-        if refresh {
-            let _ = std::fs::remove_file(&path);
-        }
-
-        let vm_dir = match std::fs::read(&path) {
-            Ok(content) => String::from_utf8(content).unwrap(),
-            Err(_) => {
-                let resp = ureq::get(format!("{}/search", url).as_str()).call();
-                let html = resp.into_string().unwrap();
-
-                if let Some(i) = html.find("vm.Directory =") {
-                    let dir = &html[i + 15..];
-                    if let Some(i) = dir.find("}];") {
-                        let vm_dir = &dir[..i + 2];
-                        let _ = std::fs::write(&path, &vm_dir);
-                        vm_dir.to_string()
-                    } else {
-                        return Err(anyhow!("error get manga"));
-                    }
+            if let Some(i) = html.find("vm.Directory =") {
+                let dir = &html[i + 15..];
+                if let Some(i) = dir.find("}];") {
+                    let vm_dir = &dir[..i + 2];
+                    vm_dir.to_string()
                 } else {
-                    return Err(anyhow!("list not found"));
+                    return Err(anyhow!("error get manga"));
                 }
+            } else {
+                return Err(anyhow!("list not found"));
             }
         };
 
@@ -270,32 +253,21 @@ impl Extension for Mangasee {
     }
 
     /// Get the rest of details unreachable from `get_mangas`
-    fn get_manga_info(&self, url: &String, refresh: bool) -> Result<Manga> {
-        let base64_url = base64::encode(&url);
-        let cache_path = tanoshi_cache_dir!(base64_url);
+    fn get_manga_info(&self, url: &String) -> Result<Manga> {
+        let description = {
+            let resp = ureq::get(url.as_str()).call();
+            let html = resp.into_string().unwrap();
 
-        if refresh {
-            let _ = std::fs::remove_file(&cache_path);
-        }
+            let document = scraper::Html::parse_document(&html);
 
-        let description = match std::fs::read(&cache_path) {
-            Ok(content) => String::from_utf8(content).ok(),
-            Err(_) => {
-                let resp = ureq::get(url.as_str()).call();
-                let html = resp.into_string().unwrap();
-
-                let document = scraper::Html::parse_document(&html);
-
-                let mut desc = None;
-                let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]").unwrap();
-                for element in document.select(&selector) {
-                    for text in element.text() {
-                        let _ = std::fs::write(&cache_path, &text);
-                        desc = Some(String::from(text));
-                    }
+            let mut desc = None;
+            let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]").unwrap();
+            for element in document.select(&selector) {
+                for text in element.text() {
+                    desc = Some(String::from(text));
                 }
-                desc
             }
+            desc
         };
 
         Ok(Manga {
@@ -304,31 +276,20 @@ impl Extension for Mangasee {
         })
     }
 
-    fn get_chapters(&self, url: &String, refresh: bool) -> Result<Vec<Chapter>> {
-        let base64_url = base64::encode(format!("chapter:{}", &url));
-        let cache_path = tanoshi_cache_dir!(base64_url);
-
-        if refresh {
-            let _ = std::fs::remove_file(&cache_path);
-        }
-
-        let html = match std::fs::read(&cache_path) {
-            Ok(content) => String::from_utf8(content).unwrap(),
-            Err(_) => {
-                let resp = ureq::get(url.as_str()).call();
-                let html = resp.into_string().unwrap();
-                if let Some(i) = html.find("vm.IndexName =") {
-                    let dir = &html[i..];
-                    if let Some(i) = dir.find("}];") {
-                        let vm_dir = &dir[..i + 2];
-                        let _ = std::fs::write(&cache_path, &vm_dir);
-                        vm_dir.to_string()
-                    } else {
-                        return Err(anyhow!("error get chapters"));
-                    }
+    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+        let html = {
+            let resp = ureq::get(url.as_str()).call();
+            let html = resp.into_string().unwrap();
+            if let Some(i) = html.find("vm.IndexName =") {
+                let dir = &html[i..];
+                if let Some(i) = dir.find("}];") {
+                    let vm_dir = &dir[..i + 2];
+                    vm_dir.to_string()
                 } else {
-                    return Err(anyhow!("list not found"));
+                    return Err(anyhow!("error get chapters"));
                 }
+            } else {
+                return Err(anyhow!("list not found"));
             }
         };
 
@@ -365,32 +326,21 @@ impl Extension for Mangasee {
         Ok(chapters)
     }
 
-    fn get_pages(&self, url: &String, refresh: bool) -> Result<Vec<String>> {
-        let base64_url = base64::encode(&url);
-        let cache_path = tanoshi_cache_dir!(base64_url);
+    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
+        let html = {
+            let resp = ureq::get(url.as_str()).call();
+            let html = resp.into_string().unwrap();
 
-        if refresh {
-            let _ = std::fs::remove_file(&cache_path);
-        }
-
-        let html = match std::fs::read(&cache_path) {
-            Ok(content) => String::from_utf8(content).unwrap(),
-            Err(_) => {
-                let resp = ureq::get(url.as_str()).call();
-                let html = resp.into_string().unwrap();
-
-                if let Some(i) = html.find("vm.CurChapter = {") {
-                    let dir = &html[i + 16..];
-                    if let Some(i) = dir.find("vm.CHAPTERS = ") {
-                        let vm_dir = &dir[..i];
-                        let _ = std::fs::write(&cache_path, &vm_dir);
-                        vm_dir.to_string()
-                    } else {
-                        return Err(anyhow!("error get pages"));
-                    }
+            if let Some(i) = html.find("vm.CurChapter = {") {
+                let dir = &html[i + 16..];
+                if let Some(i) = dir.find("vm.CHAPTERS = ") {
+                    let vm_dir = &dir[..i];
+                    vm_dir.to_string()
                 } else {
-                    return Err(anyhow!("list not found"));
+                    return Err(anyhow!("error get pages"));
                 }
+            } else {
+                return Err(anyhow!("list not found"));
             }
         };
 
