@@ -5,29 +5,39 @@ use std::{fs, io};
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, Source};
 
+pub static NAME: &str = "local";
+
 #[derive(Default)]
 pub struct Local {
     pub url: String,
 }
 
+impl Local {
+    pub fn new(path: &String) -> Local {
+        Local {
+            url: path.to_string(),
+        }
+    }
+}
+
 impl Extension for Local {
     fn info(&self) -> Source {
         Source {
-            id: 0,
-            name: "local".to_string(),
+            name: NAME.to_string(),
             url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
         }
     }
 
-    fn get_mangas(&self, url: &String, _param: Params, _auth: String) -> Result<Vec<Manga>> {
+    fn get_mangas(&self, _param: Params, _auth: String) -> Result<Vec<Manga>> {
         let local_path = self.url.clone();
-        let entries = fs::read_dir(url.clone())
+        let entries = fs::read_dir(&self.url)
             .expect("error read directory")
             .filter(|res| res.as_ref().unwrap().file_type().unwrap().is_dir())
             .map(|res| {
                 res.map(|e| Manga {
                     id: 0,
+                    source: NAME.to_string(),
                     title: e.file_name().to_str().unwrap().to_string(),
                     author: vec![],
                     genre: vec![],
@@ -51,14 +61,15 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_manga_info(&self, _url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, _path: &String) -> Result<Manga> {
         Ok(Manga::default())
     }
 
-    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+    fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>> {
         let vol_re = Regex::new(r"(?i)(?<=v)(\d+)|(?<=volume)\s*(\d+)|(?<=vol)\s*(\d+)").unwrap();
         let ch_re = Regex::new(r"(?i)(?<=ch)(\d+)|(?<=chapter)\s*(\d+)").unwrap();
 
+        let url = format!("{}{}", &self.url, &path);
         let local_path = self.url.clone();
         let entries = fs::read_dir(url)?
             .filter(|res| {
@@ -81,7 +92,7 @@ impl Extension for Local {
                     let mat = ch_re.find(file_name.as_str()).unwrap();
                     ch.no = mat.map(|m| m.as_str().to_string());
                     ch.title = Some(file_name);
-                    ch.url = e
+                    ch.path = e
                         .path()
                         .to_str()
                         .unwrap()
@@ -96,7 +107,8 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
+        let url = format!("{}{}", &self.url, &path);
         let file = fs::File::open(&url).unwrap();
         let reader = BufReader::new(file);
 
@@ -109,7 +121,8 @@ impl Extension for Local {
         Ok(pages)
     }
 
-    fn get_page(&self, url: &String) -> Result<Vec<u8>> {
+    fn get_page(&self, path: &String) -> Result<Vec<u8>> {
+        let url = format!("{}{}", &self.url, &path);
         let path = std::path::Path::new(&url);
         let dir = path.parent().unwrap().to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();

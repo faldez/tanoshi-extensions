@@ -8,6 +8,8 @@ use serde_urlencoded;
 use tanoshi_lib::extensions::Extension;
 use ureq;
 
+pub static NAME: &str = "mangadex";
+
 lazy_static! {
     static ref STATUS: BiMap<i64, &'static str> = {
         let mut m = BiMap::new();
@@ -125,6 +127,7 @@ impl Into<Vec<tanoshi_lib::manga::Chapter>> for GetMangaResponse {
                 if chapter.lang_code == "gb".to_string() {
                     Some(tanoshi_lib::manga::Chapter {
                         id: 0,
+                        source: NAME.to_string(),
                         manga_id: 0,
                         vol: if chapter.volume == "" {
                             None
@@ -141,7 +144,7 @@ impl Into<Vec<tanoshi_lib::manga::Chapter>> for GetMangaResponse {
                         } else {
                             Some(chapter.title.clone())
                         },
-                        url: format!("/api/chapter/{}", id),
+                        path: format!("/api/chapter/{}", id),
                         read: None,
                         uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
                     })
@@ -163,6 +166,7 @@ impl Into<tanoshi_lib::manga::Manga> for GetMangaResponse {
         };
         tanoshi_lib::manga::Manga {
             id: 0,
+            source: NAME.to_string(),
             title: self.manga.title.into(),
             author: vec![self.manga.author, self.manga.artist],
             genre: self
@@ -232,21 +236,29 @@ impl Into<Vec<String>> for GetPagesResponse {
     }
 }
 
-pub struct Mangadex {}
+pub struct Mangadex {
+    url: String,
+}
+
+impl Mangadex {
+    pub fn new() -> Mangadex {
+        Mangadex {
+            url: "https://mangadex.org".to_string(),
+        }
+    }
+}
 
 impl Extension for Mangadex {
     fn info(&self) -> tanoshi_lib::manga::Source {
         tanoshi_lib::manga::Source {
-            id: 0,
-            name: "mangadex".to_string(),
-            url: "https://mangadex.org".to_string(),
+            name: NAME.to_string(),
+            url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
         }
     }
 
     fn get_mangas(
         &self,
-        url: &String,
         param: tanoshi_lib::manga::Params,
         auth: String,
     ) -> Result<Vec<tanoshi_lib::manga::Manga>> {
@@ -273,9 +285,8 @@ impl Extension for Mangadex {
 
         let urlencoded = serde_urlencoded::to_string(params).unwrap();
 
-        let resp = ureq::get(format!("{}/search?{}", url.clone(), urlencoded).as_str())
-            .set("Cookie", &auth)
-            .call();
+        let url = format!("{}/search?{}", &self.url, urlencoded);
+        let resp = ureq::get(&url).set("Cookie", &auth).call();
 
         let html = resp.into_string().unwrap();
         let document = scraper::Html::parse_document(&html);
@@ -288,8 +299,11 @@ impl Extension for Mangadex {
 
             let sel = scraper::Selector::parse("div a img").unwrap();
             for el in row.select(&sel) {
-                manga.thumbnail_url =
-                    format!("{}{}", url, el.value().attr("src").unwrap().to_owned());
+                manga.thumbnail_url = format!(
+                    "{}{}",
+                    self.url.clone(),
+                    el.value().attr("src").unwrap().to_owned()
+                );
             }
 
             let sel = scraper::Selector::parse(".manga_title").unwrap();
@@ -302,22 +316,25 @@ impl Extension for Mangadex {
         Ok(mangas)
     }
 
-    fn get_manga_info(&self, url: &String) -> Result<tanoshi_lib::manga::Manga> {
-        let resp = ureq::get(url.as_str()).call();
+    fn get_manga_info(&self, path: &String) -> Result<tanoshi_lib::manga::Manga> {
+        let url = format!("{}{}", &self.url, &path);
+        let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
 
         Ok(mangadex_resp.into())
     }
 
-    fn get_chapters(&self, url: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
-        let resp = ureq::get(url.as_str()).call();
+    fn get_chapters(&self, path: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
+        let url = format!("{}{}", &self.url, &path);
+        let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
 
         Ok(mangadex_resp.into())
     }
 
-    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
-        let resp = ureq::get(url.as_str()).call();
+    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
+        let url = format!("{}{}", &self.url, &path);
+        let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetPagesResponse>().unwrap();
 
         Ok(mangadex_resp.into())
@@ -367,8 +384,7 @@ impl Extension for Mangadex {
             .collect::<Vec<String>>();
 
         Ok(tanoshi_lib::manga::SourceLoginResult {
-            source_id: 0,
-            source_name: "mangadex".to_string(),
+            source_name: NAME.to_string(),
             auth_type: "cookies".to_string(),
             value: cookies.join("; "),
         })
