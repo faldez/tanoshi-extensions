@@ -8,6 +8,8 @@ use serde::de::{self, Unexpected};
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
+pub static NAME: &str = "mangasee";
+
 #[derive(Debug, Clone, PartialEq, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dir {
@@ -85,6 +87,7 @@ impl Into<Manga> for &Dir {
     fn into(self) -> Manga {
         Manga {
             id: 0,
+            source: NAME.to_string(),
             title: self.s.clone(),
             author: self.a.clone(),
             genre: self.g.clone(),
@@ -153,11 +156,12 @@ impl Into<Chapter> for &DirChapter {
 
         let mut ch = Chapter {
             id: 0,
+            source: NAME.to_string(),
             manga_id: 0,
             vol: None,
             no: None,
             title: None,
-            url: format!(
+            path: format!(
                 "/read-online/{}-chapter-{}.html",
                 &self.index_name,
                 number.clone().unwrap()
@@ -176,21 +180,31 @@ impl Into<Chapter> for &DirChapter {
     }
 }
 
-pub struct Mangasee {}
+pub struct Mangasee {
+    url: String,
+}
+
+impl Mangasee {
+    pub fn new() -> Mangasee {
+        Mangasee {
+            url: "https://mangasee123.com".to_string(),
+        }
+    }
+}
 
 impl Extension for Mangasee {
     fn info(&self) -> Source {
         Source {
-            id: 0,
-            name: "mangasee".to_string(),
-            url: "https://mangasee123.com".to_string(),
+            name: NAME.to_string(),
+            url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
         }
     }
 
-    fn get_mangas(&self, url: &String, param: Params, _: String) -> Result<Vec<Manga>> {
+    fn get_mangas(&self, param: Params, _: String) -> Result<Vec<Manga>> {
+        let url = format!("{}/search", &self.url);
         let vm_dir = {
-            let resp = ureq::get(format!("{}/search", url).as_str()).call();
+            let resp = ureq::get(&url).call();
             let html = resp.into_string().unwrap();
 
             if let Some(i) = html.find("vm.Directory =") {
@@ -253,7 +267,8 @@ impl Extension for Mangasee {
     }
 
     /// Get the rest of details unreachable from `get_mangas`
-    fn get_manga_info(&self, url: &String) -> Result<Manga> {
+    fn get_manga_info(&self, path: &String) -> Result<Manga> {
+        let url = format!("{}{}", &self.url, &path);
         let description = {
             let resp = ureq::get(url.as_str()).call();
             let html = resp.into_string().unwrap();
@@ -276,7 +291,8 @@ impl Extension for Mangasee {
         })
     }
 
-    fn get_chapters(&self, url: &String) -> Result<Vec<Chapter>> {
+    fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>> {
+        let url = format!("{}{}", &self.url, &path);
         let html = {
             let resp = ureq::get(url.as_str()).call();
             let html = resp.into_string().unwrap();
@@ -326,7 +342,8 @@ impl Extension for Mangasee {
         Ok(chapters)
     }
 
-    fn get_pages(&self, url: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
+        let url = format!("{}{}", &self.url, &path);
         let html = {
             let resp = ureq::get(url.as_str()).call();
             let html = resp.into_string().unwrap();
