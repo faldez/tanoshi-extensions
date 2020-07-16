@@ -10,7 +10,7 @@ pub struct Config {
 
 tanoshi_lib::export_plugin!(local::NAME, register);
 
-extern "C" fn register(registrar: &mut dyn PluginRegistrar, config: Option<&serde_yaml::Value>) {
+fn register(registrar: &mut dyn PluginRegistrar, config: Option<&serde_yaml::Value>) {
     let config = config.unwrap_or(&serde_yaml::Value::default()).to_owned();
     let cfg: Config = serde_yaml::from_value(config).unwrap_or(Config::default());
 
