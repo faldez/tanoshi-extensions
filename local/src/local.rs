@@ -92,6 +92,7 @@ impl Extension for Local {
                     let mat = ch_re.find(file_name.as_str()).unwrap();
                     ch.no = mat.map(|m| m.as_str().to_string());
                     ch.title = Some(file_name);
+                    ch.source = NAME.to_string();
                     ch.path = e
                         .path()
                         .to_str()
@@ -121,13 +122,20 @@ impl Extension for Local {
         Ok(pages)
     }
 
-    fn get_page(&self, path: &String) -> Result<Vec<u8>> {
-        let url = format!("{}{}", &self.url, &path);
+    fn get_page(&self, url: &String) -> Result<Vec<u8>> {
         let path = std::path::Path::new(&url);
         let dir = path.parent().unwrap().to_str().unwrap();
         let file_name = path.file_name().unwrap().to_str().unwrap();
+        println!("{}", &dir);
+        println!("{}", &file_name);
 
-        let file = fs::File::open(&dir)?;
+        let file = match fs::File::open(&dir) {
+            Ok(file) => file,
+            Err(e) => {
+                return Err(anyhow!("error open file: {}", e));
+            }
+        };
+
         let reader = BufReader::new(file);
 
         let mut archive = zip::ZipArchive::new(reader)?;
