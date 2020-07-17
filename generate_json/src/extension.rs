@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use lib::Library;
-use std::{collections::HashMap, ffi::OsStr, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 use tanoshi_lib::extensions::{Extension, PluginDeclaration};
 use tanoshi_lib::manga::{Chapter, Manga, Params, Source, SourceLogin, SourceLoginResult};
 
@@ -60,12 +60,12 @@ impl Extensions {
         self.extensions.get(name)
     } */
 
-    pub unsafe fn load<P: AsRef<OsStr>>(
+    pub unsafe fn load(
         &mut self,
-        library_path: P,
+        library_path: String,
         config: Option<&serde_yaml::Value>,
-    ) -> Result<()> {
-        let library = Arc::new(Library::new(library_path)?);
+    ) -> Result<crate::Source> {
+        let library = Arc::new(Library::new(&library_path)?);
 
         let decl = library
             .get::<*mut PluginDeclaration>(b"plugin_declaration\0")?
@@ -77,13 +77,40 @@ impl Extensions {
             return Err(anyhow!("Version mismatch"));
         }
 
+        let ext = if cfg!(target_os = "windows") {
+            "dll"
+        } else if cfg!(target_os = "macos") {
+            "dylib"
+        } else if cfg!(target_os = "linux") {
+            "so"
+        } else {
+            return Err(anyhow!("os not supported"));
+        };
+
         let mut registrar = PluginRegistrar::new(Arc::clone(&library));
         (decl.register)(&mut registrar, config);
 
         self.extensions.extend(registrar.extensions);
         self.libraries.push(library);
+        let version = self.extensions().get(decl.name).unwrap().info().version;
+        let new_filename = format!("{}-v{}.{}", &decl.name, version, ext);
+        let mut new_path = format!("repo-{}/library/{}", std::env::consts::OS, new_filename);
+        if cfg!(target_os = "windows") {
+            new_path = new_path.replace("/", "\\");
+        }
+        let _ = std::fs::copy(library_path, &new_path);
 
-        Ok(())
+        let mut path = format!("library/{}", &new_filename);
+        if cfg!(target_os = "windows") {
+            path = path.replace("/", "\\");
+        }
+        Ok(crate::Source {
+            name: decl.name.to_string(),
+            path: path.to_string(),
+            rustc_version: decl.rustc_version.to_string(),
+            core_version: decl.core_version.to_string(),
+            version,
+        })
     }
 }
 
