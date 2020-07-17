@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ master ]
+    branches: [master]
   pull_request:
-    branches: [ master ]
+    branches: [master]
 
 jobs:
   build-windows:
@@ -12,21 +12,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-windows  repo-windows
       - name: Build
         run: cargo build --release
       - name: Generate index.json
         run: cargo run --release generate_json
-      - name: Clone repo
-        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-windows  repo-windows 
-      - name: Copy plugins
-        run: mkdir -p library && cp target\release\*.dll repo-windows\library\
       - name: Commit files
         run: |
           cd repo-windows
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add index.json library\*.dll
-          git commit -m "auto commit"
+          git commit -m "deploy"
       - name: Git Commit and Push
         uses: ad-m/github-push-action@v0.6.0
         with:
@@ -39,21 +37,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-macos repo-macos
       - name: Build
         run: cargo build --release
       - name: Generate index.json
         run: cargo run --release generate_json
-      - name: Clone repo
-        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-macos repo-macos
-      - name: Copy plugins
-        run: mkdir -p library && cp target/release/*.dylib repo-macos/library/
       - name: Commit files
         run: |
           cd repo-macos
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add index.json library/*.dylib
-          git commit -m "auto commit"
+          git commit -m "deploy"
       - name: Git Commit and Push
         uses: ad-m/github-push-action@v0.6.0
         with:
@@ -66,21 +62,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-linux repo-linux
       - name: Build
         run: cargo build --release
       - name: Generate index.json
         run: cargo run --release generate_json
-      - name: Clone repo
-        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-linux repo-linux
-      - name: Copy plugins
-        run: mkdir -p library && cp target/release/*.so repo-linux/library/
       - name: Commit files
         run: |
           cd repo-linux
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add index.json library/*.so
-          git commit -m "auto commit"
+          git commit -m "deploy"
       - name: Git Commit and Push
         uses: ad-m/github-push-action@v0.6.0
         with:
