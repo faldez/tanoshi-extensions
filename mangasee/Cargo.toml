@@ -9,7 +9,7 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-tanoshi-lib = { version = "0.12", features = ["extensions"]}
+tanoshi-lib = { version = "0.13", features = ["extensions"]}
 anyhow = "1"
 ureq = "1"
 scraper = "0.12"
