@@ -229,7 +229,7 @@ impl Extension for Mangasee {
         let sort_order = param.sort_order.unwrap_or(SortOrderParam::Asc);
 
         if let Some(keyword) = param.keyword {
-            dirs.retain(|d| d.s.to_lowercase().contains(&keyword))
+            dirs.retain(|d| d.s.to_lowercase().contains(&keyword.to_lowercase()))
         }
 
         match sort_by {
@@ -250,7 +250,12 @@ impl Extension for Mangasee {
                     SortOrderParam::Desc => b.lt.cmp(&a.lt),
                 });
             }
-            SortByParam::Title => {}
+            SortByParam::Title => {
+                dirs.sort_by(|a, b| match sort_order {
+                    SortOrderParam::Asc => a.s.cmp(&b.s),
+                    SortOrderParam::Desc => b.s.cmp(&a.s),
+                });
+            }
         }
 
         let page = param
