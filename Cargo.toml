@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "generate_json",
-    "local",
-    "mangadex",
-    "mangasee"
-]
