@@ -242,6 +242,7 @@ function get_chapter(body)
     local pages = {}
     for key, value in pairs(data['data']['pages']) do
         local p = Page()
+        p.Rank = key
         p.URL = data['data']['server'] .. data['data']['hash'] .. "/" .. value
         pages[key] = p
     end
