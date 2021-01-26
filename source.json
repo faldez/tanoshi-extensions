@@ -1,6 +1,8 @@
 [
     {
         "name": "Mangadex",
+        "script": "source/Mangadex/Mangadex.lua",
+        "icon": "source/Mangadex/icon.png",
         "version": "0.1.0"
     }
 ]
