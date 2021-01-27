@@ -2,6 +2,48 @@
 _NAME = "mangadex"
 _BASEURL = "https://mangadex.org"
 _APIBASEURL = "https://api.mangadex.org"
+_LANGUAGES = {
+    "sa",
+    "be",
+    "bg",
+    "mm",
+    "ct",
+    "cn",
+    "hk",
+    "cz",
+    "dk",
+    "nl",
+    "gb",
+    "ph",
+    "fi",
+    "fr",
+    "de",
+    "gr",
+    "il",
+    "hu",
+    "id",
+    "it",
+    "jp",
+    "kr",
+    "lt",
+    "my",
+    "mn",
+    "no",
+    "ir",
+    "pl",
+    "br",
+    "pt",
+    "ro",
+    "ru",
+    "rs",
+    "es",
+    "mx",
+    "se",
+    "th",
+    "tr",
+    "ua",
+    "vn"
+}
 
 -- Mangadex specifics
 _STATUS = {
@@ -113,6 +155,10 @@ end
 
 function base_url()
     return _BASEURL
+end
+
+function languages()
+    return _LANGUAGES
 end
 
 function get_latest_updates_request(page)
