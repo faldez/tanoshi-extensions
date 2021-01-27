@@ -256,7 +256,7 @@ function get_chapters(body)
         c.Number = value['chapter']
         c.Path = "/v2/chapter/" .. value['id']
         c.Title = value['title']
-        c.Uploaded = helper.timestamp_to_time(value['timestamp'])
+        c.UploadedAt = helper.timestamp_to_time(value['timestamp'])
         chapters[key] = c
     end
 
@@ -283,7 +283,7 @@ function get_chapter(body)
     c.Number = data['data']['chapter']
     c.Path = _BASEURL .. "/v2/chapter/" .. data['data']['id']
     c.Title = data['data']['title']
-    c.Uploaded = helper.timestamp_to_time(data['data']['timestamp'])
+    c.UploadedAt = helper.timestamp_to_time(data['data']['timestamp'])
     
     local pages = {}
     for key, value in pairs(data['data']['pages']) do
