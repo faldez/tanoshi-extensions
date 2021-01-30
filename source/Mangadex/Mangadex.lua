@@ -347,10 +347,7 @@ end
 function fetch_manga_request(filters)
     local url = _BASEURL .. "/search"
     if filters ~= nil then
-        url = url .. "?"
-        for k, v in pairs(filters) do
-            url = url .. "&" .. k .. "=" .. v
-        end
+        url = url .. "?" .. "title=" .. filters.Title .. "&p=" .. filters.Page
     end
 
     return {
