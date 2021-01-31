@@ -1,4 +1,5 @@
 -- Source details
+_VERSION="0.1.1"
 _NAME = "mangadex"
 _BASEURL = "https://mangadex.org"
 _APIBASEURL = "https://api.mangadex.org"
@@ -159,6 +160,10 @@ end
 
 function languages()
     return _LANGUAGES
+end
+
+function version()
+    return _VERSION
 end
 
 function get_latest_updates_request(page)
