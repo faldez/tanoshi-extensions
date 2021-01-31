@@ -1,5 +1,5 @@
 -- Source details
-_VERSION="0.1.1"
+_VERSION="0.1.2"
 _NAME = "mangadex"
 _BASEURL = "https://mangadex.org"
 _APIBASEURL = "https://api.mangadex.org"
@@ -183,6 +183,10 @@ function get_latest_updates(body)
     local nodes, error_message = scraper.find(doc, "//a[@class='manga_title text-truncate ']")
     
     local manga = {}
+    if nodes == nil then
+        return manga
+    end
+
     for i = 1, #nodes do
         local m = Manga()
         m.Title = nodes[i]:InnerText()
