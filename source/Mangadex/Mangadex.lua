@@ -363,6 +363,11 @@ function fetch_manga(body)
     local nodes, error_message = scraper.find(doc, '//div[@data-id]')
     
     local manga = {}
+    
+    if nodes == nil then
+        return manga
+    end
+    
     for k, v in nodes() do
         local m = Manga()
         local id = v:SelectAttr("data-id")
