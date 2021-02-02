@@ -356,7 +356,16 @@ end
 function fetch_manga_request(filters)
     local url = _BASEURL .. "/search"
     if filters ~= nil then
-        url = url .. "?" .. "title=" .. filters.Title .. "&p=" .. filters.Page
+        local isFirst = true
+        url = url .. "?"
+        for k, v in pairs(filters) do
+            if isFirst then
+                url = url .. k .. "=" .. v
+                isFirst = false
+            else
+                url = url .. "&" .. k .. "=" .. v
+            end
+        end
     end
 
     return {
