@@ -166,6 +166,91 @@ function version()
     return _VERSION
 end
 
+function filters()
+    local f = {}
+    f[1] = FilterField()
+    f[1].Label = "Include tags"
+    f[1].Field = "tags"
+    f[1].IsMultiple = true
+    f[1].Values = {}
+    
+    f[2] = FilterField()
+    f[2].Label = "Exclude tags"
+    f[2].Field = "tags"
+    f[2].IsMultiple = true
+    f[2].Values = {}
+    
+    local includeTagsValues = {}
+    local excludeTagsValues = {}
+
+    local i = 1
+    for k, v in pairs(_GENRES) do
+        local ti = FilterValue()
+        ti.Label = "" .. v
+        ti.Value = "" .. k
+        includeTagsValues[i] = ti
+        
+        local te = FilterValue()
+        te.Label = "" .. v
+        te.Value = "-" .. k
+        excludeTagsValues[i] = te
+        
+        i = i + 1
+    end
+
+    f[1].Values = includeTagsValues
+    f[2].Values = excludeTagsValues
+
+    f[3] = FilterField()
+    f[3].Label = "Publication status"
+    f[3].IsMultiple = true
+    f[3].Field = "statuses"
+    
+    local publicationValues = {}
+
+    i = 1
+    for k, v in pairs(_STATUS) do
+        local ti = FilterValue()
+        ti.Label = "" .. v
+        ti.Value = "" .. k
+        publicationValues[i] = ti
+        i = i + 1
+    end
+
+    f[3].Values = publicationValues
+    
+    f[4] = FilterField()
+    f[4].Label = "Sort by"
+    f[4].Field = "s"
+    
+    local sortByValues = {}
+
+    i = 1
+    for k, v in pairs(_SORT) do
+        local ti = FilterValue()
+        ti.Label = k
+        ti.Value = "" .. v
+        sortByValues[i] = ti
+        i = i + 1
+    end
+
+    f[4].Values = sortByValues
+
+    f[5] = FilterField()
+    f[5].Label = "Manga Title"
+    f[5].Field = "title"
+
+    f[6] = FilterField()
+    f[6].Label = "Author"
+    f[6].Field = "author"
+
+    f[7] = FilterField()
+    f[7].Label = "Artist"
+    f[7].Field = "artist"
+
+    return f
+end
+
 function get_latest_updates_request(page)
     return {
         method="GET",
@@ -356,16 +441,18 @@ end
 function fetch_manga_request(filters)
     local url = _BASEURL .. "/search"
     if filters ~= nil then
-        local isFirst = true
         url = url .. "?"
+        if filters['s'] == nil or filters['s'] == "" then
+            filters['s'] = _SORT["Views ▼"]
+        end
         for k, v in pairs(filters) do
-            if isFirst then
-                url = url .. k .. "=" .. v
-                isFirst = false
-            else
-                url = url .. "&" .. k .. "=" .. v
+            if k == 'page' then
+                url = url .. "p=" .. v .. "&"
+            else 
+                url = url .. k .. "=" .. v .. "&"
             end
         end
+        url = url:gsub("&$", "")
     end
 
     return {
