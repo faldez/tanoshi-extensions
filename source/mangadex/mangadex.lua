@@ -248,6 +248,31 @@ function filters()
     f[7].Label = "Artist"
     f[7].Field = "artist"
 
+    f[8] = FilterField()
+    f[8].Label = "Tag inclusion mode"
+    f[8].Field = "tag_mode_inc"
+
+    local all = FilterValue()
+    all.Label = "All"
+    all.Value = "all"
+
+    local any = FilterValue()
+    any.Label = "Any"
+    any.Value = "any"
+    f[8].Values = {
+        all,
+        any
+    }
+
+    f[9] = FilterField()
+    f[9].Label = "Tag exclusion mode"
+    f[9].Field = "tag_mode_exc"
+
+    f[9].Values = {
+        all,
+        any
+    }
+
     return f
 end
 
@@ -382,11 +407,13 @@ function get_chapter(body)
     c.Language = data['data']['language']
     
     local pages = {}
-    for key, value in pairs(data['data']['pages']) do
-        local p = Page()
-        p.Rank = key
-        p.URL = data['data']['server'] .. data['data']['hash'] .. "/" .. value
-        pages[key] = p
+    if type(data['data']['pages']) == 'table' then
+        for key, value in pairs(data['data']['pages']) do
+            local p = Page()
+            p.Rank = key
+            p.URL = data['data']['server'] .. data['data']['hash'] .. "/" .. value
+            pages[key] = p
+        end
     end
     c.Pages = pages
 
