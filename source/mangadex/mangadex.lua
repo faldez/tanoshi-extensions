@@ -2,7 +2,7 @@
 _VERSION="0.1.2"
 _NAME = "mangadex"
 _BASEURL = "https://mangadex.org"
-_APIBASEURL = "https://api.mangadex.org"
+_APIBASEURL = "https://mangadex.org/api"
 _LANGUAGES = {
     "sa",
     "be",
