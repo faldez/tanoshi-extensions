@@ -1,5 +1,5 @@
 -- Source details
-_VERSION="0.1.2"
+_VERSION="0.2.0"
 _NAME = "mangadex"
 _BASEURL = "https://mangadex.org"
 _APIBASEURL = "https://mangadex.org/api"
