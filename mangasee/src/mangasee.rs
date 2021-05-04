@@ -5,12 +5,14 @@ use chrono::NaiveDateTime;
 use rayon::prelude::*;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
+use serde::Deserialize;
+use fancy_regex::Regex;
 use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
 
 pub static NAME: &str = "mangasee";
 
-#[derive(Debug, Clone, PartialEq, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Dir {
     /// Link
@@ -94,7 +96,7 @@ impl Into<Manga> for &Dir {
             status: Some(self.ss.clone()),
             description: None,
             path: format!("/manga/{}", self.i),
-            thumbnail_url: format!("https://cover.mangabeast01.com/cover/{}.jpg", self.i),
+            thumbnail_url: format!("https://cover.nep.li/cover/{}.jpg", self.i),
             last_read: None,
             last_page: None,
             is_favorite: false,
@@ -177,6 +179,61 @@ impl Into<Chapter> for &DirChapter {
         };
 
         ch
+    }
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all="PascalCase")]
+pub struct CurChapter {
+    pub chapter: String,
+    #[serde(rename = "Type")]
+    pub chapter_type: String,
+    pub page: String,
+    pub directory: String,
+    #[serde(with ="date_format")]
+    pub date: NaiveDateTime,
+    pub chapter_name: Option<String>
+}
+
+mod date_format {
+    use chrono::{NaiveDateTime};
+    use serde::{self, Deserialize, Serializer, Deserializer};
+
+    const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
+
+    // The signature of a serialize_with function must follow the pattern:
+    //
+    //    fn serialize<S>(&T, S) -> Result<S::Ok, S::Error>
+    //    where
+    //        S: Serializer
+    //
+    // although it may also be generic over the input types T.
+    pub fn serialize<S>(
+        date: &NaiveDateTime,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let s = format!("{}", date.format(FORMAT));
+        serializer.serialize_str(&s)
+    }
+
+    // The signature of a deserialize_with function must follow the pattern:
+    //
+    //    fn deserialize<'de, D>(D) -> Result<T, D::Error>
+    //    where
+    //        D: Deserializer<'de>
+    //
+    // although it may also be generic over the output types T.
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<NaiveDateTime, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        NaiveDateTime::parse_from_str(&s, FORMAT).map_err(serde::de::Error::custom)
     }
 }
 
@@ -349,62 +406,70 @@ impl Extension for Mangasee {
 
     fn get_pages(&self, path: &String) -> Result<Vec<String>> {
         let url = format!("{}{}", &self.url, &path);
-        let html = {
-            let resp = ureq::get(url.as_str()).call();
-            let html = resp.into_string().unwrap();
+        let resp = ureq::get(url.as_str()).call();
+        let html = resp.into_string().unwrap();
 
-            if let Some(i) = html.find("vm.CurChapter = {") {
-                let dir = &html[i + 16..];
-                if let Some(i) = dir.find("vm.CHAPTERS = ") {
-                    let vm_dir = &dir[..i];
-                    vm_dir.to_string()
-                } else {
-                    return Err(anyhow!("error get pages"));
-                }
+        let index_name = {
+            let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#).unwrap().find(&html).unwrap();
+            mat.unwrap().as_str().to_string()
+        };
+
+        let cur_chapter = {
+            let mat = Regex::new(r"(?<=vm\.CurChapter = ){.*}(?=;)").unwrap().find(&html).unwrap();
+            let cur_chapter_str = mat.unwrap().as_str();
+            serde_json::from_str::<CurChapter>(cur_chapter_str).unwrap()
+        };
+
+        let cur_path_name = {
+            let mat = Regex::new(r#"(?<=vm\.CurPathName = ").*(?=";)"#).unwrap().find(&html).unwrap();
+            mat.unwrap().as_str().to_string()
+        };
+        
+        // https://{{vm.CurPathName}}/manga/Sono-Bisque-Doll-Wa-Koi-Wo-Suru/{{vm.CurChapter.Directory == '' ? '' : vm.CurChapter.Directory+'/'}}{{vm.ChapterImage(vm.CurChapter.Chapter)}}-{{vm.PageImage(Page)}}.png
+        let directory = {
+            if cur_chapter.directory == "" {
+                "".to_string()
             } else {
-                return Err(anyhow!("list not found"));
+                format!("{}/", cur_chapter.directory)
             }
         };
-
-        let mut host: String = "".to_string();
-        let mut ch: DirChapter = DirChapter {
-            index_name: "".to_string(),
-            chapter: "".to_string(),
-            type_field: "".to_string(),
-            date: NaiveDateTime::from_timestamp(0, 0),
-            chapter_name: None,
-            page: None,
-        };
-
-        if let Some(i) = html.find(";") {
-            let ch_str = &html[..i];
-            let path = &html[i..];
-            ch = serde_json::from_str(ch_str).unwrap();
-            if let Some(i) = path.find("vm.CurPathName = \"") {
-                let path = &path[i + 18..];
-                if let Some(i) = path.find("\";") {
-                    host = String::from(&path[..i]);
+        let chapter_image = {
+            /*
+            vm.ChapterImage = function(ChapterString){
+                var Chapter = ChapterString.slice(1,-1);
+                var Odd = ChapterString[ChapterString.length -1];
+                if(Odd == 0){
+                    return Chapter;
+                }else{
+                    return Chapter + "." + Odd;
                 }
+            };
+            */
+            let chapter = cur_chapter.chapter[1..cur_chapter.chapter.len()-1].to_string();
+            let odd = cur_chapter.chapter[cur_chapter.chapter.len()-1..].to_string();
+            if odd == "0" {
+                chapter
+            } else {
+                format!("{}.{}", chapter, odd)
             }
-        }
-
-        let mut zeroes = "".to_string();
-        for i in ch.chapter[1..ch.chapter.len() - 2].chars() {
-            if i == '0' {
-                zeroes.push_str("0");
-            }
-        }
-
-        let page = ch.page.unwrap().parse::<i32>().unwrap() + 1;
-
+        };
+        
+        let page = cur_chapter.page.parse::<i32>().unwrap_or(0);
         let mut pages = Vec::new();
         for i in 1..page {
-            let mut page = url.clone();
-            page = page.replace("mangasee123.com", &host);
-            page = page.replace("read-online", "manga");
-            page = page.replace("-chapter-", &format!("/{}", zeroes));
-            page = page.replace(".html", "-");
-            pages.push(format!("{}{:03}.png", page, i));
+            
+            let page_image = {
+                /*
+                vm.PageImage = function(PageString){
+			    	var s = "000" + PageString;
+			    	return s.substr(s.length - 3);
+			    }
+                */
+                let s = format!("000{}", i);
+                s[(s.len() - 3)..].to_string()
+            };
+
+            pages.push(format!("https://{}/manga/{}/{}{}-{}.png", cur_path_name, index_name, directory, chapter_image, page_image));
         }
 
         Ok(pages)
