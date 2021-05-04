@@ -456,7 +456,7 @@ impl Extension for Mangasee {
         
         let page = cur_chapter.page.parse::<i32>().unwrap_or(0);
         let mut pages = Vec::new();
-        for i in 1..page {
+        for i in 1..page + 1 {
             
             let page_image = {
                 /*
