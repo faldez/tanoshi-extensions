@@ -1,13 +1,14 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::RwLock};
 
 use anyhow::Result;
 use bimap::BiMap;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_urlencoded;
-use tanoshi_lib::extensions::Extension;
+use tanoshi_lib::{extensions::Extension, model::{Page, SortByParam, SortOrderParam}};
 use ureq;
 
+pub static ID: i64 = 2;
 pub static NAME: &str = "mangadex";
 
 lazy_static! {
@@ -119,33 +120,18 @@ pub struct GetMangaResponse {
     pub status: String,
 }
 
-impl Into<Vec<tanoshi_lib::manga::Chapter>> for GetMangaResponse {
-    fn into(self) -> Vec<tanoshi_lib::manga::Chapter> {
+impl Into<Vec<tanoshi_lib::model::Chapter>> for GetMangaResponse {
+    fn into(self) -> Vec<tanoshi_lib::model::Chapter> {
         self.chapter
-            .par_iter()
-            .map(|(id, chapter)| {
+            .iter()
+            .enumerate()
+            .map(|(index, (id, chapter))| {
                 if chapter.lang_code == "gb".to_string() {
-                    Some(tanoshi_lib::manga::Chapter {
-                        id: 0,
-                        source: NAME.to_string(),
-                        manga_id: 0,
-                        vol: if chapter.volume == "" {
-                            None
-                        } else {
-                            Some(chapter.volume.clone())
-                        },
-                        no: if chapter.chapter == "" {
-                            None
-                        } else {
-                            Some(chapter.chapter.clone())
-                        },
-                        title: if chapter.title == "" {
-                            None
-                        } else {
-                            Some(chapter.title.clone())
-                        },
+                    Some(tanoshi_lib::model::Chapter {
+                        source_id: ID,
+                        title: chapter.title.clone(),
                         path: format!("/api/chapter/{}", id),
-                        read: None,
+                        rank: index as i64,
                         uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
                     })
                 } else {
@@ -157,16 +143,15 @@ impl Into<Vec<tanoshi_lib::manga::Chapter>> for GetMangaResponse {
     }
 }
 
-impl Into<tanoshi_lib::manga::Manga> for GetMangaResponse {
-    fn into(self) -> tanoshi_lib::manga::Manga {
+impl Into<tanoshi_lib::model::Manga> for GetMangaResponse {
+    fn into(self) -> tanoshi_lib::model::Manga {
         let description_split = self.manga.description.split("\r\n").collect::<Vec<_>>();
         let description = match description_split[0].to_string().starts_with("[b][u]") {
             true => description_split[1].to_string(),
             false => description_split[0].to_string(),
         };
-        tanoshi_lib::manga::Manga {
-            id: 0,
-            source: NAME.to_string(),
+        tanoshi_lib::model::Manga {
+            source_id: ID,
             title: self.manga.title.into(),
             author: vec![self.manga.author, self.manga.artist],
             genre: self
@@ -180,10 +165,7 @@ impl Into<tanoshi_lib::manga::Manga> for GetMangaResponse {
                 .map(|s| s.to_string()),
             description: Some(description),
             path: "".to_string(),
-            thumbnail_url: format!("https://mangadex.org{}", self.manga.cover_url),
-            last_read: None,
-            last_page: None,
-            is_favorite: false,
+            cover_url: format!("https://mangadex.org{}", self.manga.cover_url),
         }
     }
 }
@@ -225,13 +207,19 @@ pub struct GetPagesResponse {
     pub status: String,
 }
 
-impl Into<Vec<String>> for GetPagesResponse {
-    fn into(self) -> Vec<String> {
+impl Into<Vec<Page>> for GetPagesResponse {
+    fn into(self) -> Vec<Page> {
         let host = self.server;
         let hash = self.hash;
         self.page_array
-            .par_iter()
-            .map(|p| format!("{}{}/{}", host, hash, p))
+            .iter()
+            .enumerate()
+            .map(|(index, p)| Page {
+                source_id: ID,
+                rank: index as i64,
+                url: format!("{}{}/{}", host, hash, p),
+
+            })
             .collect()
     }
 }
@@ -249,57 +237,68 @@ impl Mangadex {
 }
 
 impl Extension for Mangadex {
-    fn info(&self) -> tanoshi_lib::manga::Source {
-        tanoshi_lib::manga::Source {
+    fn detail(&self) -> tanoshi_lib::model::Source {
+        tanoshi_lib::model::Source {
+            id: ID,
             name: NAME.to_string(),
             url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
+            icon: "".to_string(),
+            need_login: true,
         }
     }
 
     fn get_mangas(
         &self,
-        param: tanoshi_lib::manga::Params,
-        auth: String,
-    ) -> Result<Vec<tanoshi_lib::manga::Manga>> {
-        let mut mangas: Vec<tanoshi_lib::manga::Manga> = Vec::new();
+        keyword: Option<String>,
+        genres: Option<Vec<String>>,
+        page: Option<i32>,
+        sort_by: Option<SortByParam>,
+        sort_order: Option<SortOrderParam>,
+        auth: Option<String>,
+    ) -> Result<Vec<tanoshi_lib::model::Manga>> {
+        let mut mangas: Vec<tanoshi_lib::model::Manga> = Vec::new();
 
-        let mut s = match param.sort_by.unwrap() {
-            tanoshi_lib::manga::SortByParam::LastUpdated => 0,
-            tanoshi_lib::manga::SortByParam::Views => 8,
-            tanoshi_lib::manga::SortByParam::Title => 2,
+        let mut s = match sort_by.unwrap_or(SortByParam::Views) {
+            tanoshi_lib::model::SortByParam::LastUpdated => 0,
+            tanoshi_lib::model::SortByParam::Views => 8,
+            tanoshi_lib::model::SortByParam::Title => 2,
             _ => 0,
         };
 
-        s = match param.sort_order.unwrap() {
-            tanoshi_lib::manga::SortOrderParam::Asc => s,
-            tanoshi_lib::manga::SortOrderParam::Desc => s + 1,
+        s = match sort_order.unwrap_or(SortOrderParam::Desc) {
+            tanoshi_lib::model::SortOrderParam::Asc => s,
+            tanoshi_lib::model::SortOrderParam::Desc => s + 1,
         };
 
         let params = vec![
-            ("title".to_owned(), param.keyword.to_owned()),
-            ("p".to_owned(), param.page.to_owned()),
+            ("title".to_owned(), keyword.to_owned()),
+            ("p".to_owned(), page.map(|p| format!("{}", p))),
             ("s".to_owned(), Some(s.to_string())),
-            ("tags".to_owned(), param.genres.map(|t| t.join(","))),
+            ("tags".to_owned(), genres.map(|t| t.join(","))),
         ];
 
         let urlencoded = serde_urlencoded::to_string(params).unwrap();
 
         let url = format!("{}/search?{}", &self.url, urlencoded);
-        let resp = ureq::get(&url).set("Cookie", &auth).call();
+        let mut req = ureq::get(&url);
+        if let Some(auth) = auth {
+            req.set("Cookie", &auth);
+        }
+        let resp = req.call();
 
         let html = resp.into_string().unwrap();
         let document = scraper::Html::parse_document(&html);
 
         let selector = scraper::Selector::parse(".manga-entry").unwrap();
         for row in document.select(&selector) {
-            let mut manga = tanoshi_lib::manga::Manga::default();
+            let mut manga = tanoshi_lib::model::Manga::default();
             let id = row.value().attr("data-id").unwrap();
             manga.path = format!("/api/manga/{}", id);
 
             let sel = scraper::Selector::parse("div a img").unwrap();
             for el in row.select(&sel) {
-                manga.thumbnail_url = format!(
+                manga.cover_url = format!(
                     "{}{}",
                     self.url.clone(),
                     el.value().attr("src").unwrap().to_owned()
@@ -316,7 +315,7 @@ impl Extension for Mangadex {
         Ok(mangas)
     }
 
-    fn get_manga_info(&self, path: &String) -> Result<tanoshi_lib::manga::Manga> {
+    fn get_manga_info(&self, path: &String) -> Result<tanoshi_lib::model::Manga> {
         let url = format!("{}{}", &self.url, &path);
         let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
@@ -324,7 +323,7 @@ impl Extension for Mangadex {
         Ok(mangadex_resp.into())
     }
 
-    fn get_chapters(&self, path: &String) -> Result<Vec<tanoshi_lib::manga::Chapter>> {
+    fn get_chapters(&self, path: &String) -> Result<Vec<tanoshi_lib::model::Chapter>> {
         let url = format!("{}{}", &self.url, &path);
         let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetMangaResponse>().unwrap();
@@ -332,7 +331,7 @@ impl Extension for Mangadex {
         Ok(mangadex_resp.into())
     }
 
-    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
+    fn get_pages(&self, path: &String) -> Result<Vec<Page>> {
         let url = format!("{}{}", &self.url, &path);
         let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetPagesResponse>().unwrap();
@@ -342,8 +341,8 @@ impl Extension for Mangadex {
 
     fn login(
         &self,
-        login: tanoshi_lib::manga::SourceLogin,
-    ) -> Result<tanoshi_lib::manga::SourceLoginResult> {
+        login: tanoshi_lib::model::SourceLogin,
+    ) -> Result<tanoshi_lib::model::SourceLoginResult> {
         let boundary = "__TANOSHI__";
         let mut param = vec![];
         param.push(format!(
@@ -383,7 +382,7 @@ impl Extension for Mangadex {
             .map(|c| c.to_string())
             .collect::<Vec<String>>();
 
-        Ok(tanoshi_lib::manga::SourceLoginResult {
+        Ok(tanoshi_lib::model::SourceLoginResult {
             source_name: NAME.to_string(),
             auth_type: "cookies".to_string(),
             value: cookies.join("; "),
