@@ -203,7 +203,7 @@ pub struct Mangasee {
 impl Mangasee {
     pub fn new() -> Mangasee {
         Mangasee {
-            url: "https://manga4life.com".to_string(),
+            url: "https://mangasee123.com".to_string(),
         }
     }
 }
@@ -231,8 +231,8 @@ impl Extension for Mangasee {
     ) -> Result<Vec<Manga>> {
         let url = format!("{}/search", &self.url);
         let vm_dir = {
-            let resp = ureq::get(&url).call().unwrap();
-            let html = resp.into_string().unwrap();
+            let resp = ureq::get(&url).call()?;
+            let html = resp.into_string()?;
             if let Some(i) = html.find("vm.Directory =") {
                 let dir = &html[i + 15..];
                 if let Some(i) = dir.find("}];") {
@@ -298,8 +298,8 @@ impl Extension for Mangasee {
     fn get_manga_info(&self, path: &String) -> Result<Manga> {
         let url = format!("{}{}", &self.url, &path);
         let description = {
-            let resp = ureq::get(url.as_str()).call().unwrap();
-            let html = resp.into_string().unwrap();
+            let resp = ureq::get(url.as_str()).call()?;
+            let html = resp.into_string()?;
 
             let document = scraper::Html::parse_document(&html);
 
@@ -322,8 +322,8 @@ impl Extension for Mangasee {
 
     fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>> {
         let url = format!("{}{}", &self.url, &path);
-        let resp = ureq::get(url.as_str()).call().unwrap();
-        let html = resp.into_string().unwrap();
+        let resp = ureq::get(url.as_str()).call()?;
+        let html = resp.into_string()?;
 
         let index_name = {
             let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#)
@@ -380,8 +380,8 @@ impl Extension for Mangasee {
 
     fn get_pages(&self, path: &String) -> Result<Vec<Page>> {
         let url = format!("{}{}", &self.url, &path);
-        let resp = ureq::get(url.as_str()).call().unwrap();
-        let html = resp.into_string().unwrap();
+        let resp = ureq::get(url.as_str()).call()?;
+        let html = resp.into_string()?;
 
         let index_name = {
             let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#)
