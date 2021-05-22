@@ -1,4 +1,4 @@
-use std::{fmt, usize};
+use std::{any, fmt, usize};
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
@@ -203,7 +203,7 @@ pub struct Mangasee {
 impl Mangasee {
     pub fn new() -> Mangasee {
         Mangasee {
-            url: "https://mangasee123.com".to_string(),
+            url: "https://manga4life.com".to_string(),
         }
     }
 }
@@ -223,17 +223,16 @@ impl Extension for Mangasee {
     fn get_mangas(
         &self,
         keyword: Option<String>,
-        genres: Option<Vec<String>>,
+        _genres: Option<Vec<String>>,
         page: Option<i32>,
         sort_by: Option<SortByParam>,
         sort_order: Option<SortOrderParam>,
-        auth: Option<String>,
+        _auth: Option<String>,
     ) -> Result<Vec<Manga>> {
         let url = format!("{}/search", &self.url);
         let vm_dir = {
-            let resp = ureq::get(&url).call();
+            let resp = ureq::get(&url).call().unwrap();
             let html = resp.into_string().unwrap();
-
             if let Some(i) = html.find("vm.Directory =") {
                 let dir = &html[i + 15..];
                 if let Some(i) = dir.find("}];") {
@@ -299,7 +298,7 @@ impl Extension for Mangasee {
     fn get_manga_info(&self, path: &String) -> Result<Manga> {
         let url = format!("{}{}", &self.url, &path);
         let description = {
-            let resp = ureq::get(url.as_str()).call();
+            let resp = ureq::get(url.as_str()).call().unwrap();
             let html = resp.into_string().unwrap();
 
             let document = scraper::Html::parse_document(&html);
@@ -323,7 +322,7 @@ impl Extension for Mangasee {
 
     fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>> {
         let url = format!("{}{}", &self.url, &path);
-        let resp = ureq::get(url.as_str()).call();
+        let resp = ureq::get(url.as_str()).call().unwrap();
         let html = resp.into_string().unwrap();
 
         let index_name = {
@@ -381,7 +380,7 @@ impl Extension for Mangasee {
 
     fn get_pages(&self, path: &String) -> Result<Vec<Page>> {
         let url = format!("{}{}", &self.url, &path);
-        let resp = ureq::get(url.as_str()).call();
+        let resp = ureq::get(url.as_str()).call().unwrap();
         let html = resp.into_string().unwrap();
 
         let index_name = {
