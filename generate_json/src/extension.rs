@@ -1,8 +1,9 @@
 use anyhow::{anyhow, Result};
 use lib::Library;
+use tanoshi_lib::model::{SortByParam, SortOrderParam};
 use std::{collections::HashMap, sync::Arc};
 use tanoshi_lib::extensions::{Extension, PluginDeclaration};
-use tanoshi_lib::manga::{Chapter, Manga, Params, Source, SourceLogin, SourceLoginResult};
+use tanoshi_lib::model::{Chapter, Manga, Source, SourceLogin, SourceLoginResult};
 
 pub struct ExtensionProxy {
     extension: Box<dyn Extension>,
@@ -10,12 +11,20 @@ pub struct ExtensionProxy {
 }
 
 impl Extension for ExtensionProxy {
-    fn info(&self) -> Source {
-        self.extension.info()
+    fn detail(&self) -> Source {
+        self.extension.detail()
     }
 
-    fn get_mangas(&self, param: Params, auth: String) -> Result<Vec<Manga>> {
-        self.extension.get_mangas(param, auth)
+    fn get_mangas(
+        &self,
+        keyword: Option<String>,
+        genres: Option<Vec<String>>,
+        page: Option<i32>,
+        sort_by: Option<SortByParam>,
+        sort_order: Option<SortOrderParam>,
+        auth: Option<String>,
+    ) -> Result<Vec<Manga>> {
+        self.extension.get_mangas(keyword, genres, page, sort_by, sort_order, auth)
     }
 
     fn get_manga_info(&self, path: &String) -> Result<Manga> {
@@ -92,8 +101,10 @@ impl Extensions {
 
         self.extensions.extend(registrar.extensions);
         self.libraries.push(library);
-        let version = self.extensions().get(decl.name).unwrap().info().version;
-        let new_filename = format!("{}-v{}.{}", &decl.name, version, ext);
+
+        let detail = self.extensions().get(decl.name).unwrap().detail();
+        
+        let new_filename = format!("{}-v{}.{}", &decl.name, detail.version, ext);
         let mut new_path = format!("repo-{}/library/{}", std::env::consts::OS, new_filename);
         if cfg!(target_os = "windows") {
             new_path = new_path.replace("/", "\\");
@@ -105,11 +116,12 @@ impl Extensions {
             path = path.replace("/", "\\");
         }
         Ok(crate::Source {
+            id: detail.id,
             name: decl.name.to_string(),
             path: path.to_string(),
             rustc_version: decl.rustc_version.to_string(),
             core_version: decl.core_version.to_string(),
-            version,
+            version: detail.version,
         })
     }
 }

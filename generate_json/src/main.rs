@@ -6,6 +6,7 @@ use anyhow::Result;
 
 #[derive(serde::Serialize)]
 pub struct Source {
+    pub id: i64,
     pub name: String,
     pub path: String,
     pub rustc_version: String,
@@ -45,6 +46,6 @@ fn main() -> Result<()> {
     }
 
     let file = std::fs::File::create(path.join("index.json"))?;
-    serde_json::to_writer_pretty(&file, &sources)?;
+    serde_json::to_writer(&file, &sources)?;
     Ok(())
 }
