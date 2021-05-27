@@ -111,10 +111,7 @@ impl Extensions {
         }
         let _ = std::fs::copy(library_path, &new_path);
 
-        let mut path = format!("library/{}", &new_filename);
-        if cfg!(target_os = "windows") {
-            path = path.replace("/", "\\");
-        }
+        let path = format!("library/{}", &new_filename);
         Ok(crate::Source {
             id: detail.id,
             name: decl.name.to_string(),
