@@ -2,7 +2,7 @@ use anyhow::{anyhow, Result};
 use fancy_regex::Regex;
 use std::io::BufReader;
 use std::{fs, io};
-use tanoshi_lib::{extensions::Extension, model::Page};
+use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::model::{Chapter, Manga, SortByParam, SortOrderParam, Source};
 
 pub static ID: i64 = 1;
@@ -142,23 +142,16 @@ impl Extension for Local {
         Ok(entries)
     }
 
-    fn get_pages(&self, path: &String) -> Result<Vec<Page>> {
+    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
         let url = format!("{}{}", &self.url, &path);
         let file = fs::File::open(&url).unwrap();
         let reader = BufReader::new(file);
 
         let archive = zip::ZipArchive::new(reader).unwrap();
-        let mut pages: Vec<Page> = archive
+        Ok(archive
             .file_names()
-            .enumerate()
-            .map(|(idx, file_name)| Page{
-                source_id: ID,
-                rank: idx as i64,
-                url: format!("{}/{}", url, file_name)
-            })
-            .collect();
-        pages.sort_by(|a, b| a.rank.cmp(&b.rank));
-        Ok(pages)
+            .map(|file_name| format!("{}/{}", url, file_name))
+            .collect())
     }
 
     fn get_page(&self, url: &String) -> Result<Vec<u8>> {

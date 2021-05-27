@@ -1,11 +1,14 @@
-use std::{collections::HashMap, sync::RwLock};
+use std::collections::HashMap;
 
 use anyhow::Result;
 use bimap::BiMap;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_urlencoded;
-use tanoshi_lib::{extensions::Extension, model::{Page, SortByParam, SortOrderParam}};
+use tanoshi_lib::{
+    extensions::Extension,
+    model::{SortByParam, SortOrderParam},
+};
 use ureq;
 
 pub static ID: i64 = 2;
@@ -207,23 +210,6 @@ pub struct GetPagesResponse {
     pub status: String,
 }
 
-impl Into<Vec<Page>> for GetPagesResponse {
-    fn into(self) -> Vec<Page> {
-        let host = self.server;
-        let hash = self.hash;
-        self.page_array
-            .iter()
-            .enumerate()
-            .map(|(index, p)| Page {
-                source_id: ID,
-                rank: index as i64,
-                url: format!("{}{}/{}", host, hash, p),
-
-            })
-            .collect()
-    }
-}
-
 pub struct Mangadex {
     url: String,
 }
@@ -331,12 +317,12 @@ impl Extension for Mangadex {
         Ok(mangadex_resp.into())
     }
 
-    fn get_pages(&self, path: &String) -> Result<Vec<Page>> {
+    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
         let url = format!("{}{}", &self.url, &path);
         let resp = ureq::get(&url).call();
         let mangadex_resp = resp.into_json_deserialize::<GetPagesResponse>().unwrap();
 
-        Ok(mangadex_resp.into())
+        Ok(mangadex_resp.page_array)
     }
 
     fn login(

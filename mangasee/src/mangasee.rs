@@ -7,8 +7,8 @@ use rayon::prelude::*;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
 use serde::Deserialize;
+use tanoshi_lib::extensions::Extension;
 use tanoshi_lib::model::{Chapter, Manga, SortByParam, SortOrderParam, Source};
-use tanoshi_lib::{extensions::Extension, model::Page};
 
 pub static ID: i64 = 3;
 pub static NAME: &str = "mangasee";
@@ -378,7 +378,7 @@ impl Extension for Mangasee {
         Ok(chapters)
     }
 
-    fn get_pages(&self, path: &String) -> Result<Vec<Page>> {
+    fn get_pages(&self, path: &String) -> Result<Vec<String>> {
         let url = format!("{}{}", &self.url, &path);
         let resp = ureq::get(url.as_str()).call()?;
         let html = resp.into_string()?;
@@ -451,14 +451,10 @@ impl Extension for Mangasee {
                 s[(s.len() - 3)..].to_string()
             };
 
-            pages.push(Page {
-                source_id: ID,
-                rank: i as i64,
-                url: format!(
-                    "https://{}/manga/{}/{}{}-{}.png",
-                    cur_path_name, index_name, directory, chapter_image, page_image
-                ),
-            });
+            pages.push(format!(
+                "https://{}/manga/{}/{}{}-{}.png",
+                cur_path_name, index_name, directory, chapter_image, page_image
+            ));
         }
 
         Ok(pages)
