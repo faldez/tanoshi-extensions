@@ -12,6 +12,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-windows  repo-windows
       - name: Build
         run: cargo build --release
       - name: Generate index.json
@@ -35,6 +37,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-macos  repo-macos
       - name: Build
         run: cargo build --release
       - name: Generate index.json
@@ -58,6 +62,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b repo-linux  repo-linux
       - name: Build
         run: cargo build --release
       - name: Generate index.json
