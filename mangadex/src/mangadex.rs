@@ -127,14 +127,14 @@ impl Into<Vec<tanoshi_lib::model::Chapter>> for GetMangaResponse {
     fn into(self) -> Vec<tanoshi_lib::model::Chapter> {
         self.chapter
             .iter()
-            .enumerate()
-            .map(|(index, (id, chapter))| {
+            .map(|(id, chapter)| {
                 if chapter.lang_code == "gb".to_string() {
                     Some(tanoshi_lib::model::Chapter {
                         source_id: ID,
                         title: chapter.title.clone(),
                         path: format!("/api/chapter/{}", id),
-                        rank: index as i64,
+                        number: 0.0,
+                        scanlator: "".to_string(),
                         uploaded: chrono::NaiveDateTime::from_timestamp(chapter.timestamp, 0),
                     })
                 } else {

@@ -1,3 +1,4 @@
+use core::num;
 use std::{any, fmt, usize};
 
 use anyhow::{anyhow, Result};
@@ -352,28 +353,34 @@ impl Extension for Mangasee {
             Err(e) => return Err(anyhow!(e)),
         };
 
-        let chapters = ch_dirs
-            .iter()
-            .enumerate()
-            .map(|(index, ch)| {
-                let mut chapter = ch.chapter.clone();
-                chapter.remove(0);
-                chapter.insert_str(chapter.len() - 1, ".");
-                let number = chapter.parse::<f32>().ok().map(|n| n.to_string());
+        let mut chapters = vec![];
+        for ch in ch_dirs.iter() {
+            let mut chapter = ch.chapter.clone();
+            let t = chapter.remove(0);
 
-                Chapter {
-                    source_id: ID,
-                    title: format!("{} {}", ch.type_field, number.clone().unwrap()),
-                    path: format!(
-                        "/read-online/{}-chapter-{}.html",
-                        &index_name,
-                        number.clone().unwrap()
-                    ),
-                    uploaded: ch.date,
-                    rank: index as i64,
-                }
+            let index = if t != '1' {
+                format!("-index-{}", t)
+            } else {
+                "".to_string()
+            };
+
+            chapter.insert_str(chapter.len() - 1, ".");
+            let number = chapter.parse::<f64>()?;
+
+            chapters.push(Chapter {
+                source_id: ID,
+                title: format!("{} {}", ch.type_field, number.to_string()),
+                path: format!(
+                    "/read-online/{}-chapter-{}{}.html",
+                    &index_name,
+                    number.to_string(),
+                    index,
+                ),
+                uploaded: ch.date,
+                number: number + if index == "" { 0.0 } else { 10000.0 },
+                scanlator: "".to_string(),
             })
-            .collect();
+        }
 
         Ok(chapters)
     }

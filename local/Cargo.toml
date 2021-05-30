@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 zip = { version = "0.5" }
 fancy-regex = {version = "0.6"}
-tanoshi-lib = { version = "0.21", features = ["extensions"]}
+tanoshi-lib = { version = "0.22.0", features = ["extensions"]}
 anyhow = "1"
 serde = {version = "1.0", features = ["derive"]}
 serde_yaml="0.8"

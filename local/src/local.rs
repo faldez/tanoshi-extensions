@@ -131,7 +131,8 @@ impl Extension for Local {
                             .unwrap()
                             .replace(local_path.as_str(), "")
                             .to_string(),
-                        rank: 0,
+                        number: 0.0,
+                        scanlator: "".to_string(),
                         uploaded: chrono::NaiveDateTime::from_timestamp(created as i64, 0),
                     }
                 })
