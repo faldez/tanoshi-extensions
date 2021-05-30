@@ -1,15 +1,17 @@
-use std::fmt;
+use core::num;
+use std::{any, fmt, usize};
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
+use fancy_regex::Regex;
 use rayon::prelude::*;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
 use serde::Deserialize;
-use fancy_regex::Regex;
 use tanoshi_lib::extensions::Extension;
-use tanoshi_lib::manga::{Chapter, Manga, Params, SortByParam, SortOrderParam, Source};
+use tanoshi_lib::model::{Chapter, Manga, SortByParam, SortOrderParam, Source};
 
+pub static ID: i64 = 3;
 pub static NAME: &str = "mangasee";
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -88,18 +90,14 @@ where
 impl Into<Manga> for &Dir {
     fn into(self) -> Manga {
         Manga {
-            id: 0,
-            source: NAME.to_string(),
+            source_id: ID,
             title: self.s.clone(),
             author: self.a.clone(),
             genre: self.g.clone(),
             status: Some(self.ss.clone()),
             description: None,
             path: format!("/manga/{}", self.i),
-            thumbnail_url: format!("https://cover.nep.li/cover/{}.jpg", self.i),
-            last_read: None,
-            last_page: None,
-            is_favorite: false,
+            cover_url: format!("https://cover.nep.li/cover/{}.jpg", self.i),
         }
     }
 }
@@ -149,55 +147,22 @@ where
     deserializer.deserialize_any(DateVisitor)
 }
 
-impl Into<Chapter> for &DirChapter {
-    fn into(self) -> Chapter {
-        let mut chapter = self.chapter.clone();
-        chapter.remove(0);
-        chapter.insert_str(chapter.len() - 1, ".");
-        let number = chapter.parse::<f32>().ok().map(|n| n.to_string());
-
-        let mut ch = Chapter {
-            id: 0,
-            source: NAME.to_string(),
-            manga_id: 0,
-            vol: None,
-            no: None,
-            title: None,
-            path: format!(
-                "/read-online/{}-chapter-{}.html",
-                &self.index_name,
-                number.clone().unwrap()
-            ),
-            read: None,
-            uploaded: self.date,
-        };
-
-        if self.type_field == "Volume" {
-            ch.vol = number
-        } else {
-            ch.no = number
-        };
-
-        ch
-    }
-}
-
 #[derive(Debug, Deserialize)]
-#[serde(rename_all="PascalCase")]
+#[serde(rename_all = "PascalCase")]
 pub struct CurChapter {
     pub chapter: String,
     #[serde(rename = "Type")]
     pub chapter_type: String,
     pub page: String,
     pub directory: String,
-    #[serde(with ="date_format")]
+    #[serde(with = "date_format")]
     pub date: NaiveDateTime,
-    pub chapter_name: Option<String>
+    pub chapter_name: Option<String>,
 }
 
 mod date_format {
-    use chrono::{NaiveDateTime};
-    use serde::{self, Deserialize, Serializer, Deserializer};
+    use chrono::NaiveDateTime;
+    use serde::{self, Deserialize, Deserializer, Serializer};
 
     const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
 
@@ -208,10 +173,7 @@ mod date_format {
     //        S: Serializer
     //
     // although it may also be generic over the input types T.
-    pub fn serialize<S>(
-        date: &NaiveDateTime,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(date: &NaiveDateTime, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -226,9 +188,7 @@ mod date_format {
     //        D: Deserializer<'de>
     //
     // although it may also be generic over the output types T.
-    pub fn deserialize<'de, D>(
-        deserializer: D,
-    ) -> Result<NaiveDateTime, D::Error>
+    pub fn deserialize<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -250,20 +210,30 @@ impl Mangasee {
 }
 
 impl Extension for Mangasee {
-    fn info(&self) -> Source {
+    fn detail(&self) -> Source {
         Source {
+            id: ID,
             name: NAME.to_string(),
             url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
+            icon: "".to_string(),
+            need_login: false,
         }
     }
 
-    fn get_mangas(&self, param: Params, _: String) -> Result<Vec<Manga>> {
+    fn get_mangas(
+        &self,
+        keyword: Option<String>,
+        _genres: Option<Vec<String>>,
+        page: Option<i32>,
+        sort_by: Option<SortByParam>,
+        sort_order: Option<SortOrderParam>,
+        _auth: Option<String>,
+    ) -> Result<Vec<Manga>> {
         let url = format!("{}/search", &self.url);
         let vm_dir = {
-            let resp = ureq::get(&url).call();
-            let html = resp.into_string().unwrap();
-
+            let resp = ureq::get(&url).call()?;
+            let html = resp.into_string()?;
             if let Some(i) = html.find("vm.Directory =") {
                 let dir = &html[i + 15..];
                 if let Some(i) = dir.find("}];") {
@@ -282,10 +252,10 @@ impl Extension for Mangasee {
             Err(e) => return Err(anyhow!(e)),
         };
 
-        let sort_by = param.sort_by.unwrap_or(SortByParam::Views);
-        let sort_order = param.sort_order.unwrap_or(SortOrderParam::Asc);
+        let sort_by = sort_by.unwrap_or(SortByParam::Views);
+        let sort_order = sort_order.unwrap_or(SortOrderParam::Asc);
 
-        if let Some(keyword) = param.keyword {
+        if let Some(keyword) = keyword {
             dirs.retain(|d| d.s.to_lowercase().contains(&keyword.to_lowercase()))
         }
 
@@ -315,10 +285,7 @@ impl Extension for Mangasee {
             }
         }
 
-        let page = param
-            .page
-            .map(|p| p.parse::<usize>().ok().unwrap_or(1))
-            .unwrap_or(1);
+        let page = page.map(|p| p as usize).unwrap_or(1);
         let offset = (page - 1) * 20;
         let mangas = match dirs.len() {
             0..=20 => &dirs,
@@ -332,8 +299,8 @@ impl Extension for Mangasee {
     fn get_manga_info(&self, path: &String) -> Result<Manga> {
         let url = format!("{}{}", &self.url, &path);
         let description = {
-            let resp = ureq::get(url.as_str()).call();
-            let html = resp.into_string().unwrap();
+            let resp = ureq::get(url.as_str()).call()?;
+            let html = resp.into_string()?;
 
             let document = scraper::Html::parse_document(&html);
 
@@ -348,6 +315,7 @@ impl Extension for Mangasee {
         };
 
         Ok(Manga {
+            source_id: ID,
             description,
             ..Default::default()
         })
@@ -355,37 +323,23 @@ impl Extension for Mangasee {
 
     fn get_chapters(&self, path: &String) -> Result<Vec<Chapter>> {
         let url = format!("{}{}", &self.url, &path);
-        let html = {
-            let resp = ureq::get(url.as_str()).call();
-            let html = resp.into_string().unwrap();
-            if let Some(i) = html.find("vm.IndexName =") {
-                let dir = &html[i..];
-                if let Some(i) = dir.find("}];") {
-                    let vm_dir = &dir[..i + 2];
-                    vm_dir.to_string()
-                } else {
-                    return Err(anyhow!("error get chapters"));
-                }
-            } else {
-                return Err(anyhow!("list not found"));
-            }
+        let resp = ureq::get(url.as_str()).call()?;
+        let html = resp.into_string()?;
+
+        let index_name = {
+            let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#)
+                .unwrap()
+                .find(&html)
+                .unwrap();
+            mat.unwrap().as_str().to_string()
         };
 
-        let index_name = if html.starts_with("vm.IndexName =") {
-            let name = &html[15..];
-            if let Some(i) = name.find(";") {
-                &name[1..i - 1]
-            } else {
-                return Err(anyhow!("IndexName not found"));
-            }
-        } else {
-            return Err(anyhow!("IndexName not found"));
-        };
-
-        let vm_dir = if let Some(i) = html.find("vm.Chapters =") {
-            &html[i + 13..]
-        } else {
-            return Err(anyhow!("list not found"));
+        let vm_dir = {
+            let mat = Regex::new(r#"(?<=vm\.Chapters = )\[.*\](?=;)"#)
+                .unwrap()
+                .find(&html)
+                .unwrap();
+            mat.unwrap().as_str().to_string()
         };
 
         let ch_dirs: Vec<DirChapter> = match serde_json::from_str::<Vec<DirChapter>>(&vm_dir) {
@@ -399,32 +353,68 @@ impl Extension for Mangasee {
             Err(e) => return Err(anyhow!(e)),
         };
 
-        let chapters = ch_dirs.par_iter().map(|c| c.into()).collect();
+        let mut chapters = vec![];
+        for ch in ch_dirs.iter() {
+            let mut chapter = ch.chapter.clone();
+            let t = chapter.remove(0);
+
+            let index = if t != '1' {
+                format!("-index-{}", t)
+            } else {
+                "".to_string()
+            };
+
+            chapter.insert_str(chapter.len() - 1, ".");
+            let number = chapter.parse::<f64>()?;
+
+            chapters.push(Chapter {
+                source_id: ID,
+                title: format!("{} {}", ch.type_field, number.to_string()),
+                path: format!(
+                    "/read-online/{}-chapter-{}{}.html",
+                    &index_name,
+                    number.to_string(),
+                    index,
+                ),
+                uploaded: ch.date,
+                number: number + if index == "" { 0.0 } else { 10000.0 },
+                scanlator: "".to_string(),
+            })
+        }
 
         Ok(chapters)
     }
 
     fn get_pages(&self, path: &String) -> Result<Vec<String>> {
         let url = format!("{}{}", &self.url, &path);
-        let resp = ureq::get(url.as_str()).call();
-        let html = resp.into_string().unwrap();
+        let resp = ureq::get(url.as_str()).call()?;
+        let html = resp.into_string()?;
 
         let index_name = {
-            let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#).unwrap().find(&html).unwrap();
+            let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#)
+                .unwrap()
+                .find(&html)
+                .unwrap();
             mat.unwrap().as_str().to_string()
         };
 
         let cur_chapter = {
-            let mat = Regex::new(r"(?<=vm\.CurChapter = ){.*}(?=;)").unwrap().find(&html).unwrap();
+            let mat = Regex::new(r"(?<=vm\.CurChapter = ){.*}(?=;)")
+                .unwrap()
+                .find(&html)
+                .unwrap();
             let cur_chapter_str = mat.unwrap().as_str();
             serde_json::from_str::<CurChapter>(cur_chapter_str).unwrap()
         };
 
         let cur_path_name = {
-            let mat = Regex::new(r#"(?<=vm\.CurPathName = ").*(?=";)"#).unwrap().find(&html).unwrap();
+            let mat = Regex::new(r#"(?<=vm\.CurPathName = ").*(?=";)"#)
+                .unwrap()
+                .find(&html)
+                .unwrap();
             mat.unwrap().as_str().to_string()
         };
-        
+
         // https://{{vm.CurPathName}}/manga/Sono-Bisque-Doll-Wa-Koi-Wo-Suru/{{vm.CurChapter.Directory == '' ? '' : vm.CurChapter.Directory+'/'}}{{vm.ChapterImage(vm.CurChapter.Chapter)}}-{{vm.PageImage(Page)}}.png
         let directory = {
             if cur_chapter.directory == "" {
@@ -445,31 +435,33 @@ impl Extension for Mangasee {
                 }
             };
             */
-            let chapter = cur_chapter.chapter[1..cur_chapter.chapter.len()-1].to_string();
-            let odd = cur_chapter.chapter[cur_chapter.chapter.len()-1..].to_string();
+            let chapter = cur_chapter.chapter[1..cur_chapter.chapter.len() - 1].to_string();
+            let odd = cur_chapter.chapter[cur_chapter.chapter.len() - 1..].to_string();
             if odd == "0" {
                 chapter
             } else {
                 format!("{}.{}", chapter, odd)
             }
         };
-        
+
         let page = cur_chapter.page.parse::<i32>().unwrap_or(0);
         let mut pages = Vec::new();
         for i in 1..page + 1 {
-            
             let page_image = {
                 /*
                 vm.PageImage = function(PageString){
-			    	var s = "000" + PageString;
-			    	return s.substr(s.length - 3);
-			    }
+                    var s = "000" + PageString;
+                    return s.substr(s.length - 3);
+                }
                 */
                 let s = format!("000{}", i);
                 s[(s.len() - 3)..].to_string()
             };
 
-            pages.push(format!("https://{}/manga/{}/{}{}-{}.png", cur_path_name, index_name, directory, chapter_image, page_image));
+            pages.push(format!(
+                "https://{}/manga/{}/{}{}-{}.png",
+                cur_path_name, index_name, directory, chapter_image, page_image
+            ));
         }
 
         Ok(pages)
