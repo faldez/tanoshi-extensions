@@ -1,5 +1,3 @@
-use core::num;
-use std::{any, fmt, usize};
 
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
@@ -57,7 +55,7 @@ struct DateOrZeroVisitor;
 impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
     type Value = NaiveDateTime;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str("an integer or a string")
     }
 
@@ -124,7 +122,7 @@ struct DateVisitor;
 impl<'de> de::Visitor<'de> for DateVisitor {
     type Value = NaiveDateTime;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
         formatter.write_str("a string")
     }
 
@@ -287,8 +285,11 @@ impl Extension for Mangasee {
 
         let page = page.map(|p| p as usize).unwrap_or(1);
         let offset = (page - 1) * 20;
-        let mangas = match dirs.len() {
-            0..=20 => &dirs,
+        if offset >= dirs.len() {
+            return Err(anyhow!("no page"));
+        }
+        let mangas = match dirs[offset..].len() {
+            0..=20 => &dirs[offset..],
             _ => &dirs[offset..offset + 20],
         };
 
@@ -298,26 +299,97 @@ impl Extension for Mangasee {
     /// Get the rest of details unreachable from `get_mangas`
     fn get_manga_info(&self, path: &String) -> Result<Manga> {
         let url = format!("{}{}", &self.url, &path);
-        let description = {
-            let resp = ureq::get(url.as_str()).call()?;
-            let html = resp.into_string()?;
+        let resp = ureq::get(url.as_str()).call()?;
+        let html = resp.into_string()?;
 
-            let document = scraper::Html::parse_document(&html);
+        let document = scraper::Html::parse_document(&html);
 
-            let mut desc = None;
-            let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]").unwrap();
+        let title = {
+            let mut title = None;
+            let selector = scraper::Selector::parse("li[class=\"list-group-item d-none d-sm-block\"] h1")
+                .map_err(|e| anyhow!("{:?}", e))?;
             for element in document.select(&selector) {
                 for text in element.text() {
-                    desc = Some(String::from(text));
+                    if !text.is_empty() {
+                        title = Some(text.to_string());
+                        break;
+                    }
+                }
+            }
+            if let Some(title) = title {
+                title
+            } else {
+                return Err(anyhow!("no title"));
+            }
+        };
+
+        let description = {
+            let mut desc = None;
+            let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]")
+                .map_err(|e| anyhow!("{:?}", e))?;
+            for element in document.select(&selector) {
+                for text in element.text() {
+                    desc = Some(text.to_string());
+                    break;
                 }
             }
             desc
         };
 
+        let mut author = vec![];
+        let selector = scraper::Selector::parse("a[href^=\"/search/?author=\"]")
+            .map_err(|e| anyhow!("{:?}", e))?;
+        for element in document.select(&selector) {
+            for text in element.text() {
+                author.push(text.to_string());
+            }
+        }
+
+        let mut genre = vec![];
+        let selector = scraper::Selector::parse("a[href^=\"/search/?genre=\"]")
+            .map_err(|e| anyhow!("{:?}", e))?;
+        for element in document.select(&selector) {
+            for text in element.text() {
+                genre.push(String::from(text));
+            }
+        }
+
+        let status = {
+            let mut status = None;
+            let selector = scraper::Selector::parse("a[href^=\"/search/?status=\"]")
+                .map_err(|e| anyhow!("{:?}", e))?;
+            for element in document.select(&selector) {
+                status = element.value().attr("href").map(|h| {
+                    h.strip_prefix("/search/?status=")
+                        .map(|s| s.to_string())
+                        .unwrap_or(h.to_string())
+                });
+                break;
+            }
+            status
+        };
+
+        let mut cover_url = "".to_string();
+        let selector = scraper::Selector::parse("img[class=\"img-fluid bottom-5\"]")
+            .map_err(|e| anyhow!("{:?}", e))?;
+        for element in document.select(&selector) {
+            cover_url = element
+                .value()
+                .attr("src")
+                .map(|src| src.to_string())
+                .ok_or(anyhow!("no src"))?;
+            break;
+        }
+
         Ok(Manga {
             source_id: ID,
+            title,
             description,
-            ..Default::default()
+            author,
+            genre,
+            status,
+            path: path.clone(),
+            cover_url,
         })
     }
 
