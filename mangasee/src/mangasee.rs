@@ -216,7 +216,7 @@ impl Extension for Mangasee {
             name: NAME.to_string(),
             url: self.url.clone(),
             version: std::env!("PLUGIN_VERSION").to_string(),
-            icon: "".to_string(),
+            icon: "https://mangasee123.com/media/favicon.png".to_string(),
             need_login: false,
         }
     }
