@@ -9,9 +9,8 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-tanoshi-lib = { version = "0.22.0", features = ["extensions"]}
+tanoshi-lib = { path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-lib" }
 anyhow = "1"
-ureq = "2"
 scraper = "0.12"
 chrono = {version="0.4", features=["serde"]}
 serde = {version="1", features=["derive"]}
