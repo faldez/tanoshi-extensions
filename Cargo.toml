@@ -1,7 +1,5 @@
 [workspace]
 members = [
-    "local",
-    "mangadex",
     "mangasee",
     "mangalife"
 ]
