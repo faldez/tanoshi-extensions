@@ -23,7 +23,8 @@ jobs:
           cargo build --release --target wasm32-wasi
       - name: Generate index.json
         run: |
-          cargo run --release generate_json
+          cargo install tanoshi-cli
+          tanoshi-cli
       - name: Commit files
         run: |
           cd repo
@@ -35,6 +36,6 @@ jobs:
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: repo-linux
+          branch: repo
           force: true
-          directory: repo-linux
+          directory: repo
