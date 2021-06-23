@@ -1,12 +1,12 @@
 [package]
 name = "mangasee"
-version = "3.0.4"
+version = "4.0.0"
 authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-tanoshi-lib = { path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-lib" }
-tanoshi-util = { path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-util" }
+tanoshi-lib = "0.23.0"
+tanoshi-util = "0.1.0"
 scraper = "0.12"
 chrono = {version="0.4", features=["serde"]}
 serde = {version="1", features=["derive"]}
