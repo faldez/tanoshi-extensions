@@ -6,7 +6,7 @@ edition = "2018"
 
 [dependencies]
 tanoshi-lib = { path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-lib" }
-anyhow = "1"
+tanoshi-util = { path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-util" }
 scraper = "0.12"
 chrono = {version="0.4", features=["serde"]}
 serde = {version="1", features=["derive"]}
@@ -16,5 +16,4 @@ serde_yaml="0.8"
 html-escape = "0.2"
 dirs = "3"
 base64 = "0.13"
-rayon = "1.4.1"
 fancy-regex = "0.6.0"
