@@ -18,7 +18,7 @@ register_extension!(Mangalife);
 impl Default for Mangalife {
     fn default() -> Self {
         Mangalife {
-            url: "https://manga4life.com/".to_string(),
+            url: "https://manga4life.com".to_string(),
         }
     }
 }
