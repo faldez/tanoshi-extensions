@@ -13,8 +13,18 @@ pub struct Root {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Query {
+pub struct SingleRoot {
+    pub props: SingleProps,
+    pub page: String,
+    pub query: Query,
+    pub build_id: String,
+    pub is_fallback: bool,
+    pub gsp: bool,
 }
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Query {}
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -26,10 +36,40 @@ pub struct Props {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SingleProps {
+    pub page_props: SinglePageProps,
+    #[serde(rename = "__N_SSG")]
+    pub n_ssg: bool,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct PageProps {
     pub series: Vec<series::Series>,
     pub latests: Vec<Vec<latest::Latest>>,
-    pub featured: Vec<featured::Featured>
+    pub featured: Vec<featured::Featured>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SinglePageProps {
+    pub series: series::Series,
+    #[serde(default)]
+    pub chapter: SingleChapter,
+    #[serde(default = "Vec::new")]
+    pub pages: Vec<String>,
+    #[serde(default)]
+    pub key: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SingleChapter {
+    pub title: String,
+    pub groups: Vec<String>,
+    pub number: i64,
+    #[serde(default)]
+    pub volume: i64,
 }
 
 mod series {
@@ -84,7 +124,7 @@ mod series {
 
 mod latest {
     use serde::{Deserialize, Serialize};
-    
+
     #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Latest {
@@ -141,7 +181,7 @@ mod latest {
 
 mod featured {
     use serde::{Deserialize, Serialize};
-    
+
     #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
     #[serde(rename_all = "camelCase")]
     pub struct Featured {

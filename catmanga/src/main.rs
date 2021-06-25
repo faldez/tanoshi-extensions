@@ -5,6 +5,7 @@ pub static NAME: &str = "catmanga";
 pub static URL: &str = "https://catmanga.org";
 
 use chrono::Local;
+use data::SingleRoot;
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::*;
 use tanoshi_util::*;
@@ -36,6 +37,29 @@ impl Catmanga {
         let selector = Selector::parse("script[id=\"__NEXT_DATA__\"]").unwrap();
 
         let mut root: Option<Root> = None;
+        if let Some(element) = document.select(&selector).next() {
+            if let Some(text) = element.text().next() {
+                root = serde_json::from_str(text).unwrap();
+            }
+        }
+
+        root
+    }
+
+    fn get_single_data(path: String) -> Option<SingleRoot> {
+        let resp = http_request(Request {
+            method: "GET".to_string(),
+            url: format!("{}{}", URL, path),
+            headers: None,
+        });
+        if resp.status > 299 {
+            return None;
+        }
+        let html = resp.body;
+        let document = Html::parse_document(&html);
+        let selector = Selector::parse("script[id=\"__NEXT_DATA__\"]").unwrap();
+
+        let mut root: Option<SingleRoot> = None;
         if let Some(element) = document.select(&selector).next() {
             if let Some(text) = element.text().next() {
                 root = serde_json::from_str(text).unwrap();
@@ -113,29 +137,18 @@ impl Extension for Catmanga {
     }
 
     fn get_chapters(&self, path: String) -> ExtensionResult<Vec<Chapter>> {
-        let root = Self::get_data();
+        let root = Self::get_single_data(path.clone());
 
         let mut data = None;
         let mut error = None;
 
-        let series_id = path.replace("/series/", "");
-        let mut series = None;
-        if let Some(root) = root {
-            for s in root.props.page_props.series {
-                if series_id == s.series_id {
-                    series = Some(s);
-                    break;
-                }
-            }
-        }
-
         let dt = Local::now();
-        if let Some(s) = series {
+        if let Some(s) = root {
             let mut chapters = vec![];
-            for chapter in s.chapters {
+            for chapter in s.props.page_props.series.chapters {
                 chapters.push(Chapter {
                     source_id: ID,
-                    title: s.title.clone(),
+                    title: format!("Chapter {} - {}", chapter.number, chapter.title.unwrap_or("".to_string()).clone()),
                     path: format!("{}/{}", path, chapter.number),
                     number: chapter.number,
                     scanlator: chapter.groups.get(0).unwrap_or(&"".to_string()).to_string(),
@@ -153,32 +166,22 @@ impl Extension for Catmanga {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", URL, path),
-            headers: None,
-        });
-        if resp.status > 299 {
-            return ExtensionResult::err("http request error");
-        }
-        let html = resp.body;
+        let root = Self::get_single_data(path);
 
-        let mut pages = vec![];
-        let document = Html::parse_document(&html);
-        let selector = Selector::parse("img[alt^=\"Page\"]").unwrap();
-        for element in document.select(&selector) {
-            let page = element
-                .value()
-                .attr("src")
-                .map(|src| src.to_string())
-                .ok_or(format!("no src"))
-                .unwrap();
-            pages.push(page);
+        let mut data = None;
+        let mut error = None;
+
+        if let Some(root) = root {
+            data = Some(root.props.page_props.pages);
+        }
+
+        if data.is_none() {
+            error = Some(format!("manga not found"));
         }
 
         ExtensionResult {
-            data: Some(pages),
-            error: None,
+            data,
+            error,
         }
     }
 }
