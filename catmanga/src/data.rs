@@ -65,6 +65,7 @@ pub struct SinglePageProps {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SingleChapter {
+    #[serde(default)]
     pub title: String,
     pub groups: Vec<String>,
     pub number: i64,
@@ -83,6 +84,7 @@ mod series {
         pub authors: Vec<String>,
         pub genres: Vec<String>,
         pub chapters: Vec<Chapter>,
+        #[serde(default)]
         pub title: String,
         #[serde(rename = "series_id")]
         pub series_id: String,
