@@ -151,7 +151,7 @@ mod latest {
         pub all_covers: Vec<AllCover>,
         #[serde(default)]
         pub groups: Vec<String>,
-        pub number: Option<i64>,
+        pub number: Option<f64>,
         pub volume: Option<i64>,
     }
 
