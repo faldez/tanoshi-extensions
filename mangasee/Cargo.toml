@@ -5,8 +5,6 @@ authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-tanoshi-lib = "0.23.0"
-tanoshi-util = "0.1.0"
 scraper = "0.12"
 chrono = {version="0.4", features=["serde"]}
 serde = {version="1", features=["derive"]}
@@ -16,4 +14,11 @@ serde_yaml="0.8"
 html-escape = "0.2"
 dirs = "3"
 base64 = "0.13"
-fancy-regex = "0.6.0"
+fancy-regex = "0.7.0"
+ron = "0.6.4"
+
+[dependencies.tanoshi-lib]
+path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-lib"
+
+[dependencies.tanoshi-util]
+path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-util"

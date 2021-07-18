@@ -23,6 +23,26 @@ impl Default for Mangasee {
     }
 }
 
+impl Mangasee {
+    fn find_filter_map_value(
+        filter_map: &Option<Filters>,
+        key: &String,
+        index: usize,
+    ) -> Result<FilterValue, Box<dyn std::error::Error>> {
+        Ok(filter_map
+            .clone()
+            .ok_or("no filters")?
+            .fields
+            .get(key)
+            .ok_or(format!("no {} filter", key))?
+            .values
+            .clone()
+            .ok_or("no possible values")?
+            .get(index)
+            .ok_or(format!("no value at index {}", index))?
+            .clone())
+    }
+}
 
 impl Extension for Mangasee {
     fn detail(&self) -> Source {
@@ -33,6 +53,14 @@ impl Extension for Mangasee {
             version: std::env!("PLUGIN_VERSION").to_string(),
             icon: "https://mangasee123.com/media/favicon.png".to_string(),
             need_login: false,
+            languages: vec!["en".to_string()],
+        }
+    }
+
+    fn filters(&self) -> ExtensionResult<Option<Filters>> {
+        match ron::from_str(include_str!("filters.ron")) {
+            Ok(filters) => ExtensionResult::ok(Some(filters)),
+            Err(e) => ExtensionResult::err(format!("error parse filters: {}", e).as_str()),
         }
     }
 
@@ -61,6 +89,97 @@ impl Extension for Mangasee {
         };
 
         let mut dirs = serde_json::from_str::<Vec<Dir>>(&vm_dir).unwrap();
+
+        // let filter_map: Option<Filters> = ron::from_str(include_str!("filters.ron")).ok();
+        // if let Some(filters) = param.filters {
+        //     for (key, values) in filters {
+        //         match key.as_str() {
+        //             "name" => {
+        //                 if let Some(name) = values.first() {
+        //                     dirs.retain(|d| d.s.to_lowercase().contains(&name.to_lowercase()))
+        //                 }
+        //             }
+        //             "author" => dirs.retain(move |d| {
+        //                 let mut found = true;
+        //                 for name in values.clone() {
+        //                     for a in d.a.clone() {
+        //                         if name != a {
+        //                             found = false;
+        //                             break;
+        //                         }
+        //                     }
+        //                 }
+        //                 found
+        //             }),
+        //             "year" => {
+        //                 if let Some(name) = values.first() {
+        //                     dirs.retain(|d| d.y.to_lowercase().contains(&name.to_lowercase()))
+        //                 }
+        //             }
+        //             "status" => {
+        //                 if let Some(name) = values.first() {
+        //                     dirs.retain(|d| d.ss.to_lowercase().contains(&name.to_lowercase()))
+        //                 }
+        //             }
+        //             "pstatus" => {
+        //                 if let Some(name) = values.first() {
+        //                     dirs.retain(|d| d.ps.to_lowercase().contains(&name.to_lowercase()))
+        //                 }
+        //             }
+        //             "sort" => {
+        //                 if let Some(value) = values.first() {
+        //                     let index = match value.parse::<usize>() {
+        //                         Ok(val) => val,
+        //                         Err(e) => {
+        //                             return ExtensionResult::err(
+        //                                 format!("error parse value: {}", e).as_str(),
+        //                             );
+        //                         }
+        //                     };
+
+        //                     let value = match Self::find_filter_map_value(&filter_map, &key, index) {
+        //                         Ok(value) => value,
+        //                         Err(e) => {
+        //                             return ExtensionResult::err(format!("error: {}", e).as_str());
+        //                         }
+        //                     };
+
+        //                     dirs.sort_by_key(|d| d.field_by_name(&value.clone().value.unwrap_or("".to_string())));
+        //                     if let Some(related) = value.related {
+        //                         if let Some(desc) = related.get("desc") {
+        //                             if desc == "true" {
+        //                                 dirs.reverse();
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //             "official" => {
+        //                 if let Some(name) = values.first() {
+        //                     dirs.retain(|d| d.o.to_lowercase().contains(&name.to_lowercase()))
+        //                 }
+        //             }
+        //             "type" => {
+        //                 if let Some(name) = values.first() {
+        //                     dirs.retain(|d| d.t.to_lowercase().contains(&name.to_lowercase()))
+        //                 }
+        //             }
+        //             "genre" => dirs.retain(move |d| {
+        //                 let mut found = false;
+        //                 for name in values.clone() {
+        //                     for a in d.a.clone() {
+        //                         if name == a {
+        //                             found = true;
+        //                             break;
+        //                         }
+        //                     }
+        //                 }
+        //                 found
+        //             }),
+        //             _ => {}
+        //         }
+        //     }
+        // }
 
         let sort_by = param.sort_by.unwrap_or(SortByParam::Views);
         let sort_order = param.sort_order.unwrap_or(SortOrderParam::Asc);
@@ -126,7 +245,8 @@ impl Extension for Mangasee {
             let mut title = None;
             let selector =
                 scraper::Selector::parse("li[class=\"list-group-item d-none d-sm-block\"] h1")
-                    .map_err(|e| format!("{:?}", e)).unwrap();
+                    .map_err(|e| format!("{:?}", e))
+                    .unwrap();
             for element in document.select(&selector) {
                 for text in element.text() {
                     if !text.is_empty() {
@@ -145,7 +265,8 @@ impl Extension for Mangasee {
         let description = {
             let mut desc = None;
             let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]")
-                .map_err(|e| format!("{:?}", e)).unwrap();
+                .map_err(|e| format!("{:?}", e))
+                .unwrap();
             for element in document.select(&selector) {
                 for text in element.text() {
                     desc = Some(text.to_string());
@@ -157,7 +278,8 @@ impl Extension for Mangasee {
 
         let mut author = vec![];
         let selector = scraper::Selector::parse("a[href^=\"/search/?author=\"]")
-            .map_err(|e| format!("{:?}", e)).unwrap();
+            .map_err(|e| format!("{:?}", e))
+            .unwrap();
         for element in document.select(&selector) {
             for text in element.text() {
                 author.push(text.to_string());
@@ -166,7 +288,8 @@ impl Extension for Mangasee {
 
         let mut genre = vec![];
         let selector = scraper::Selector::parse("a[href^=\"/search/?genre=\"]")
-            .map_err(|e| format!("{:?}", e)).unwrap();
+            .map_err(|e| format!("{:?}", e))
+            .unwrap();
         for element in document.select(&selector) {
             for text in element.text() {
                 genre.push(String::from(text));
@@ -176,7 +299,8 @@ impl Extension for Mangasee {
         let status = {
             let mut status = None;
             let selector = scraper::Selector::parse("a[href^=\"/search/?status=\"]")
-                .map_err(|e| format!("{:?}", e)).unwrap();
+                .map_err(|e| format!("{:?}", e))
+                .unwrap();
             for element in document.select(&selector) {
                 status = element.value().attr("href").map(|h| {
                     h.strip_prefix("/search/?status=")
@@ -190,13 +314,15 @@ impl Extension for Mangasee {
 
         let mut cover_url = "".to_string();
         let selector = scraper::Selector::parse("img[class=\"img-fluid bottom-5\"]")
-            .map_err(|e| format!("{:?}", e)).unwrap();
+            .map_err(|e| format!("{:?}", e))
+            .unwrap();
         for element in document.select(&selector) {
             cover_url = element
                 .value()
                 .attr("src")
                 .map(|src| src.to_string())
-                .ok_or(format!("no src")).unwrap();
+                .ok_or(format!("no src"))
+                .unwrap();
             break;
         }
 
@@ -318,7 +444,6 @@ impl Extension for Mangasee {
             mat.unwrap().as_str().to_string()
         };
 
-        // https://{{vm.CurPathName}}/manga/Sono-Bisque-Doll-Wa-Koi-Wo-Suru/{{vm.CurChapter.Directory == '' ? '' : vm.CurChapter.Directory+'/'}}{{vm.ChapterImage(vm.CurChapter.Chapter)}}-{{vm.PageImage(Page)}}.png
         let directory = {
             if cur_chapter.directory == "" {
                 "".to_string()
@@ -327,17 +452,6 @@ impl Extension for Mangasee {
             }
         };
         let chapter_image = {
-            /*
-            vm.ChapterImage = function(ChapterString){
-                var Chapter = ChapterString.slice(1,-1);
-                var Odd = ChapterString[ChapterString.length -1];
-                if(Odd == 0){
-                    return Chapter;
-                }else{
-                    return Chapter + "." + Odd;
-                }
-            };
-            */
             let chapter = cur_chapter.chapter[1..cur_chapter.chapter.len() - 1].to_string();
             let odd = cur_chapter.chapter[cur_chapter.chapter.len() - 1..].to_string();
             if odd == "0" {
@@ -351,12 +465,6 @@ impl Extension for Mangasee {
         let mut pages = Vec::new();
         for i in 1..page + 1 {
             let page_image = {
-                /*
-                vm.PageImage = function(PageString){
-                    var s = "000" + PageString;
-                    return s.substr(s.length - 3);
-                }
-                */
                 let s = format!("000{}", i);
                 s[(s.len() - 3)..].to_string()
             };

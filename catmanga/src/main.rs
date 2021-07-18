@@ -79,7 +79,12 @@ impl Extension for Catmanga {
             version: std::env!("CARGO_PKG_VERSION").to_string(),
             icon: "https://catmanga.org/favicon.png".to_string(),
             need_login: false,
+            languages: vec!["en".to_string()]
         }
+    }
+
+    fn filters(&self) -> ExtensionResult<Option<Filters>> {
+        ExtensionResult::ok(None)
     }
 
     fn get_manga_list(&self, _param: Param) -> ExtensionResult<Vec<Manga>> {
@@ -108,14 +113,7 @@ impl Extension for Catmanga {
     }
 
     fn get_manga_info(&self, path: String) -> ExtensionResult<Manga> {
-        let param = Param {
-            keyword: None,
-            genres: None,
-            page: None,
-            sort_by: None,
-            sort_order: None,
-            auth: None,
-        };
+        let param = Param::default();
 
         let mut data = None;
         let mut error = None;

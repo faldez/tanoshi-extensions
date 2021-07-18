@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use chrono::NaiveDateTime;
 use serde::de::Deserializer;
 use serde::de::{self, Unexpected};
@@ -19,9 +21,9 @@ pub struct Dir {
     pub ps: String,
     /// Type
     pub t: String,
-    /// View ?
+    /// Views
     pub v: String,
-    /// vm
+    /// Views Montly
     pub vm: String,
     /// Year of published
     pub y: String,
@@ -40,6 +42,19 @@ pub struct Dir {
     pub g: Vec<String>,
     /// Hentai?
     pub h: bool,
+}
+
+impl Dir {
+    pub fn field_by_name(&self, name: &str) -> i64 {
+        match name {
+            "s" => self.s.parse().unwrap_or(0),
+            "lt" => self.lt,
+            "y" => self.y.parse().unwrap_or(0),
+            "v" => self.v.parse().unwrap_or(0),
+            "vm" => self.vm.parse().unwrap_or(0),
+            _ => 0
+        }
+    }    
 }
 
 struct DateOrZeroVisitor;

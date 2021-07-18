@@ -7,8 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tanoshi-lib = "0.23.0"
-tanoshi-util = "0.1.0"
 scraper = "0.12"
 chrono = {version="0.4", features=["serde"]}
 serde = {version="1", features=["derive"]}
@@ -17,4 +15,10 @@ serde_urlencoded = "0.7"
 serde_yaml="0.8"
 html-escape = "0.2"
 base64 = "0.13"
-fancy-regex = "0.6.0"
+fancy-regex = "0.7.0"
+
+[dependencies.tanoshi-lib]
+path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-lib"
+
+[dependencies.tanoshi-util]
+path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-util"

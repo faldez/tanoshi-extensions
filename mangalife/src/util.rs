@@ -42,6 +42,19 @@ pub struct Dir {
     pub h: bool,
 }
 
+impl Dir {
+    pub fn field_by_name(&self, name: &str) -> i64 {
+        match name {
+            "s" => self.s.parse().unwrap_or(0),
+            "lt" => self.lt,
+            "y" => self.y.parse().unwrap_or(0),
+            "v" => self.v.parse().unwrap_or(0),
+            "vm" => self.vm.parse().unwrap_or(0),
+            _ => 0
+        }
+    }    
+}
+
 struct DateOrZeroVisitor;
 
 impl<'de> de::Visitor<'de> for DateOrZeroVisitor {
