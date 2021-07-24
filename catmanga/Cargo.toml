@@ -16,9 +16,5 @@ serde_yaml="0.8"
 html-escape = "0.2"
 base64 = "0.13"
 fancy-regex = "0.7.0"
-
-[dependencies.tanoshi-lib]
-path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-lib"
-
-[dependencies.tanoshi-util]
-path = "C:\\Users\\fadhlika\\Repos\\tanoshi\\tanoshi-util"
+tanoshi-lib = "0.23.2"
+tanoshi-util = "0.1.1"
