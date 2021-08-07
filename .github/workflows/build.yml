@@ -22,6 +22,10 @@ jobs:
       - name: Build
         run: |
           cargo build --release --target wasm32-wasi
+      - name: Copy Files
+        run: |
+          mkdir -p repo/library
+          cp target/wasm32-wasi/release/*.wasm repo/library
       - name: Generate index.json
         run: tanoshi-cli generate-json
       - name: Commit files
