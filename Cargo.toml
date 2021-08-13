@@ -1,6 +1,2 @@
 [workspace]
-members = [
-    "catmanga",
-    "mangasee",
-    "mangalife"
-]
+members = ["catmanga", "mangasee", "mangalife", "mangadex"]
