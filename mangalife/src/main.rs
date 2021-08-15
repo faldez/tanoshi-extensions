@@ -58,10 +58,7 @@ impl Extension for Mangalife {
     }
 
     fn filters(&self) -> ExtensionResult<Option<Filters>> {
-        match ron::from_str(include_str!("filters.ron")) {
-            Ok(filters) => ExtensionResult::ok(Some(filters)),
-            Err(e) => ExtensionResult::err(format!("error parse filters: {}", e).as_str()),
-        }
+        ExtensionResult::ok(None)
     }
 
     fn get_manga_list(&self, param: Param) -> ExtensionResult<Vec<Manga>> {
