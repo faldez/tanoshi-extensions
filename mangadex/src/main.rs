@@ -1,9 +1,13 @@
 use chrono::NaiveDateTime;
 use data::Result;
+use fancy_regex::Regex;
 use tanoshi_lib::prelude::*;
 use tanoshi_util::*;
 
-use crate::data::{Home, Results, manga::{ListOrder, Order, request}};
+use crate::data::{
+    manga::{request, ListOrder, Order},
+    Home, Results,
+};
 
 mod data;
 
@@ -26,6 +30,19 @@ impl Default for Mangadex {
 }
 
 impl Mangadex {
+    #[must_use]
+    fn remove_bbcode(string: &str) -> String {
+        let regex = Regex::new(r#"\[(\w+)[^]]*](.*?)\[/\1]"#).unwrap();
+
+        let result = string
+            .replace("[list]", "")
+            .replace("[/list]", "")
+            .replace("[*]", "")
+            .replace("[hr]", "\n");
+
+        regex.replace_all(&result, "$2").to_string()
+    }
+
     pub fn map_result_to_manga(result: Result) -> Option<Manga> {
         let mut author = vec![];
         let mut genre = vec![];
@@ -71,7 +88,8 @@ impl Mangadex {
                     .map(|s| s.to_string()),
                 description: attributes
                     .clone()
-                    .and_then(|attr| attr.description.get("en").cloned()),
+                    .and_then(|attr| attr.description.get("en").cloned())
+                    .map(|description| Self::remove_bbcode(&description)),
                 path: format!("/manga/{}", id),
                 cover_url: format!("https://uploads.mangadex.org/covers/{}/{}", id, file_name),
             }),
@@ -180,7 +198,6 @@ impl Extension for Mangadex {
     }
 
     fn get_manga_list(&self, param: Param) -> ExtensionResult<Vec<Manga>> {
-        
         let order = match (param.sort_by, param.sort_order) {
             (Some(sort_by), Some(sort_order)) => {
                 if matches!(sort_by, SortByParam::LastUpdated) {
@@ -191,7 +208,7 @@ impl Extension for Mangadex {
 
                     Some(ListOrder {
                         created_at: None,
-                        updated_at: Some(order)
+                        updated_at: Some(order),
                     })
                 } else {
                     None
