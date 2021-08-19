@@ -52,9 +52,9 @@ impl Dir {
             "y" => self.y.parse().unwrap_or(0),
             "v" => self.v.parse().unwrap_or(0),
             "vm" => self.vm.parse().unwrap_or(0),
-            _ => 0
+            _ => 0,
         }
-    }    
+    }
 }
 
 struct DateOrZeroVisitor;

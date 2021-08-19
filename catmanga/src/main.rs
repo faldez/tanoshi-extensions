@@ -79,7 +79,7 @@ impl Extension for Catmanga {
             version: std::env!("CARGO_PKG_VERSION").to_string(),
             icon: "https://catmanga.org/favicon.png".to_string(),
             need_login: false,
-            languages: vec!["en".to_string()]
+            languages: vec!["en".to_string()],
         }
     }
 
@@ -146,7 +146,11 @@ impl Extension for Catmanga {
             for chapter in s.props.page_props.series.chapters {
                 chapters.push(Chapter {
                     source_id: ID,
-                    title: format!("Chapter {} - {}", chapter.number, chapter.title.unwrap_or("".to_string()).clone()),
+                    title: format!(
+                        "Chapter {} - {}",
+                        chapter.number,
+                        chapter.title.unwrap_or("".to_string()).clone()
+                    ),
                     path: format!("{}/{}", path, chapter.number),
                     number: chapter.number,
                     scanlator: chapter.groups.get(0).unwrap_or(&"".to_string()).to_string(),
@@ -177,9 +181,6 @@ impl Extension for Catmanga {
             error = Some(format!("manga not found"));
         }
 
-        ExtensionResult {
-            data,
-            error,
-        }
+        ExtensionResult { data, error }
     }
 }

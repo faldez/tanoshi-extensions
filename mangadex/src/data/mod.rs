@@ -1,15 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-use self::manga::{AuthorAttributes, ChapterAttributes, CoverAttributes, MangaAttributes, ScanlationGroupAttributes, TagAttributes};
+use self::manga::{
+    AuthorAttributes, ChapterAttributes, CoverAttributes, MangaAttributes,
+    ScanlationGroupAttributes, TagAttributes,
+};
 
 pub mod manga;
 
-#[derive(Debug, Clone,Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Relationship {
     Manga {
         id: String,
-        attributes: Option<MangaAttributes>
+        attributes: Option<MangaAttributes>,
     },
     Chapter {
         id: String,
@@ -40,23 +43,23 @@ pub enum Relationship {
     },
     CustomList {
         id: String,
-    }
+    },
 }
 
-#[derive(Debug, Clone,Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Home {
-    pub base_url: String
+    pub base_url: String,
 }
 
-#[derive(Debug, Clone,Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Result {
     pub result: String,
     pub data: Relationship,
-    pub relationships: Vec<Relationship>
+    pub relationships: Vec<Relationship>,
 }
 
-#[derive(Debug, Clone,Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Results {
     pub results: Vec<Result>,
     pub limit: i64,
