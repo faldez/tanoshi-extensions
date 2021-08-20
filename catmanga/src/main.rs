@@ -28,9 +28,6 @@ impl Catmanga {
         if resp.status > 299 {
             return None;
         }
-        if resp.status > 299 {
-            return None;
-        }
         let html = resp.body;
         let document = Html::parse_document(&html);
         let selector = Selector::parse("script[id=\"__NEXT_DATA__\"]").unwrap();
