@@ -120,7 +120,7 @@ impl Extension for Catmanga {
         }
 
         if data.is_none() {
-            error = Some(format!("manga not found"));
+            error = Some("manga not found".to_string());
         }
 
         ExtensionResult { data, error }
@@ -141,11 +141,11 @@ impl Extension for Catmanga {
                     title: format!(
                         "Chapter {} - {}",
                         chapter.number,
-                        chapter.title.unwrap_or("".to_string()).clone()
+                        chapter.title.unwrap_or_default().clone()
                     ),
                     path: format!("{}/{}", path, chapter.number),
                     number: chapter.number,
-                    scanlator: chapter.groups.get(0).unwrap_or(&"".to_string()).to_string(),
+                    scanlator: chapter.groups.get(0).map(String::clone).unwrap_or_default(),
                     uploaded: dt.naive_local(),
                 });
             }
@@ -153,7 +153,7 @@ impl Extension for Catmanga {
         }
 
         if data.is_none() {
-            error = Some(format!("manga not found"));
+            error = Some("manga not found".to_string());
         }
 
         ExtensionResult { data, error }
@@ -170,7 +170,7 @@ impl Extension for Catmanga {
         }
 
         if data.is_none() {
-            error = Some(format!("manga not found"));
+            error = Some("manga not found".to_string());
         }
 
         ExtensionResult { data, error }

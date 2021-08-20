@@ -17,7 +17,7 @@ register_extension!(Mangalife);
 
 impl Default for Mangalife {
     fn default() -> Self {
-        Mangalife {
+        Self {
             url: "https://manga4life.com".to_string(),
         }
     }
@@ -26,7 +26,7 @@ impl Default for Mangalife {
 impl Mangalife {
     fn find_filter_map_value(
         filter_map: &Option<Filters>,
-        key: &String,
+        key: &str,
         index: usize,
     ) -> Result<FilterValue, Box<dyn std::error::Error>> {
         Ok(filter_map
@@ -256,11 +256,9 @@ impl Extension for Mangalife {
             let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]")
                 .map_err(|e| format!("{:?}", e))
                 .unwrap();
+
             for element in document.select(&selector) {
-                for text in element.text() {
-                    desc = Some(text.to_string());
-                    break;
-                }
+                desc = element.text().next().map(str::to_string);
             }
             desc
         };
@@ -269,6 +267,7 @@ impl Extension for Mangalife {
         let selector = scraper::Selector::parse("a[href^=\"/search/?author=\"]")
             .map_err(|e| format!("{:?}", e))
             .unwrap();
+
         for element in document.select(&selector) {
             for text in element.text() {
                 author.push(text.to_string());
@@ -279,6 +278,7 @@ impl Extension for Mangalife {
         let selector = scraper::Selector::parse("a[href^=\"/search/?genre=\"]")
             .map_err(|e| format!("{:?}", e))
             .unwrap();
+
         for element in document.select(&selector) {
             for text in element.text() {
                 genre.push(String::from(text));
@@ -286,34 +286,37 @@ impl Extension for Mangalife {
         }
 
         let status = {
-            let mut status = None;
             let selector = scraper::Selector::parse("a[href^=\"/search/?status=\"]")
                 .map_err(|e| format!("{:?}", e))
                 .unwrap();
-            for element in document.select(&selector) {
-                status = element.value().attr("href").map(|h| {
+
+            let status = document.select(&selector).next().and_then(|element| {
+                element.value().attr("href").map(|h| {
                     h.strip_prefix("/search/?status=")
                         .map(|s| s.to_string())
-                        .unwrap_or(h.to_string())
-                });
-                break;
-            }
+                        .unwrap_or_else(|| h.to_string())
+                })
+            });
+
             status
         };
 
-        let mut cover_url = "".to_string();
         let selector = scraper::Selector::parse("img[class=\"img-fluid bottom-5\"]")
             .map_err(|e| format!("{:?}", e))
             .unwrap();
-        for element in document.select(&selector) {
-            cover_url = element
-                .value()
-                .attr("src")
-                .map(|src| src.to_string())
-                .ok_or(format!("no src"))
-                .unwrap();
-            break;
-        }
+
+        let cover_url = document
+            .select(&selector)
+            .next()
+            .map(|element| {
+                element
+                    .value()
+                    .attr("src")
+                    .map(str::to_string)
+                    .ok_or_else(|| "no src".to_string())
+                    .unwrap()
+            })
+            .unwrap_or_default();
 
         ExtensionResult::ok(Manga {
             source_id: ID,
@@ -322,7 +325,7 @@ impl Extension for Mangalife {
             author,
             genre,
             status,
-            path: path.clone(),
+            path,
             cover_url,
         })
     }
@@ -372,7 +375,7 @@ impl Extension for Mangalife {
                 "".to_string()
             };
 
-            chapter.insert_str(chapter.len() - 1, ".");
+            chapter.insert(chapter.len() - 1, '.');
             let number = chapter.parse::<f64>().unwrap();
 
             chapters.push(Chapter {
@@ -385,7 +388,7 @@ impl Extension for Mangalife {
                     index,
                 ),
                 uploaded: ch.date,
-                number: number + if index == "" { 0.0 } else { 10000.0 },
+                number: number + if index.is_empty() { 0.0 } else { 10000.0 },
                 scanlator: "".to_string(),
             })
         }
@@ -426,7 +429,7 @@ impl Extension for Mangalife {
         };
 
         let directory = {
-            if cur_chapter.directory == "" {
+            if cur_chapter.directory.is_empty() {
                 "".to_string()
             } else {
                 format!("{}/", cur_chapter.directory)

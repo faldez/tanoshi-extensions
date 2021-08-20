@@ -19,7 +19,7 @@ register_extension!(Mangasee);
 
 impl Default for Mangasee {
     fn default() -> Self {
-        Mangasee {
+        Self {
             url: "https://mangasee123.com".to_string(),
         }
     }
@@ -259,10 +259,7 @@ impl Extension for Mangasee {
                 .map_err(|e| format!("{:?}", e))
                 .unwrap();
             for element in document.select(&selector) {
-                for text in element.text() {
-                    desc = Some(text.to_string());
-                    break;
-                }
+                desc = element.text().next().map(str::to_string);
             }
             desc
         };
@@ -288,34 +285,35 @@ impl Extension for Mangasee {
         }
 
         let status = {
-            let mut status = None;
             let selector = scraper::Selector::parse("a[href^=\"/search/?status=\"]")
                 .map_err(|e| format!("{:?}", e))
                 .unwrap();
-            for element in document.select(&selector) {
-                status = element.value().attr("href").map(|h| {
+
+            document.select(&selector).next().and_then(|element| {
+                element.value().attr("href").map(|h| {
                     h.strip_prefix("/search/?status=")
                         .map(|s| s.to_string())
-                        .unwrap_or(h.to_string())
-                });
-                break;
-            }
-            status
+                        .unwrap_or_else(|| h.to_string())
+                })
+            })
         };
 
-        let mut cover_url = "".to_string();
         let selector = scraper::Selector::parse("img[class=\"img-fluid bottom-5\"]")
             .map_err(|e| format!("{:?}", e))
             .unwrap();
-        for element in document.select(&selector) {
-            cover_url = element
-                .value()
-                .attr("src")
-                .map(|src| src.to_string())
-                .ok_or(format!("no src"))
-                .unwrap();
-            break;
-        }
+
+        let cover_url = document
+            .select(&selector)
+            .next()
+            .map(|element| {
+                element
+                    .value()
+                    .attr("src")
+                    .map(str::to_string)
+                    .ok_or_else(|| "no src".to_string())
+                    .unwrap()
+            })
+            .unwrap_or_default();
 
         ExtensionResult::ok(Manga {
             source_id: ID,
@@ -324,7 +322,7 @@ impl Extension for Mangasee {
             author,
             genre,
             status,
-            path: path.clone(),
+            path,
             cover_url,
         })
     }
@@ -374,7 +372,7 @@ impl Extension for Mangasee {
                 "".to_string()
             };
 
-            chapter.insert_str(chapter.len() - 1, ".");
+            chapter.insert(chapter.len() - 1, '.');
             let number = chapter.parse::<f64>().unwrap();
 
             chapters.push(Chapter {
@@ -387,7 +385,7 @@ impl Extension for Mangasee {
                     index,
                 ),
                 uploaded: ch.date,
-                number: number + if index == "" { 0.0 } else { 10000.0 },
+                number: number + if index.is_empty() { 0.0 } else { 10000.0 },
                 scanlator: "".to_string(),
             })
         }
@@ -428,7 +426,7 @@ impl Extension for Mangasee {
         };
 
         let directory = {
-            if cur_chapter.directory == "" {
+            if cur_chapter.directory.is_empty() {
                 "".to_string()
             } else {
                 format!("{}/", cur_chapter.directory)
