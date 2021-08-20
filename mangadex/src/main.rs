@@ -23,7 +23,7 @@ register_extension!(Mangadex);
 
 impl Default for Mangadex {
     fn default() -> Self {
-        Mangadex {
+        Self {
             url: URL.to_string(),
         }
     }
@@ -84,10 +84,9 @@ impl Mangadex {
                 genre,
                 status: attributes
                     .clone()
-                    .and_then(|attr| attr.status.clone())
+                    .and_then(|attr| attr.status)
                     .map(|s| s.to_string()),
                 description: attributes
-                    .clone()
                     .and_then(|attr| attr.description.get("en").cloned())
                     .map(|description| Self::remove_bbcode(&description)),
                 path: format!("/manga/{}", id),
@@ -100,14 +99,11 @@ impl Mangadex {
     pub fn map_result_to_chapter(result: Result) -> Option<Chapter> {
         let mut scanlator = "".to_string();
         for relationship in result.relationships {
-            match relationship {
-                data::Relationship::ScanlationGroup { attributes, .. } => {
-                    if let Some(name) = attributes.map(|attr| attr.name) {
-                        scanlator = name;
-                    }
+            if let data::Relationship::ScanlationGroup { attributes, .. } = relationship {
+                if let Some(name) = attributes.map(|attr| attr.name) {
+                    scanlator = name;
                 }
-                _ => {}
-            };
+            }
         }
 
         match result.data {

@@ -40,13 +40,10 @@ impl Extension for Nhentai {
             .unwrap_or("popular");
         let page = param.page.unwrap_or(1);
 
-        let url = if let Some(keyword) = param.keyword.and_then(|keyword| {
-            if keyword.is_empty() {
-                None
-            } else {
-                Some(keyword)
-            }
-        }) {
+        let url = if let Some(keyword) = param
+            .keyword
+            .and_then(|keyword| (!keyword.is_empty()).then(|| keyword))
+        {
             let sort = if !sort_by.is_empty() {
                 format!("&sort={}", sort_by)
             } else {
@@ -152,7 +149,7 @@ impl Extension for Nhentai {
         let mut manga = Manga {
             source_id: ID,
             status: Some("ongoing".to_string()),
-            path: path.to_string(),
+            path,
             description: Some("".to_string()),
             ..Default::default()
         };
@@ -216,7 +213,7 @@ impl Extension for Nhentai {
         let chapter = Chapter {
             source_id: ID,
             title: "Chapter 1".to_string(),
-            path: path.to_string(),
+            path,
             number: 1_f64,
             scanlator: group.unwrap_or_else(|| "".to_string()),
             uploaded: uploaded.unwrap_or_else(|| NaiveDateTime::from_timestamp(0, 0)),
