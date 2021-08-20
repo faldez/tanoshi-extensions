@@ -1,10 +1,12 @@
+#[cfg(test)]
+mod test;
 mod util;
 
 use crate::util::*;
 
 use fancy_regex::Regex;
 use tanoshi_lib::prelude::*;
-use tanoshi_util::*;
+use tanoshi_util::http::Request;
 
 pub static ID: i64 = 3;
 pub static NAME: &str = "mangasee";
@@ -23,26 +25,26 @@ impl Default for Mangasee {
     }
 }
 
-impl Mangasee {
-    fn find_filter_map_value(
-        filter_map: &Option<Filters>,
-        key: &String,
-        index: usize,
-    ) -> Result<FilterValue, Box<dyn std::error::Error>> {
-        Ok(filter_map
-            .clone()
-            .ok_or("no filters")?
-            .fields
-            .get(key)
-            .ok_or(format!("no {} filter", key))?
-            .values
-            .clone()
-            .ok_or("no possible values")?
-            .get(index)
-            .ok_or(format!("no value at index {}", index))?
-            .clone())
-    }
-}
+// impl Mangasee {
+//     fn find_filter_map_value(
+//         filter_map: &Option<Filters>,
+//         key: &String,
+//         index: usize,
+//     ) -> Result<FilterValue, Box<dyn std::error::Error>> {
+//         Ok(filter_map
+//             .clone()
+//             .ok_or("no filters")?
+//             .fields
+//             .get(key)
+//             .ok_or(format!("no {} filter", key))?
+//             .values
+//             .clone()
+//             .ok_or("no possible values")?
+//             .get(index)
+//             .ok_or(format!("no value at index {}", index))?
+//             .clone())
+//     }
+// }
 
 impl Extension for Mangasee {
     fn detail(&self) -> Source {
@@ -63,11 +65,7 @@ impl Extension for Mangasee {
 
     fn get_manga_list(&self, param: Param) -> ExtensionResult<Vec<Manga>> {
         let vm_dir = {
-            let resp = http_request(Request {
-                method: "GET".to_string(),
-                url: format!("{}/search", &self.url),
-                headers: None,
-            });
+            let resp = Request::get(format!("{}/search", &self.url).as_str()).call();
             if resp.status > 299 {
                 return ExtensionResult::err("http request error");
             }
@@ -226,11 +224,7 @@ impl Extension for Mangasee {
 
     /// Get the rest of details unreachable from `get_mangas`
     fn get_manga_info(&self, path: String) -> ExtensionResult<Manga> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", &self.url, &path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", &self.url, &path).as_str()).call();
         if resp.status > 299 {
             return ExtensionResult::err("http request error");
         }
@@ -336,11 +330,7 @@ impl Extension for Mangasee {
     }
 
     fn get_chapters(&self, path: String) -> ExtensionResult<Vec<Chapter>> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", &self.url, &path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", &self.url, &path).as_str()).call();
         if resp.status > 299 {
             return ExtensionResult::err("http request error");
         }
@@ -406,11 +396,7 @@ impl Extension for Mangasee {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", &self.url, &path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", &self.url, &path).as_str()).call();
         if resp.status > 299 {
             return ExtensionResult::err("http request error");
         }

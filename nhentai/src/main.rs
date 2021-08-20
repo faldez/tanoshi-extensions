@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use fancy_regex::Regex;
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::*;
-use tanoshi_util::*;
+use tanoshi_util::http::Request;
 
 pub static ID: i64 = 6;
 pub static NAME: &str = "nhentai";
@@ -57,12 +57,10 @@ impl Extension for Nhentai {
             format!("{}/language/english/{}?page={}", URL, sort_by, page)
         };
 
-        let req = Request {
-            method: "GET".to_string(),
-            url,
-            headers: None,
-        };
-        let res = http_request(req);
+        let res = Request::get(&url).call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
 
         let document = Html::parse_document(&res.body);
         let gallery_selector = match Selector::parse(".gallery") {
@@ -120,12 +118,10 @@ impl Extension for Nhentai {
     }
 
     fn get_manga_info(&self, path: String) -> ExtensionResult<Manga> {
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", URL, path),
-            headers: None,
-        };
-        let res = http_request(req);
+        let res = Request::get(format!("{}{}", URL, path).as_str()).call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
 
         let document = Html::parse_document(&res.body);
         let thumbnail_selector = match Selector::parse("#cover > a > img") {
@@ -185,12 +181,10 @@ impl Extension for Nhentai {
     }
 
     fn get_chapters(&self, path: String) -> ExtensionResult<Vec<Chapter>> {
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", URL, path),
-            headers: None,
-        };
-        let res = http_request(req);
+        let res = Request::get(format!("{}{}", URL, path).as_str()).call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
 
         let document = Html::parse_document(&res.body);
         let scanlator_selector = match Selector::parse("a[href^=\"/group/\"] > .name") {
@@ -232,12 +226,10 @@ impl Extension for Nhentai {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", URL, path),
-            headers: None,
-        };
-        let res = http_request(req);
+        let res = Request::get(format!("{}{}", URL, path).as_str()).call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
 
         let document = Html::parse_document(&res.body);
         let page_selector = match Selector::parse(".thumb-container > .gallerythumb > img") {

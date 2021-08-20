@@ -8,7 +8,7 @@ use chrono::Local;
 use data::SingleRoot;
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::*;
-use tanoshi_util::*;
+use tanoshi_util::http::Request;
 
 use crate::data::Root;
 
@@ -24,11 +24,7 @@ register_extension!(Catmanga);
 
 impl Catmanga {
     fn get_data() -> Option<Root> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: URL.to_string(),
-            headers: None,
-        });
+        let resp = Request::get(URL).call();
         if resp.status > 299 {
             return None;
         }
@@ -47,11 +43,7 @@ impl Catmanga {
     }
 
     fn get_single_data(path: String) -> Option<SingleRoot> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", URL, path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", URL, path).as_str()).call();
         if resp.status > 299 {
             return None;
         }

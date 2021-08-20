@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use data::Result;
 use fancy_regex::Regex;
 use tanoshi_lib::prelude::*;
-use tanoshi_util::*;
+use tanoshi_util::http::Request;
 
 use crate::data::{
     manga::{request, ListOrder, Order},
@@ -150,13 +150,11 @@ impl Mangadex {
         match result.data {
             data::Relationship::Chapter { id, attributes } => {
                 if let Some(attr) = attributes {
-                    let req = Request {
-                        method: "GET".to_string(),
-                        url: format!("{}/at-home/server/{}", URL, id,),
-                        headers: None,
-                    };
-
-                    let res = http_request(req);
+                    let res =
+                        Request::get(format!("{}/at-home/server/{}", URL, id,).as_str()).call();
+                    if res.status > 299 {
+                        return None;
+                    }
                     let base_url = match serde_json::from_str::<Home>(&res.body) {
                         Ok(home) => home.base_url,
                         Err(_) => {
@@ -231,17 +229,18 @@ impl Extension for Mangadex {
             ..Default::default()
         };
 
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!(
+        let res = Request::get(
+            format!(
                 "{}/manga?{}",
                 self.url,
                 serde_qs::to_string(&query).unwrap()
-            ),
-            headers: None,
-        };
-
-        let res = http_request(req);
+            )
+            .as_str(),
+        )
+        .call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
         let res: Results = match serde_json::from_str(&res.body) {
             Ok(res) => res,
             Err(e) => {
@@ -266,18 +265,19 @@ impl Extension for Mangadex {
                 "artist".to_string(),
             ],
         };
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!(
+        let res = Request::get(
+            format!(
                 "{}{}?{}",
                 self.url,
                 path,
                 serde_qs::to_string(&query).unwrap()
-            ),
-            headers: None,
-        };
-
-        let res = http_request(req);
+            )
+            .as_str(),
+        )
+        .call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
         let res = serde_json::from_str(&res.body);
         let manga: Manga = match res.map(Self::map_result_to_manga) {
             Ok(Some(res)) => res,
@@ -295,18 +295,19 @@ impl Extension for Mangadex {
             translated_language: vec!["en".to_string()],
             ..Default::default()
         };
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!(
+        let res = Request::get(
+            format!(
                 "{}{}/feed?{}",
                 self.url,
                 path,
                 serde_qs::to_string(&query).unwrap()
-            ),
-            headers: None,
-        };
-
-        let res = http_request(req);
+            )
+            .as_str(),
+        )
+        .call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
         let res: Results = match serde_json::from_str(&res.body) {
             Ok(res) => res,
             Err(e) => {
@@ -324,13 +325,10 @@ impl Extension for Mangadex {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
-        let req = Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", self.url, path,),
-            headers: None,
-        };
-
-        let res = http_request(req);
+        let res = Request::get(format!("{}{}", self.url, path,).as_str()).call();
+        if res.status > 299 {
+            return ExtensionResult::err("http request error");
+        }
         let res = serde_json::from_str(&res.body);
         let pages = match res.map(Self::map_result_to_pages) {
             Ok(Some(pages)) => pages,

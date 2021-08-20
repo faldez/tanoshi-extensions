@@ -4,7 +4,7 @@ use crate::util::*;
 
 use fancy_regex::Regex;
 use tanoshi_lib::prelude::*;
-use tanoshi_util::*;
+use tanoshi_util::http::Request;
 
 pub static ID: i64 = 4;
 pub static NAME: &str = "mangalife";
@@ -63,11 +63,7 @@ impl Extension for Mangalife {
 
     fn get_manga_list(&self, param: Param) -> ExtensionResult<Vec<Manga>> {
         let vm_dir = {
-            let resp = http_request(Request {
-                method: "GET".to_string(),
-                url: format!("{}/search", &self.url),
-                headers: None,
-            });
+            let resp = Request::get(format!("{}/search", &self.url).as_str()).call();
             if resp.status > 299 {
                 return ExtensionResult::err("http request error");
             }
@@ -134,17 +130,14 @@ impl Extension for Mangalife {
         //                         }
         //                     };
 
-        //                     let value = match Self::find_filter_map_value(&filter_map, &key, index)
-        //                     {
+        //                     let value = match Self::find_filter_map_value(&filter_map, &key, index) {
         //                         Ok(value) => value,
         //                         Err(e) => {
         //                             return ExtensionResult::err(format!("error: {}", e).as_str());
         //                         }
         //                     };
 
-        //                     dirs.sort_by_key(|d| {
-        //                         d.field_by_name(&value.clone().value.unwrap_or("".to_string()))
-        //                     });
+        //                     dirs.sort_by_key(|d| d.field_by_name(&value.clone().value.unwrap_or("".to_string())));
         //                     if let Some(related) = value.related {
         //                         if let Some(desc) = related.get("desc") {
         //                             if desc == "true" {
@@ -229,11 +222,7 @@ impl Extension for Mangalife {
 
     /// Get the rest of details unreachable from `get_mangas`
     fn get_manga_info(&self, path: String) -> ExtensionResult<Manga> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", &self.url, &path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", &self.url, &path).as_str()).call();
         if resp.status > 299 {
             return ExtensionResult::err("http request error");
         }
@@ -339,11 +328,7 @@ impl Extension for Mangalife {
     }
 
     fn get_chapters(&self, path: String) -> ExtensionResult<Vec<Chapter>> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", &self.url, &path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", &self.url, &path).as_str()).call();
         if resp.status > 299 {
             return ExtensionResult::err("http request error");
         }
@@ -409,11 +394,7 @@ impl Extension for Mangalife {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
-        let resp = http_request(Request {
-            method: "GET".to_string(),
-            url: format!("{}{}", &self.url, &path),
-            headers: None,
-        });
+        let resp = Request::get(format!("{}{}", &self.url, &path).as_str()).call();
         if resp.status > 299 {
             return ExtensionResult::err("http request error");
         }
@@ -444,7 +425,6 @@ impl Extension for Mangalife {
             mat.unwrap().as_str().to_string()
         };
 
-        // https://{{vm.CurPathName}}/manga/Sono-Bisque-Doll-Wa-Koi-Wo-Suru/{{vm.CurChapter.Directory == '' ? '' : vm.CurChapter.Directory+'/'}}{{vm.ChapterImage(vm.CurChapter.Chapter)}}-{{vm.PageImage(Page)}}.png
         let directory = {
             if cur_chapter.directory == "" {
                 "".to_string()
@@ -453,17 +433,6 @@ impl Extension for Mangalife {
             }
         };
         let chapter_image = {
-            /*
-            vm.ChapterImage = function(ChapterString){
-                var Chapter = ChapterString.slice(1,-1);
-                var Odd = ChapterString[ChapterString.length -1];
-                if(Odd == 0){
-                    return Chapter;
-                }else{
-                    return Chapter + "." + Odd;
-                }
-            };
-            */
             let chapter = cur_chapter.chapter[1..cur_chapter.chapter.len() - 1].to_string();
             let odd = cur_chapter.chapter[cur_chapter.chapter.len() - 1..].to_string();
             if odd == "0" {
@@ -477,12 +446,6 @@ impl Extension for Mangalife {
         let mut pages = Vec::new();
         for i in 1..page + 1 {
             let page_image = {
-                /*
-                vm.PageImage = function(PageString){
-                    var s = "000" + PageString;
-                    return s.substr(s.length - 3);
-                }
-                */
                 let s = format!("000{}", i);
                 s[(s.len() - 3)..].to_string()
             };
