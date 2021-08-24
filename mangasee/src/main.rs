@@ -46,6 +46,31 @@ impl Default for Mangasee {
 //     }
 // }
 
+macro_rules! create_selector {
+    ($arg:literal) => {
+        match scraper::Selector::parse($arg).map_err(|e| format!("{:?}", e)) {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(&e);
+            }
+        };
+    };
+}
+
+macro_rules! regex_find {
+    ($arg:literal, $text:ident) => {
+        match Regex::new($arg).map(|re| re.find(&$text)) {
+            Ok(Ok(Some(mat))) => mat.as_str().to_string(),
+            Ok(Ok(None)) => {
+                return ExtensionResult::err("regex not found anything");
+            }
+            Ok(Err(e)) | Err(e) => {
+                return ExtensionResult::err(format!("error regex: {}", e).as_str());
+            }
+        };
+    };
+}
+
 impl Extension for Mangasee {
     fn detail(&self) -> Source {
         Source {
@@ -83,7 +108,12 @@ impl Extension for Mangasee {
             }
         };
 
-        let mut dirs = serde_json::from_str::<Vec<Dir>>(&vm_dir).unwrap();
+        let mut dirs = match serde_json::from_str::<Vec<Dir>>(&vm_dir) {
+            Ok(dirs) => dirs,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse json: {}", e).as_str());
+            }
+        };
 
         // let filter_map: Option<Filters> = ron::from_str(include_str!("filters.ron")).ok();
         // if let Some(filters) = param.filters {
@@ -186,8 +216,8 @@ impl Extension for Mangasee {
         match sort_by {
             SortByParam::Views => {
                 dirs.sort_by(|a, b| {
-                    let v_a = a.v.parse::<i32>().unwrap();
-                    let v_b = b.v.parse::<i32>().unwrap();
+                    let v_a = a.v.parse::<i32>().unwrap_or_default();
+                    let v_b = b.v.parse::<i32>().unwrap_or_default();
                     match sort_order {
                         SortOrderParam::Asc => v_a.cmp(&v_b),
                         SortOrderParam::Desc => v_b.cmp(&v_a),
@@ -234,10 +264,7 @@ impl Extension for Mangasee {
 
         let title = {
             let mut title = None;
-            let selector =
-                scraper::Selector::parse("li[class=\"list-group-item d-none d-sm-block\"] h1")
-                    .map_err(|e| format!("{:?}", e))
-                    .unwrap();
+            let selector = create_selector!("li[class=\"list-group-item d-none d-sm-block\"] h1");
             for element in document.select(&selector) {
                 for text in element.text() {
                     if !text.is_empty() {
@@ -255,9 +282,7 @@ impl Extension for Mangasee {
 
         let description = {
             let mut desc = None;
-            let selector = scraper::Selector::parse("div[class=\"top-5 Content\"]")
-                .map_err(|e| format!("{:?}", e))
-                .unwrap();
+            let selector = create_selector!("div[class=\"top-5 Content\"]");
             for element in document.select(&selector) {
                 desc = element.text().next().map(str::to_string);
             }
@@ -265,9 +290,7 @@ impl Extension for Mangasee {
         };
 
         let mut author = vec![];
-        let selector = scraper::Selector::parse("a[href^=\"/search/?author=\"]")
-            .map_err(|e| format!("{:?}", e))
-            .unwrap();
+        let selector = create_selector!("a[href^=\"/search/?author=\"]");
         for element in document.select(&selector) {
             for text in element.text() {
                 author.push(text.to_string());
@@ -275,9 +298,7 @@ impl Extension for Mangasee {
         }
 
         let mut genre = vec![];
-        let selector = scraper::Selector::parse("a[href^=\"/search/?genre=\"]")
-            .map_err(|e| format!("{:?}", e))
-            .unwrap();
+        let selector = create_selector!("a[href^=\"/search/?genre=\"]");
         for element in document.select(&selector) {
             for text in element.text() {
                 genre.push(String::from(text));
@@ -285,9 +306,7 @@ impl Extension for Mangasee {
         }
 
         let status = {
-            let selector = scraper::Selector::parse("a[href^=\"/search/?status=\"]")
-                .map_err(|e| format!("{:?}", e))
-                .unwrap();
+            let selector = create_selector!("a[href^=\"/search/?status=\"]");
 
             document.select(&selector).next().and_then(|element| {
                 element.value().attr("href").map(|h| {
@@ -298,21 +317,12 @@ impl Extension for Mangasee {
             })
         };
 
-        let selector = scraper::Selector::parse("img[class=\"img-fluid bottom-5\"]")
-            .map_err(|e| format!("{:?}", e))
-            .unwrap();
+        let selector = create_selector!("img[class=\"img-fluid bottom-5\"]");
 
         let cover_url = document
             .select(&selector)
             .next()
-            .map(|element| {
-                element
-                    .value()
-                    .attr("src")
-                    .map(str::to_string)
-                    .ok_or_else(|| "no src".to_string())
-                    .unwrap()
-            })
+            .and_then(|element| element.value().attr("src").map(str::to_string))
             .unwrap_or_default();
 
         ExtensionResult::ok(Manga {
@@ -334,21 +344,9 @@ impl Extension for Mangasee {
         }
         let html = resp.body;
 
-        let index_name = {
-            let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#)
-                .unwrap()
-                .find(&html)
-                .unwrap();
-            mat.unwrap().as_str().to_string()
-        };
+        let index_name = regex_find!(r#"(?<=vm\.IndexName = ").*(?=";)"#, html);
 
-        let vm_dir = {
-            let mat = Regex::new(r#"(?<=vm\.Chapters = )\[.*\](?=;)"#)
-                .unwrap()
-                .find(&html)
-                .unwrap();
-            mat.unwrap().as_str().to_string()
-        };
+        let vm_dir = regex_find!(r#"(?<=vm\.Chapters = )\[.*\](?=;)"#, html);
 
         let ch_dirs: Vec<DirChapter> = match serde_json::from_str::<Vec<DirChapter>>(&vm_dir) {
             Ok(dirs) => dirs
@@ -373,7 +371,7 @@ impl Extension for Mangasee {
             };
 
             chapter.insert(chapter.len() - 1, '.');
-            let number = chapter.parse::<f64>().unwrap();
+            let number = chapter.parse::<f64>().unwrap_or_default();
 
             chapters.push(Chapter {
                 source_id: ID,
@@ -400,30 +398,21 @@ impl Extension for Mangasee {
         }
         let html = resp.body;
 
-        let index_name = {
-            let mat = Regex::new(r#"(?<=vm\.IndexName = ").*(?=";)"#)
-                .unwrap()
-                .find(&html)
-                .unwrap();
-            mat.unwrap().as_str().to_string()
-        };
+        let index_name = regex_find!(r#"(?<=vm\.IndexName = ").*(?=";)"#, html);
 
         let cur_chapter = {
-            let mat = Regex::new(r"(?<=vm\.CurChapter = ){.*}(?=;)")
-                .unwrap()
-                .find(&html)
-                .unwrap();
-            let cur_chapter_str = mat.unwrap().as_str();
-            serde_json::from_str::<CurChapter>(cur_chapter_str).unwrap()
+            let mat = regex_find!(r"(?<=vm\.CurChapter = ){.*}(?=;)", html);
+            match serde_json::from_str::<CurChapter>(&mat) {
+                Ok(cur_chater) => cur_chater,
+                Err(e) => {
+                    return ExtensionResult::err(
+                        format!("failed to deserialize chapter: {}", e).as_str(),
+                    );
+                }
+            }
         };
 
-        let cur_path_name = {
-            let mat = Regex::new(r#"(?<=vm\.CurPathName = ").*(?=";)"#)
-                .unwrap()
-                .find(&html)
-                .unwrap();
-            mat.unwrap().as_str().to_string()
-        };
+        let cur_path_name = regex_find!(r#"(?<=vm\.CurPathName = ").*(?=";)"#, html);
 
         let directory = {
             if cur_chapter.directory.is_empty() {
