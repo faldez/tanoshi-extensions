@@ -1,5 +1,5 @@
 use chrono::NaiveDateTime;
-use data::Result;
+use data::{Relationship, Result};
 use fancy_regex::Regex;
 use tanoshi_lib::prelude::*;
 use tanoshi_util::http::Request;
@@ -43,6 +43,19 @@ impl Mangadex {
         regex.replace_all(&result, "$2").to_string()
     }
 
+    pub fn map_tags_to_string(relationships: Vec<Relationship>) -> Vec<String> {
+        let mut tags = vec![];
+        for relationship in relationships {
+            if let data::Relationship::Tag { attributes, .. } = relationship {
+                if let Some(name) = attributes.and_then(|attr| attr.name.get("en").cloned()) {
+                    tags.push(name.to_owned());
+                }
+            };
+        }
+
+        tags
+    }
+
     pub fn map_result_to_manga(result: Result) -> Option<Manga> {
         let mut author = vec![];
         let mut genre = vec![];
@@ -81,7 +94,11 @@ impl Mangadex {
                     .and_then(|attr| attr.title.get("en").cloned())
                     .unwrap_or_else(|| "".to_string()),
                 author,
-                genre,
+                genre: attributes
+                    .clone()
+                    .map(|attr| attr.tags)
+                    .map(Self::map_tags_to_string)
+                    .unwrap_or_else(|| vec![]),
                 status: attributes
                     .clone()
                     .and_then(|attr| attr.status)
@@ -334,5 +351,63 @@ impl Extension for Mangadex {
         };
 
         ExtensionResult::ok(pages)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_manga_list() {
+        let mangasee = Mangadex::default();
+
+        let res = mangasee.get_manga_list(Param::default());
+
+        assert_eq!(res.data.is_some(), true);
+        assert_eq!(res.error.is_none(), true);
+    }
+
+    #[test]
+    fn test_get_manga_list_latest() {
+        let mangasee = Mangadex::default();
+
+        let res = mangasee.get_manga_list(Param::default());
+
+        assert_eq!(res.data.is_some(), true);
+        assert_eq!(res.error.is_none(), true);
+    }
+
+    #[test]
+    fn test_get_manga() {
+        let mangasee = Mangadex::default();
+
+        let res =
+            mangasee.get_manga_info("/manga/77bee52c-d2d6-44ad-a33a-1734c1fe696a".to_string());
+
+        assert_eq!(res.data.is_some(), true);
+        assert_eq!(res.error.is_none(), true);
+
+        if let Some(manga) = res.data {
+            assert_eq!(manga.title, "Kage no Jitsuryokusha ni Naritakute");
+            assert_eq!(manga.cover_url, "https://uploads.mangadex.org/covers/77bee52c-d2d6-44ad-a33a-1734c1fe696a/2273a826-f8a6-45f4-ae68-7acc714934d1.jpg");
+            assert_eq!(
+                manga.genre,
+                vec![
+                    "Reincarnation",
+                    "Action",
+                    "Demons",
+                    "Comedy",
+                    "Martial Arts",
+                    "Magic",
+                    "Harem",
+                    "Isekai",
+                    "Drama",
+                    "School Life",
+                    "Fantasy",
+                    "Adaptation"
+                ]
+            );
+        }
     }
 }
