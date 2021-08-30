@@ -205,7 +205,7 @@ impl Extension for Nhentai {
             uploaded
                 .value()
                 .attr("datetime")
-                .and_then(|t| NaiveDateTime::parse_from_str(t, "%Y-%m-%dT%H:%M:%S.f%z").ok())
+                .and_then(|t| NaiveDateTime::parse_from_str(t, "%Y-%m-%dT%H:%M:%S%.f%z").ok())
         } else {
             None
         };
@@ -248,5 +248,32 @@ impl Extension for Nhentai {
         }
 
         ExtensionResult::ok(pages)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_chapters() {
+        let nhentai = Nhentai::default();
+
+        let res = nhentai.get_chapters("/g/370978/".to_string());
+
+        assert_eq!(res.data.is_some(), true);
+        assert_eq!(res.error.is_none(), true);
+
+        if let Some(data) = res.data {
+            if let Some(data) = data.get(0) {
+                assert_eq!(
+                    Ok(data.uploaded),
+                    NaiveDateTime::parse_from_str(
+                        "2021-08-28T21:50:59.973874+00:00",
+                        "%Y-%m-%dT%H:%M:%S%.f%z"
+                    )
+                );
+            }
+        }
     }
 }
