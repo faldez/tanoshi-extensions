@@ -261,8 +261,8 @@ mod test {
 
         let res = nhentai.get_chapters("/g/370978/".to_string());
 
-        assert_eq!(res.data.is_some(), true);
-        assert_eq!(res.error.is_none(), true);
+        assert!(res.data.is_some());
+        assert!(res.error.is_none());
 
         if let Some(data) = res.data {
             if let Some(data) = data.get(0) {
