@@ -1,6 +1,6 @@
 [package]
 name = "mangadex"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
 edition = "2018"
 
@@ -16,6 +16,7 @@ fancy-regex = "0.7.0"
 ron = "0.6.4"
 tanoshi-lib = "0.24"
 tanoshi-util = "0.2.1"
+void = "1"
 
 [features]
 test = ["tanoshi-util/__test"]

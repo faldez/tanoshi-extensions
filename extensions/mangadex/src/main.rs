@@ -11,21 +11,19 @@ use crate::data::{
 
 mod data;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 pub static ID: i64 = 2;
 pub static NAME: &str = "mangadex";
 pub static URL: &str = "https://api.mangadex.org";
 
-pub struct Mangadex {
-    url: String,
-}
+pub struct Mangadex;
 
 register_extension!(Mangadex);
 
 impl Default for Mangadex {
     fn default() -> Self {
-        Self {
-            url: URL.to_string(),
-        }
+        Self {}
     }
 }
 
@@ -103,10 +101,11 @@ impl Mangadex {
                     .clone()
                     .and_then(|attr| attr.status)
                     .map(|s| s.to_string()),
-                description: attributes
-                    .and_then(|attr| attr.description.get("en").cloned())
-                    .map(|description| Self::remove_bbcode(&description)),
+                // description: attributes
+                //     .and_then(|attr| attr.description.get("en").cloned())
+                //     .map(|description| Self::remove_bbcode(&description)),
                 path: format!("/manga/{}", id),
+                description: None,
                 cover_url: format!("https://uploads.mangadex.org/covers/{}/{}", id, file_name),
             }),
             _ => None,
@@ -196,7 +195,7 @@ impl Extension for Mangadex {
         Source {
             id: ID,
             name: NAME.to_string(),
-            url: self.url.clone(),
+            url: URL.to_string(),
             version: std::env!("PLUGIN_VERSION").to_string(),
             icon: "https://api.mangadex.org/favicon.ico".to_string(),
             need_login: false,
@@ -243,12 +242,7 @@ impl Extension for Mangadex {
         };
 
         let res = Request::get(
-            format!(
-                "{}/manga?{}",
-                self.url,
-                serde_qs::to_string(&query).unwrap()
-            )
-            .as_str(),
+            format!("{}/manga?{}", URL, serde_qs::to_string(&query).unwrap()).as_str(),
         )
         .call();
         if res.status > 299 {
@@ -279,13 +273,7 @@ impl Extension for Mangadex {
             ],
         };
         let res = Request::get(
-            format!(
-                "{}{}?{}",
-                self.url,
-                path,
-                serde_qs::to_string(&query).unwrap()
-            )
-            .as_str(),
+            format!("{}{}?{}", URL, path, serde_qs::to_string(&query).unwrap()).as_str(),
         )
         .call();
         if res.status > 299 {
@@ -311,7 +299,7 @@ impl Extension for Mangadex {
         let res = Request::get(
             format!(
                 "{}{}/feed?{}",
-                self.url,
+                URL,
                 path,
                 serde_qs::to_string(&query).unwrap()
             )
@@ -338,7 +326,7 @@ impl Extension for Mangadex {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
-        let res = Request::get(format!("{}{}", self.url, path,).as_str()).call();
+        let res = Request::get(format!("{}{}", URL, path,).as_str()).call();
         if res.status > 299 {
             return ExtensionResult::err("http request error");
         }
@@ -360,9 +348,9 @@ mod test {
 
     #[test]
     fn test_get_manga_list() {
-        let mangasee = Mangadex::default();
+        let mangadex = Mangadex::default();
 
-        let res = mangasee.get_manga_list(Param::default());
+        let res = mangadex.get_manga_list(Param::default());
 
         assert_eq!(res.data.is_some(), true);
         assert_eq!(res.error.is_none(), true);
@@ -370,20 +358,24 @@ mod test {
 
     #[test]
     fn test_get_manga_list_latest() {
-        let mangasee = Mangadex::default();
+        let mangadex = Mangadex::default();
 
-        let res = mangasee.get_manga_list(Param::default());
+        let res = mangadex.get_manga_list(Param {
+            sort_by: Some(SortByParam::LastUpdated),
+            sort_order: Some(SortOrderParam::Desc),
+            ..Default::default()
+        });
 
-        assert_eq!(res.data.is_some(), true);
-        assert_eq!(res.error.is_none(), true);
+        assert!(res.error.is_none(), "should not error but {:?}", res.error);
+        assert!(res.data.is_some());
     }
 
     #[test]
     fn test_get_manga() {
-        let mangasee = Mangadex::default();
+        let mangadex = Mangadex::default();
 
         let res =
-            mangasee.get_manga_info("/manga/77bee52c-d2d6-44ad-a33a-1734c1fe696a".to_string());
+            mangadex.get_manga_info("/manga/77bee52c-d2d6-44ad-a33a-1734c1fe696a".to_string());
 
         assert_eq!(res.data.is_some(), true);
         assert_eq!(res.error.is_none(), true);

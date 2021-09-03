@@ -1,9 +1,14 @@
 use std::{collections::HashMap, fmt::Display};
 
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::fmt;
+use std::marker::PhantomData;
+use std::str::FromStr;
+use void::Void;
 
 use super::Relationship;
+use serde::de::{self, MapAccess, Visitor};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "UPPERCASE")]
@@ -65,12 +70,54 @@ pub struct ListOrder {
     pub updated_at: Option<Order>,
 }
 
-pub type LocalizedString = HashMap<String, String>;
+pub type Map = HashMap<String, String>;
+
+fn sequence_or_map<'de, D>(deserializer: D) -> Result<Map, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    // This is a Visitor that forwards string types to T's `FromStr` impl and
+    // forwards map types to T's `Deserialize` impl. The `PhantomData` is to
+    // keep the compiler from complaining about T being an unused generic type
+    // parameter. We need T in order to know the Value type for the Visitor
+    // impl.
+    struct SequenceOrMap<Map>(PhantomData<fn() -> Map>);
+
+    impl<'de> Visitor<'de> for SequenceOrMap<Map> {
+        type Value = Map;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("sequence or map")
+        }
+
+        fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
+        where
+            A: de::SeqAccess<'de>,
+        {
+            Ok(HashMap::new())
+        }
+
+        fn visit_map<M>(self, map: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            // `MapAccessDeserializer` is a wrapper that turns a `MapAccess`
+            // into a `Deserializer`, allowing it to be used as the input to T's
+            // `Deserialize` implementation. T then deserializes itself using
+            // the entries from the map visitor.
+            Deserialize::deserialize(de::value::MapAccessDeserializer::new(map))
+        }
+    }
+
+    deserializer.deserialize_any(SequenceOrMap(PhantomData))
+}
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct TagAttributes {
-    pub name: LocalizedString,
-    pub description: Vec<LocalizedString>,
+    #[serde(deserialize_with = "sequence_or_map")]
+    pub name: Map,
+    #[serde(deserialize_with = "sequence_or_map")]
+    pub description: Map,
     pub group: String,
     pub version: i64,
 }
@@ -78,12 +125,15 @@ pub struct TagAttributes {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MangaAttributes {
-    pub title: LocalizedString,
-    pub alt_titles: Vec<LocalizedString>,
-    pub description: LocalizedString,
+    #[serde(deserialize_with = "sequence_or_map")]
+    pub title: Map,
+    pub alt_titles: Vec<Map>,
+    #[serde(deserialize_with = "sequence_or_map")]
+    pub description: Map,
     #[serde(default = "bool::default")]
     pub is_locked: bool,
-    // pub links: HashMap<String, String>,
+    #[serde(deserialize_with = "sequence_or_map")]
+    pub links: Map,
     pub original_language: String,
     pub last_volume: Option<String>,
     pub last_chapter: Option<String>,
@@ -102,7 +152,8 @@ pub struct MangaAttributes {
 pub struct AuthorAttributes {
     pub name: String,
     pub image_url: Option<String>,
-    // pub biography: HashMap<String, String>,
+    #[serde(deserialize_with = "sequence_or_map")]
+    pub biography: Map,
     pub version: i64,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
