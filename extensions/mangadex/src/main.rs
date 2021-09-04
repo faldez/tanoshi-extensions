@@ -101,11 +101,10 @@ impl Mangadex {
                     .clone()
                     .and_then(|attr| attr.status)
                     .map(|s| s.to_string()),
-                // description: attributes
-                //     .and_then(|attr| attr.description.get("en").cloned())
-                //     .map(|description| Self::remove_bbcode(&description)),
+                description: attributes
+                    .and_then(|attr| attr.description.get("en").cloned())
+                    .map(|description| Self::remove_bbcode(&description)),
                 path: format!("/manga/{}", id),
-                description: None,
                 cover_url: format!("https://uploads.mangadex.org/covers/{}/{}", id, file_name),
             }),
             _ => None,
@@ -294,6 +293,7 @@ impl Extension for Mangadex {
         let query = request::MangaFeed {
             limit: 500,
             translated_language: vec!["en".to_string()],
+            includes: vec!["scanlation_group".to_string()],
             ..Default::default()
         };
         let res = Request::get(
