@@ -132,8 +132,7 @@ pub struct MangaAttributes {
     pub description: Map,
     #[serde(default = "bool::default")]
     pub is_locked: bool,
-    #[serde(deserialize_with = "sequence_or_map")]
-    pub links: Map,
+    pub links: Option<Map>,
     pub original_language: String,
     pub last_volume: Option<String>,
     pub last_chapter: Option<String>,
