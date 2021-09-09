@@ -89,7 +89,15 @@ impl Mangadex {
                 source_id: ID,
                 title: attributes
                     .clone()
-                    .and_then(|attr| attr.title.get("en").cloned())
+                    .and_then(|attr| {
+                        if let Some(title) = attr.title.get("en").cloned() {
+                            Some(title)
+                        } else if let Some(title) = attr.title.get("ja").cloned() {
+                            Some(title)
+                        } else {
+                            None
+                        }
+                    })
                     .unwrap_or_else(|| "".to_string()),
                 author,
                 genre: attributes
