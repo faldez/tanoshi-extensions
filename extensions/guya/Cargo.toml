@@ -1,0 +1,15 @@
+[package]
+name = "guya"
+version = "0.1.0"
+authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tanoshi-lib = "0.25.1"
+tanoshi-util = "0.3.0"
+
+[features]
+test = ["tanoshi-util/__test"]
