@@ -1,8 +1,13 @@
-name: Check
+name: Check and Test
 
 on:
   pull_request:
+    paths:
+      - extensions/**
+  push:
     branches: [master]
+    paths:
+      - extensions/**
 
 jobs:
   fmt:
@@ -21,3 +26,16 @@ jobs:
         with:
           command: fmt
           args: --all -- --check
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: default
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --features test
