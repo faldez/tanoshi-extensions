@@ -24,7 +24,7 @@ impl Extension for Guya {
             name: NAME.to_string(),
             url: URL.to_string(),
             version: Version::from_str(env!("CARGO_PKG_VERSION")).unwrap_or_default(),
-            lib_version: Version::from_str(tanoshi_lib::TANOSHI_LIB_VERSION).unwrap_or_default(),
+            lib_version: tanoshi_lib::VERSION.to_owned(),
             icon: "https://guya.moe/static/logo_small.png".to_string(),
             need_login: false,
             languages: vec!["en".to_string()],
