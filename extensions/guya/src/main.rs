@@ -136,6 +136,7 @@ impl Extension for Guya {
     }
 
     fn get_pages(&self, path: String) -> ExtensionResult<Vec<String>> {
+        //https://guya.moe/media/manga/Kaguya-Wants-To-Be-Confessed-To/chapters/0236_5ts2bsnf/7/02.png?v2
         let split: Vec<_> = path.rsplitn(2, '/').collect();
         let resp = Request::get(format!("{}{}", URL, split[1]).as_str()).call();
         if resp.status > 299 {
@@ -152,8 +153,26 @@ impl Extension for Guya {
         let pages = series
             .chapters
             .get(split[0])
-            .and_then(|chapter| chapter.groups.iter().next().map(|(_, pages)| pages.clone()))
+            .and_then(|chapter| {
+                chapter
+                    .groups
+                    .iter()
+                    .next()
+                    .map(|(group, pages)| (chapter.folder.clone(), group, pages))
+            })
+            .map(|(folder, group, pages)| {
+                pages
+                    .iter()
+                    .map(|page| {
+                        format!(
+                            "{}/media/manga/Kaguya-Wants-To-Be-Confessed-To/chapters/{}/{}/{}",
+                            URL, folder, group, page
+                        )
+                    })
+                    .collect()
+            })
             .unwrap_or(vec![]);
+
         ExtensionResult::ok(pages)
     }
 }
