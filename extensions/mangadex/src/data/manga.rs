@@ -90,7 +90,7 @@ where
             formatter.write_str("sequence or map")
         }
 
-        fn visit_seq<A>(self, seq: A) -> Result<Self::Value, A::Error>
+        fn visit_seq<A>(self, _seq: A) -> Result<Self::Value, A::Error>
         where
             A: de::SeqAccess<'de>,
         {
@@ -132,7 +132,7 @@ pub struct MangaAttributes {
     pub description: Map,
     #[serde(default = "bool::default")]
     pub is_locked: bool,
-    pub links: Option<Map>,
+    // pub links: Option<Map>,
     pub original_language: String,
     pub last_volume: Option<String>,
     pub last_chapter: Option<String>,
