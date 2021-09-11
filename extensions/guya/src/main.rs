@@ -165,8 +165,8 @@ impl Extension for Guya {
                     .iter()
                     .map(|page| {
                         format!(
-                            "{}/media/manga/Kaguya-Wants-To-Be-Confessed-To/chapters/{}/{}/{}",
-                            URL, folder, group, page
+                            "{}/media/manga/{}/chapters/{}/{}/{}",
+                            URL, series.slug, folder, group, page
                         )
                     })
                     .collect()
