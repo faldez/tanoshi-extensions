@@ -13,11 +13,13 @@ pub enum Relationship {
     Manga {
         id: String,
         attributes: Option<MangaAttributes>,
+        #[serde(default)]
         relationships: Vec<Relationship>,
     },
     Chapter {
         id: String,
         attributes: Option<ChapterAttributes>,
+        #[serde(default)]
         relationships: Vec<Relationship>,
     },
     CoverArt {
@@ -39,6 +41,7 @@ pub enum Relationship {
     Tag {
         id: String,
         attributes: Option<TagAttributes>,
+        #[serde(default)]
         relationships: Vec<Relationship>,
     },
     User {

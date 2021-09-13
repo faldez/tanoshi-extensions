@@ -422,4 +422,14 @@ mod test {
             );
         }
     }
+
+    #[test]
+    fn test_get_chapters() {
+        let mangadex = Mangadex::default();
+
+        let res = mangadex.get_chapters("/manga/77bee52c-d2d6-44ad-a33a-1734c1fe696a".to_string());
+
+        assert_eq!(res.error, None, "should be None, but got {:?}", res.error);
+        assert!(res.data.is_some());
+    }
 }
