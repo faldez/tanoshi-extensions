@@ -350,8 +350,8 @@ impl Extension for Mangadex {
         if res.status > 299 {
             return ExtensionResult::err("http request error");
         }
-        let res = serde_json::from_str(&res.body);
-        let pages = match res.map(Self::map_result_to_pages) {
+        let res = serde_json::from_str::<SingleResult>(&res.body);
+        let pages = match res.map(|res| Self::map_result_to_pages(res.data)) {
             Ok(Some(pages)) => pages,
             Ok(_) | Err(_) => {
                 return ExtensionResult::err("failed to parse pages");
@@ -428,6 +428,16 @@ mod test {
         let mangadex = Mangadex::default();
 
         let res = mangadex.get_chapters("/manga/77bee52c-d2d6-44ad-a33a-1734c1fe696a".to_string());
+
+        assert_eq!(res.error, None, "should be None, but got {:?}", res.error);
+        assert!(res.data.is_some());
+    }
+
+    #[test]
+    fn test_get_pages() {
+        let mangadex = Mangadex::default();
+
+        let res = mangadex.get_pages("/chapter/11a3c024-dcba-4f0c-9ea1-4361302775de".to_string());
 
         assert_eq!(res.error, None, "should be None, but got {:?}", res.error);
         assert!(res.data.is_some());
