@@ -1,12 +1,12 @@
 use chrono::NaiveDateTime;
-use data::{Relationship, Result};
+use data::Relationship;
 use fancy_regex::Regex;
 use tanoshi_lib::prelude::*;
 use tanoshi_util::http::Request;
 
 use crate::data::{
     manga::{request, ListOrder, Order},
-    Home, Results,
+    Home, Results, SingleResult,
 };
 
 mod data;
@@ -54,83 +54,95 @@ impl Mangadex {
         tags
     }
 
-    pub fn map_result_to_manga(result: Result) -> Option<Manga> {
-        let mut author = vec![];
-        let mut genre = vec![];
-        let mut file_name = "".to_string();
-        for relationship in result.relationships {
-            match relationship {
-                data::Relationship::Author { attributes, .. } => {
-                    if let Some(name) = attributes.map(|attr| attr.name) {
-                        author.push(name);
-                    }
-                }
-                data::Relationship::Artist { attributes, .. } => {
-                    if let Some(name) = attributes.map(|attr| attr.name) {
-                        author.push(name);
-                    }
-                }
-                data::Relationship::Tag { attributes, .. } => {
-                    if let Some(name) = attributes.and_then(|attr| attr.name.get("en").cloned()) {
-                        genre.push(name.to_owned());
-                    }
-                }
-                data::Relationship::CoverArt { attributes, .. } => {
-                    if let Some(name) = attributes.map(|attr| attr.file_name) {
-                        file_name = name;
-                    }
-                }
-                _ => {}
-            };
-        }
-
-        match result.data {
-            data::Relationship::Manga { id, attributes } => Some(Manga {
-                source_id: ID,
-                title: attributes
-                    .clone()
-                    .and_then(|attr| {
-                        if let Some(title) = attr.title.get("en").cloned() {
-                            Some(title)
-                        } else if let Some(title) = attr.title.get("ja").cloned() {
-                            Some(title)
-                        } else {
-                            None
+    pub fn map_result_to_manga(data: Relationship) -> Option<Manga> {
+        match data {
+            data::Relationship::Manga {
+                id,
+                attributes,
+                relationships,
+            } => {
+                let mut author = vec![];
+                let mut genre = vec![];
+                let mut file_name = "".to_string();
+                for relationship in relationships {
+                    match relationship {
+                        data::Relationship::Author { attributes, .. } => {
+                            if let Some(name) = attributes.map(|attr| attr.name) {
+                                author.push(name);
+                            }
                         }
-                    })
-                    .unwrap_or_else(|| "".to_string()),
-                author,
-                genre: attributes
-                    .clone()
-                    .map(|attr| attr.tags)
-                    .map(Self::map_tags_to_string)
-                    .unwrap_or_else(|| vec![]),
-                status: attributes
-                    .clone()
-                    .and_then(|attr| attr.status)
-                    .map(|s| s.to_string()),
-                description: attributes
-                    .and_then(|attr| attr.description.get("en").cloned())
-                    .map(|description| Self::remove_bbcode(&description)),
-                path: format!("/manga/{}", id),
-                cover_url: format!("https://uploads.mangadex.org/covers/{}/{}", id, file_name),
-            }),
+                        data::Relationship::Artist { attributes, .. } => {
+                            if let Some(name) = attributes.map(|attr| attr.name) {
+                                author.push(name);
+                            }
+                        }
+                        data::Relationship::Tag { attributes, .. } => {
+                            if let Some(name) =
+                                attributes.and_then(|attr| attr.name.get("en").cloned())
+                            {
+                                genre.push(name.to_owned());
+                            }
+                        }
+                        data::Relationship::CoverArt { attributes, .. } => {
+                            if let Some(name) = attributes.map(|attr| attr.file_name) {
+                                file_name = name;
+                            }
+                        }
+                        _ => {}
+                    };
+                }
+
+                Some(Manga {
+                    source_id: ID,
+                    title: attributes
+                        .clone()
+                        .and_then(|attr| {
+                            if let Some(title) = attr.title.get("en").cloned() {
+                                Some(title)
+                            } else if let Some(title) = attr.title.get("ja").cloned() {
+                                Some(title)
+                            } else {
+                                None
+                            }
+                        })
+                        .unwrap_or_else(|| "".to_string()),
+                    author,
+                    genre: attributes
+                        .clone()
+                        .map(|attr| attr.tags)
+                        .map(Self::map_tags_to_string)
+                        .unwrap_or_else(|| vec![]),
+                    status: attributes
+                        .clone()
+                        .and_then(|attr| attr.status)
+                        .map(|s| s.to_string()),
+                    description: attributes
+                        .and_then(|attr| attr.description.get("en").cloned())
+                        .map(|description| Self::remove_bbcode(&description)),
+                    path: format!("/manga/{}", id),
+                    cover_url: format!("https://uploads.mangadex.org/covers/{}/{}", id, file_name),
+                })
+            }
             _ => None,
         }
     }
 
-    pub fn map_result_to_chapter(result: Result) -> Option<Chapter> {
-        let mut scanlator = "".to_string();
-        for relationship in result.relationships {
-            if let data::Relationship::ScanlationGroup { attributes, .. } = relationship {
-                if let Some(name) = attributes.map(|attr| attr.name) {
-                    scanlator = name;
+    pub fn map_result_to_chapter(data: Relationship) -> Option<Chapter> {
+        match data {
+            data::Relationship::Chapter {
+                id,
+                attributes,
+                relationships,
+            } => {
+                let mut scanlator = "".to_string();
+                for relationship in relationships {
+                    if let data::Relationship::ScanlationGroup { attributes, .. } = relationship {
+                        if let Some(name) = attributes.map(|attr| attr.name) {
+                            scanlator = name;
+                        }
+                    }
                 }
-            }
-        }
 
-        match result.data {
-            data::Relationship::Chapter { id, attributes } => {
                 let volume = attributes.clone().and_then(|attr| attr.volume);
                 let number = attributes.clone().and_then(|attr| attr.chapter);
                 let mut title = attributes
@@ -165,9 +177,9 @@ impl Mangadex {
         }
     }
 
-    pub fn map_result_to_pages(result: Result) -> Option<Vec<String>> {
-        match result.data {
-            data::Relationship::Chapter { id, attributes } => {
+    pub fn map_result_to_pages(data: Relationship) -> Option<Vec<String>> {
+        match data {
+            data::Relationship::Chapter { id, attributes, .. } => {
                 if let Some(attr) = attributes {
                     let res =
                         Request::get(format!("{}/at-home/server/{}", URL, id,).as_str()).call();
@@ -263,7 +275,7 @@ impl Extension for Mangadex {
         };
 
         let manga: Vec<Manga> = res
-            .results
+            .data
             .into_iter()
             .filter_map(Self::map_result_to_manga)
             .collect();
@@ -286,8 +298,8 @@ impl Extension for Mangadex {
         if res.status > 299 {
             return ExtensionResult::err("http request error");
         }
-        let res = serde_json::from_str(&res.body);
-        let manga: Manga = match res.map(Self::map_result_to_manga) {
+        let res = serde_json::from_str::<SingleResult>(&res.body);
+        let manga: Manga = match res.map(|res| Self::map_result_to_manga(res.data)) {
             Ok(Some(res)) => res,
             Ok(_) | Err(_) => {
                 return ExtensionResult::err("failed to parse manga");
@@ -325,7 +337,7 @@ impl Extension for Mangadex {
         };
 
         let chapters: Vec<Chapter> = res
-            .results
+            .data
             .into_iter()
             .filter_map(Self::map_result_to_chapter)
             .collect();
@@ -385,8 +397,8 @@ mod test {
         let res =
             mangadex.get_manga_info("/manga/77bee52c-d2d6-44ad-a33a-1734c1fe696a".to_string());
 
-        assert_eq!(res.data.is_some(), true);
-        assert_eq!(res.error.is_none(), true);
+        assert_eq!(res.error, None, "should be None, but got {:?}", res.error);
+        assert!(res.data.is_some());
 
         if let Some(manga) = res.data {
             assert_eq!(manga.title, "Kage no Jitsuryokusha ni Naritakute");

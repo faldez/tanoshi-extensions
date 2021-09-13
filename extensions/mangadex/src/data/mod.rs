@@ -13,10 +13,12 @@ pub enum Relationship {
     Manga {
         id: String,
         attributes: Option<MangaAttributes>,
+        relationships: Vec<Relationship>,
     },
     Chapter {
         id: String,
         attributes: Option<ChapterAttributes>,
+        relationships: Vec<Relationship>,
     },
     CoverArt {
         id: String,
@@ -37,6 +39,7 @@ pub enum Relationship {
     Tag {
         id: String,
         attributes: Option<TagAttributes>,
+        relationships: Vec<Relationship>,
     },
     User {
         id: String,
@@ -53,16 +56,18 @@ pub struct Home {
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
-pub struct Result {
-    pub result: String,
-    pub data: Relationship,
-    pub relationships: Vec<Relationship>,
-}
-
-#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Results {
-    pub results: Vec<Result>,
+    pub result: String,
+    pub response: String,
+    pub data: Vec<Relationship>,
     pub limit: i64,
     pub offset: i64,
     pub total: i64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct SingleResult {
+    pub result: String,
+    pub response: String,
+    pub data: Relationship,
 }
