@@ -19,9 +19,9 @@ pub struct Dir {
     pub ps: String,
     /// Type
     pub t: String,
-    /// View ?
+    /// Views
     pub v: String,
-    /// vm
+    /// Views Montly
     pub vm: String,
     /// Year of published
     pub y: String,
@@ -93,7 +93,7 @@ where
 impl Into<Manga> for &Dir {
     fn into(self) -> Manga {
         Manga {
-            source_id: crate::ID,
+            source_id: 0,
             title: self.s.clone(),
             author: self.a.clone(),
             genre: self.g.clone(),

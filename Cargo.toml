@@ -1,5 +1,5 @@
 [workspace]
-members = ["extensions/*"]
+members = ["extensions/*", "lib/*"]
 
 [profile.release]
 lto = true
