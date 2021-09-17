@@ -55,7 +55,7 @@ jobs:
         env:
           LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
       - name: Compile ${{ matrix.triple }}
-        run: tanoshi-cli --path repo compile --target ${{ matrix.triple }} --remove-wasm true
+        run: tanoshi-cli --path repo compile --target ${{ matrix.triple }} --remove-wasm
       - name: Upload dist
         uses: actions/upload-artifact@v2
         with:
