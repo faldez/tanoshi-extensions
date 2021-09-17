@@ -102,7 +102,7 @@ jobs:
       - name: Setup
         run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib --features disable-compiler
       - name: Generate index.json
-        run: tanoshi-cli generate-json --path repo/library
+        run: tanoshi-cli --path repo/library generate-json
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
