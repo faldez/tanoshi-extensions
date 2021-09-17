@@ -76,16 +76,12 @@ jobs:
         with:
           name: extensions-${{ matrix.triple }}
           path: repo/library
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "11.0"
       - name: Setup
-        run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib
+        run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib --features disable-compiler
         env:
           LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
       - name: Generate index.json
-        run: tanoshi-cli generate-json
+        run: tanoshi-cli generate-json --path repo/library
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
