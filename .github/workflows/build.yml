@@ -19,11 +19,18 @@ jobs:
       - name: Build
         run: |
           cargo build --release --target wasm32-wasi
+      - name: Generate index.json
+        run: tanoshi-cli generate-json
       - name: Upload dist
         uses: actions/upload-artifact@v2
         with:
           name: extensions-wasm
           path: target/wasm32-wasi/release/*.wasm
+      - name: Upload dist
+        uses: actions/upload-artifact@v2
+        with:
+          name: index
+          path: repo/index.json
   serialize:
     runs-on: ${{ matrix.os }}
     needs:
@@ -84,8 +91,11 @@ jobs:
         with:
           name: extensions-${{ matrix.triple }}
           path: repo/library
-      - name: Generate index.json
-        run: tanoshi-cli generate-json --path repo
+      - name: Download index
+        uses: actions/download-artifact@v2
+        with:
+          name: index
+          path: repo
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
