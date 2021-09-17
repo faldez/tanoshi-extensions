@@ -35,13 +35,13 @@ jobs:
           - macos-latest
         include:
           - os: ubuntu-latest
-            triple: x86_64-pc-windows-msvc
-          - os: ubuntu-latest
-            triple: x86_64-unknown-linux-gnu
-          - os: ubuntu-latest
-            triple: aarch64-unknown-linux-gnu
+            triples:
+              - x86_64-pc-windows-msvc
+              - x86_64-unknown-linux-gnu
+              - aarch64-unknown-linux-gnu
           - os: macos-latest
-            triple: x86_64-apple-darwin
+            triples:
+              - x86_64-apple-darwin
     steps:
       - uses: actions/checkout@v2
       - name: Download dist
@@ -58,11 +58,11 @@ jobs:
         env:
           LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
       - name: Compile ${{ matrix.triple }}
-        run: tanoshi-cli --path repo --target ${{ matrix.triple }} --remove-wasm true
+        run: tanoshi-cli --path repo --target ${{ matrix.triples }} --remove-wasm true
       - name: Upload dist
         uses: actions/upload-artifact@v2
         with:
-          name: extensions-${{ matrix.triple }}
+          name: extensions-${{ matrix.triples }}
           path: repo/library/*.tanoshi
   push:
     runs-on: ubuntu-latest
