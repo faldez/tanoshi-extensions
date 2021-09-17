@@ -55,7 +55,9 @@ jobs:
         env:
           LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
       - name: Compile ${{ matrix.triple }}
-        run: tanoshi-cli --path repo compile --target ${{ matrix.triple }} --remove-wasm
+        run: tanoshi-cli --path repo/library compile --target ${{ matrix.triple }} --remove-wasm
+        env:
+          RUST_LOG: debug
       - name: Upload dist
         uses: actions/upload-artifact@v2
         with:
@@ -66,25 +68,39 @@ jobs:
     needs:
       - build-wasm
       - serialize
-    strategy:
-      matrix:
-        triple:
-          - wasm
-          - x86_64-pc-windows-msvc
-          - x86_64-unknown-linux-gnu
-          - aarch64-unknown-linux-gnu
-          - x86_64-apple-darwin
     steps:
       - uses: actions/checkout@v2
-      - name: Download dist
+      - name: Download wasm
         uses: actions/download-artifact@v2
         with:
-          name: extensions-${{ matrix.triple }}
+          name: extensions-wasm
+          path: repo/library
+      - uses: actions/checkout@v2
+      - name: Download x86_64-pc-windows-msvc
+        uses: actions/download-artifact@v2
+        with:
+          name: extensions-x86_64-pc-windows-msvc
+          path: repo/library
+      - uses: actions/checkout@v2
+      - name: Download x86_64-unknown-linux-gnu
+        uses: actions/download-artifact@v2
+        with:
+          name: extensions-x86_64-unknown-linux-gnu
+          path: repo/library
+      - uses: actions/checkout@v2
+      - name: Download aarch64-unknown-linux-gnu
+        uses: actions/download-artifact@v2
+        with:
+          name: extensions-aarch64-unknown-linux-gnu
+          path: repo/library
+      - uses: actions/checkout@v2
+      - name: Download x86_64-apple-darwin
+        uses: actions/download-artifact@v2
+        with:
+          name: extensions-x86_64-apple-darwin
           path: repo/library
       - name: Setup
         run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib --features disable-compiler
-        env:
-          LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
       - name: Generate index.json
         run: tanoshi-cli generate-json --path repo/library
       - name: Deploy 🚀
