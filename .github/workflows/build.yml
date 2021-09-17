@@ -19,18 +19,11 @@ jobs:
       - name: Build
         run: |
           cargo build --release --target wasm32-wasi
-      - name: Generate index.json
-        run: tanoshi-cli generate-json
       - name: Upload dist
         uses: actions/upload-artifact@v2
         with:
           name: extensions-wasm
           path: target/wasm32-wasi/release/*.wasm
-      - name: Upload dist
-        uses: actions/upload-artifact@v2
-        with:
-          name: index
-          path: repo/index.json
   serialize:
     runs-on: ${{ matrix.os }}
     needs:
@@ -56,14 +49,6 @@ jobs:
         with:
           name: extensions-wasm
           path: repo/library
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: "11.0"
-      - name: Setup
-        run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib
-        env:
-          LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
       - name: Compile ${{ matrix.triple }}
         run: tanoshi-cli --path repo --target ${{ matrix.triple }} --remove-wasm true
       - name: Upload dist
@@ -91,11 +76,16 @@ jobs:
         with:
           name: extensions-${{ matrix.triple }}
           path: repo/library
-      - name: Download index
-        uses: actions/download-artifact@v2
+      - name: Install LLVM and Clang
+        uses: KyleMayes/install-llvm-action@v1
         with:
-          name: index
-          path: repo
+          version: "11.0"
+      - name: Setup
+        run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib
+        env:
+          LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
+      - name: Generate index.json
+        run: tanoshi-cli generate-json
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
