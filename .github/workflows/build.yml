@@ -57,7 +57,7 @@ jobs:
         run: cargo install tanoshi-cli --git https://github.com/faldez/tanoshi --branch llvm-dylib
         env:
           LLSM_SYS_110_PREFIX: ${{ env.LLVM_PATH }}
-      - name: Compile ${{ matrix.triple }}
+      - name: Compile ${{ matrix.triples }}
         run: tanoshi-cli --path repo --target ${{ matrix.triples }} --remove-wasm true
       - name: Upload dist
         uses: actions/upload-artifact@v2
