@@ -27,7 +27,7 @@ jobs:
   serialize:
     runs-on: ${{ matrix.os }}
     needs:
-      - build-web
+      - build-wasm
     strategy:
       matrix:
         os:
