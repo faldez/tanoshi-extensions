@@ -48,7 +48,7 @@ impl Extension for Guya {
             }
         };
 
-        let manga: Vec<Manga> = results
+        let mut manga: Vec<Manga> = results
             .into_iter()
             .map(|(title, detail)| Manga {
                 source_id: ID,
@@ -61,6 +61,8 @@ impl Extension for Guya {
                 cover_url: format!("{}{}", URL, detail.cover),
             })
             .collect();
+
+        manga.sort_by(|a, b| a.title.cmp(&b.title));
 
         ExtensionResult::ok(manga)
     }
