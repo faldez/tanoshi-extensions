@@ -4,7 +4,7 @@ pub static ID: i64 = 5;
 pub static NAME: &str = "catmanga";
 pub static URL: &str = "https://catmanga.org";
 
-use chrono::Local;
+use chrono::{Local, NaiveDateTime};
 use data::SingleRoot;
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::*;
@@ -79,7 +79,7 @@ impl Extension for Catmanga {
         ExtensionResult::ok(None)
     }
 
-    fn get_manga_list(&self, _param: Param) -> ExtensionResult<Vec<Manga>> {
+    fn get_manga_list(&self, param: Param) -> ExtensionResult<Vec<Manga>> {
         let root = Self::get_data();
 
         let mut manga = vec![];
@@ -98,8 +98,24 @@ impl Extension for Catmanga {
             }
         }
 
+        if let Some(keyword) = param.keyword {
+            if !keyword.is_empty() {
+                manga.retain(|m| m.title.to_lowercase().contains(&keyword));
+            }
+        }
+
+        let page = param.page.map(|p| p as usize).unwrap_or(1);
+        let offset = (page - 1) * 20;
+        if offset >= manga.len() {
+            return ExtensionResult::err("no page");
+        }
+        let manga = match manga[offset..].len() {
+            0..=20 => &manga[offset..],
+            _ => &manga[offset..offset + 20],
+        };
+
         ExtensionResult {
-            data: Some(manga),
+            data: Some(manga.to_vec()),
             error: None,
         }
     }
@@ -132,7 +148,6 @@ impl Extension for Catmanga {
         let mut data = None;
         let mut error = None;
 
-        let dt = Local::now();
         if let Some(s) = root {
             let mut chapters = vec![];
             for chapter in s.props.page_props.series.chapters {
@@ -146,7 +161,7 @@ impl Extension for Catmanga {
                     path: format!("{}/{}", path, chapter.number),
                     number: chapter.number,
                     scanlator: chapter.groups.get(0).map(String::clone).unwrap_or_default(),
-                    uploaded: dt.naive_local(),
+                    uploaded: NaiveDateTime::from_timestamp(0, 0),
                 });
             }
             data = Some(chapters)
@@ -174,5 +189,64 @@ impl Extension for Catmanga {
         }
 
         ExtensionResult { data, error }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_get_manga_list() {
+        let catmanga = Catmanga::default();
+
+        let res = catmanga.get_manga_list(Param::default());
+
+        assert_eq!(res.data.is_some(), true);
+        assert_eq!(res.error.is_none(), true);
+    }
+
+    #[test]
+    fn test_get_manga_list_with_keyword() {
+        let catmanga = Catmanga::default();
+
+        let res = catmanga.get_manga_list(Param {
+            keyword: Some("kanojo".to_string()),
+            ..Default::default()
+        });
+
+        assert_eq!(res.data.is_some(), true);
+        assert_eq!(res.error.is_none(), true);
+    }
+
+    #[test]
+    fn test_get_manga_list_last_page() {
+        let catmanga = Catmanga::default();
+
+        let res = catmanga.get_manga_list(Param {
+            page: Some(10),
+            ..Default::default()
+        });
+
+        assert_eq!(
+            res.error,
+            Some("no page".to_string()),
+            "should Some(\"no page\") get {:?}",
+            res.error
+        );
+    }
+
+    #[test]
+    fn test_get_manga_list_latest() {
+        let catmanga = Catmanga::default();
+
+        let res = catmanga.get_manga_list(Param {
+            sort_by: Some(SortByParam::LastUpdated),
+            sort_order: Some(SortOrderParam::Desc),
+            ..Default::default()
+        });
+
+        assert!(res.error.is_none(), "should not error but {:?}", res.error);
+        assert!(res.data.is_some());
     }
 }

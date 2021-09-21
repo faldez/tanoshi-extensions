@@ -1,6 +1,6 @@
 [package]
 name = "catmanga"
-version = "0.1.5"
+version = "0.1.6"
 authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
 edition = "2018"
 
