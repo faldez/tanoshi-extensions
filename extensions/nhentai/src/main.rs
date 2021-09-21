@@ -121,6 +121,12 @@ impl Extension for Nhentai {
         }
 
         let document = Html::parse_document(&res.body);
+        let gallery_id_selector = match Selector::parse("h3[id=\"gallery_id\"]") {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
+            }
+        };
         let thumbnail_selector = match Selector::parse("#cover > a > img") {
             Ok(selector) => selector,
             Err(e) => {
@@ -150,9 +156,19 @@ impl Extension for Nhentai {
             source_id: ID,
             status: Some("ongoing".to_string()),
             path,
-            description: Some("".to_string()),
+            description: None,
             ..Default::default()
         };
+        if let Some(gallery_id) = document.select(&gallery_id_selector).next() {
+            manga.description = Some(
+                gallery_id
+                    .text()
+                    .into_iter()
+                    .map(|id| id.to_string())
+                    .collect::<Vec<String>>()
+                    .join(""),
+            );
+        }
         if let Some(thumbnail) = document.select(&thumbnail_selector).next() {
             if let Some(cover_url) = thumbnail.value().attr("data-src") {
                 manga.cover_url = cover_url.to_string();
@@ -256,13 +272,23 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_get_manga_info() {
+        let nhentai = Nhentai::default();
+
+        let res = nhentai.get_manga_info("/g/370978/".to_string());
+
+        assert_eq!(res.error, None, "should None get {:?}", res.error);
+
+        assert_eq!(res.data.unwrap().description, Some("#370978".to_string()));
+    }
+
+    #[test]
     fn test_get_chapters() {
         let nhentai = Nhentai::default();
 
         let res = nhentai.get_chapters("/g/370978/".to_string());
 
-        assert!(res.data.is_some());
-        assert!(res.error.is_none());
+        assert_eq!(res.error, None, "should None get {:?}", res.error);
 
         if let Some(data) = res.data {
             if let Some(data) = data.get(0) {
