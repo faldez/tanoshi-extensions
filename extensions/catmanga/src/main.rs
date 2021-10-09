@@ -69,7 +69,7 @@ impl Extension for Catmanga {
             name: NAME.to_string(),
             url: URL.to_string(),
             version: std::env!("CARGO_PKG_VERSION").to_string(),
-            icon: "https://catmanga.org/favicon.png".to_string(),
+            icon: "https://images.catmanga.org/favicon.png".to_string(),
             need_login: false,
             languages: vec!["en".to_string()],
         }
