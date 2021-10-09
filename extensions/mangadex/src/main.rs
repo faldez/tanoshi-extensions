@@ -216,7 +216,7 @@ impl Extension for Mangadex {
             name: NAME.to_string(),
             url: URL.to_string(),
             version: std::env!("PLUGIN_VERSION").to_string(),
-            icon: "https://api.mangadex.org/favicon.ico".to_string(),
+            icon: "https://mangadex.org/favicon.ico".to_string(),
             need_login: false,
             languages: vec!["en".to_string()],
         }

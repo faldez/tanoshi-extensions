@@ -1,6 +1,6 @@
 [package]
 name = "mangadex"
-version = "0.1.11"
+version = "0.1.12"
 authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
 edition = "2018"
 
