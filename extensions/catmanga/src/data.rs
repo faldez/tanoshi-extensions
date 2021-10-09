@@ -46,7 +46,9 @@ pub struct SingleProps {
 #[serde(rename_all = "camelCase")]
 pub struct PageProps {
     pub series: Vec<series::Series>,
+    #[serde(default = "Vec::new")]
     pub latests: Vec<Vec<latest::Latest>>,
+    #[serde(default = "Vec::new")]
     pub featured: Vec<featured::Featured>,
 }
 
