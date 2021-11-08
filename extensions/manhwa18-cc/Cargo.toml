@@ -1,0 +1,15 @@
+[package]
+name = "manhwa18-cc"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tanoshi-lib = "0.25.3"
+tanoshi-util = "0.3.0"
+scraper = "0.12"
+
+[features]
+test = ["tanoshi-util/__test"]
