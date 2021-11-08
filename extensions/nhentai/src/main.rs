@@ -127,6 +127,36 @@ impl Extension for Nhentai {
                 return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
             }
         };
+        let parodies_selector = match Selector::parse("a[href^=\"/parody/\"] > .name") {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
+            }
+        };
+        let characters_selector = match Selector::parse("a[href^=\"/character/\"] > .name") {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
+            }
+        };
+        let languages_selector = match Selector::parse("a[href^=\"/language/\"] > .name") {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
+            }
+        };
+        let categories_selector = match Selector::parse("a[href^=\"/category/\"] > .name") {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
+            }
+        };
+        let pages_selector = match Selector::parse("a[href^=\"/search/?q=pages\"] > .name") {
+            Ok(selector) => selector,
+            Err(e) => {
+                return ExtensionResult::err(format!("error parse selector: {:?}", e).as_str())
+            }
+        };
         let thumbnail_selector = match Selector::parse("#cover > a > img") {
             Ok(selector) => selector,
             Err(e) => {
@@ -159,16 +189,65 @@ impl Extension for Nhentai {
             description: None,
             ..Default::default()
         };
-        if let Some(gallery_id) = document.select(&gallery_id_selector).next() {
-            manga.description = Some(
-                gallery_id
-                    .text()
-                    .into_iter()
-                    .map(|id| id.to_string())
-                    .collect::<Vec<String>>()
-                    .join(""),
-            );
+
+        let mut description = "".to_string();
+        if let Some(gallery_id) = document.select(&gallery_id_selector).next().map(|el| {
+            el.text()
+                .into_iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join("")
+        }) {
+            description = format!("{}", gallery_id);
         }
+        let parodies = document
+            .select(&parodies_selector)
+            .into_iter()
+            .filter_map(|el| el.text().next())
+            .collect::<Vec<&str>>()
+            .join(",");
+        if !parodies.is_empty() {
+            description = format!("{}\nParodies: {}", description, parodies);
+        }
+        let characters = document
+            .select(&characters_selector)
+            .into_iter()
+            .filter_map(|el| el.text().next())
+            .collect::<Vec<&str>>()
+            .join(",");
+        if !characters.is_empty() {
+            description = format!("{}\nCharacters: {}", description, characters);
+        }
+        let languages = document
+            .select(&languages_selector)
+            .into_iter()
+            .filter_map(|el| el.text().next())
+            .collect::<Vec<&str>>()
+            .join(",");
+        if !languages.is_empty() {
+            description = format!("{}\nLanguages: {}", description, languages);
+        }
+        let categories = document
+            .select(&categories_selector)
+            .into_iter()
+            .filter_map(|el| el.text().next())
+            .collect::<Vec<&str>>()
+            .join(",");
+        if !categories.is_empty() {
+            description = format!("{}\nCategories: {}", description, categories);
+        }
+        if let Some(pages) = document.select(&pages_selector).next().map(|el| {
+            el.text()
+                .into_iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<String>>()
+                .join("")
+        }) {
+            description = format!("{}\nPages: {}", description, pages);
+        }
+
+        manga.description = Some(description);
+
         if let Some(thumbnail) = document.select(&thumbnail_selector).next() {
             if let Some(cover_url) = thumbnail.value().attr("data-src") {
                 manga.cover_url = cover_url.to_string();
@@ -275,11 +354,13 @@ mod test {
     fn test_get_manga_info() {
         let nhentai = Nhentai::default();
 
-        let res = nhentai.get_manga_info("/g/370978/".to_string());
+        let res = nhentai.get_manga_info("/g/379261/".to_string());
 
         assert_eq!(res.error, None, "should None get {:?}", res.error);
 
-        assert_eq!(res.data.unwrap().description, Some("#370978".to_string()));
+        let data = res.data.unwrap();
+
+        assert_eq!(data.description, Some("#379261\nParodies: girls frontline\nCharacters: rpk-16\nLanguages: translated,english\nCategories: doujinshi\nPages: 15".to_string()));
     }
 
     #[test]
