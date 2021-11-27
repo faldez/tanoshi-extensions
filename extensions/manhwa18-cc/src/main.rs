@@ -4,7 +4,7 @@ use chrono::{NaiveDate, NaiveDateTime};
 use tanoshi_lib::prelude::*;
 use tanoshi_util::http::Request;
 
-const ID: i64 = 7;
+const ID: i64 = 8;
 const NAME: &str = "manhwa18.cc";
 const URL: &str = "https://manhwa18.cc";
 
@@ -20,7 +20,7 @@ macro_rules! create_selector {
             Err(e) => {
                 return ExtensionResult::err(&e);
             }
-        };
+        }
     };
 }
 
@@ -59,19 +59,26 @@ impl Extension for Manhwa18 {
         let document = scraper::Html::parse_document(&resp.body);
 
         let mut manga = vec![];
-        let selector = create_selector!(".manga-item .thumb > a");
+        let selector = create_selector!(".manga-item a[href^=\"/webtoon\"] img");
         for element in document.select(&selector) {
-            let title = element
+            let cover_url = element
                 .value()
+                .attr("data-src")
+                .map(|s| s.to_string())
+                .unwrap_or_else(|| "".to_string());
+
+            let parent = element.parent().unwrap().value().as_element().unwrap();
+
+            let title = parent
                 .attr("title")
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "".to_string());
-            let path = element
-                .value()
+
+            let path = parent
                 .attr("href")
                 .map(|s| s.to_string())
                 .unwrap_or_else(|| "".to_string());
-            let cover_url = format!("{}{}czv.jpg", URL, path.replace("webtoon", "manga"));
+
             manga.push(Manga {
                 source_id: ID,
                 title,
@@ -95,20 +102,19 @@ impl Extension for Manhwa18 {
         }
         let document = scraper::Html::parse_document(&resp.body);
 
-        let selector = create_selector!(".post-title > h1");
+        let selector = create_selector!("a[href^=\"/webtoon\"] img");
         let title = document
             .select(&selector)
             .next()
-            .and_then(|title| title.text().next())
+            .and_then(|el| el.value().attr("title"))
             .map(|title| title.to_string())
             .unwrap_or_else(|| "".to_string());
 
-        let selector = create_selector!(".summary-image img");
         let cover_url = document
             .select(&selector)
             .next()
-            .and_then(|el| el.value().attr("src"))
-            .map(|src| format!("{}{}", URL, src))
+            .and_then(|el| el.value().attr("data-src"))
+            .map(|src| src.to_string())
             .unwrap_or_else(|| "".to_string());
 
         let mut authors = vec![];
@@ -239,7 +245,19 @@ mod test {
         assert_eq!(res.error, None, "should be none, got {:?}", res.error);
         assert!(res.data.is_some());
 
-        println!("{:?}", res.data);
+        if let Some(items) = res.data {
+            for item in items {
+                assert_eq!(item.title.is_empty(), false);
+                assert_eq!(item.path.is_empty(), false);
+                assert_eq!(
+                    item.cover_url.is_empty(),
+                    false,
+                    "on manga {} got {}",
+                    item.title,
+                    item.cover_url
+                );
+            }
+        }
     }
 
     #[test]
@@ -251,7 +269,20 @@ mod test {
         assert_eq!(res.error, None, "should be none, got {:?}", res.error);
         assert!(res.data.is_some());
 
-        println!("{:?}", res.data);
+        let data = res.data.unwrap();
+        assert_eq!(
+            data.title, "Secret Class",
+            "should be Secret Class, got {:?}",
+            data.title
+        );
+
+        let cover_url = data.cover_url.clone();
+        assert_eq!(
+            cover_url.clone(),
+            "https://manhwa18.cc/manga/secret-classczv.jpg".to_string(),
+            "should be https://manhwa18.cc/manga/secret-classczv.jpg, got {:?}",
+            cover_url.clone()
+        );
     }
 
     #[test]
@@ -261,8 +292,6 @@ mod test {
         let res = ext.get_chapters("/webtoon/secret-class".to_string());
         assert_eq!(res.error, None, "should be none, got {:?}", res.error);
         assert!(res.data.is_some());
-
-        println!("{:?}", res.data);
     }
 
     #[test]
@@ -272,7 +301,5 @@ mod test {
         let res = ext.get_pages("/webtoon/secret-class/chapter-103".to_string());
         assert_eq!(res.error, None, "should be none, got {:?}", res.error);
         assert!(res.data.is_some());
-
-        println!("{:?}", res.data);
     }
 }
