@@ -5,7 +5,7 @@ use tanoshi_lib::prelude::*;
 use tanoshi_util::http::Request;
 
 const ID: i64 = 8;
-const NAME: &str = "manhwa18.cc";
+const NAME: &str = "manhwa18_cc";
 const URL: &str = "https://manhwa18.cc";
 
 #[derive(Debug, Default)]
