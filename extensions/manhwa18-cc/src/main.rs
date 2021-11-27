@@ -51,9 +51,20 @@ impl Extension for Manhwa18 {
             _ => "trending".to_string(),
         };
 
-        let resp = Request::get(format!("{}/webtoons?orderby={}", URL, query).as_str()).call();
+        let url = if let Some(keyword) = param.keyword {
+            format!("{}/search/{}?q={}", URL, param.page.unwrap_or(1), keyword)
+        } else {
+            format!(
+                "{}/webtoons/{}?orderby={}",
+                URL,
+                param.page.unwrap_or(1),
+                query
+            )
+        };
+
+        let resp = Request::get(&url).call();
         if resp.status > 299 {
-            return ExtensionResult::err("http request error");
+            return ExtensionResult::err(format!("http request to {} error", url).as_str());
         }
 
         let document = scraper::Html::parse_document(&resp.body);
