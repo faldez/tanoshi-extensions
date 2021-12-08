@@ -1,6 +1,0 @@
-[workspace]
-members = ["extensions/*", "lib/*"]
-
-[profile.release]
-lto = true
-opt-level = 3
