@@ -52,7 +52,12 @@ impl Extension for Manhwa18 {
         };
 
         let url = if let Some(keyword) = param.keyword {
-            format!("{}/search/{}?q={}", URL, param.page.unwrap_or(1), keyword)
+            let page = param.page.unwrap_or(1);
+            if page > 2 {
+                format!("{}/search/{}?q={}", URL, page, keyword)
+            } else {
+                format!("{}/search?q={}", URL, keyword)
+            }
         } else {
             format!(
                 "{}/webtoons/{}?orderby={}",
@@ -259,6 +264,33 @@ mod test {
         if let Some(items) = res.data {
             for item in items {
                 assert_eq!(item.title.is_empty(), false);
+                assert_eq!(item.path.is_empty(), false);
+                assert_eq!(
+                    item.cover_url.is_empty(),
+                    false,
+                    "on manga {} got {}",
+                    item.title,
+                    item.cover_url
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_search_manga_list() {
+        let ext = Manhwa18::default();
+
+        let res = ext.get_manga_list(Param {
+            keyword: Some("unwanted".to_string()),
+            ..Default::default()
+        });
+
+        assert_eq!(res.error, None, "should be none, got {:?}", res.error);
+        assert!(res.data.is_some());
+
+        if let Some(items) = res.data {
+            for item in items {
+                assert_eq!(item.title, "The Unwanted Roommate");
                 assert_eq!(item.path.is_empty(), false);
                 assert_eq!(
                     item.cover_url.is_empty(),
