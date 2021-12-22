@@ -8,6 +8,7 @@ on:
   push:
     branches: [master]
     paths:
+      - ".github/workflows/test.yml"
       - src/**
       - multisrc/**
 
@@ -24,7 +25,7 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: install
-          args: tanoshi-cli --version v0.5.0-beta.1
+          args: tanoshi-cli --version 0.5.0-beta.1
       - uses: actions/setup-node@v2
       - run: npm install -g lerna
       - run: npm install
