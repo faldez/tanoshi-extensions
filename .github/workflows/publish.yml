@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - src/**
+      - multisrc/**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b dist dist
+      - name: Clear directory
+        run: rm -r dist/*
+      - uses: actions/setup-node@v2
+      - run: npm install -g lerna
+      - run: npm install
+      - run: npm run build
+      - run: npm run generate-json
+      - name: Git Commit and Push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: dist
+          force: true
+          directory: dist

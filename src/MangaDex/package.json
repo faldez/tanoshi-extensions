@@ -1,0 +1,23 @@
+{
+  "name": "mangadex",
+  "version": "0.0.0",
+  "description": "",
+  "source": "src/index.ts",
+  "module": "../../dist/MangaDex.mjs",
+  "scripts": {
+    "build": "tanoshi-extension-cli build",
+    "test": "tanoshi-extension-cli test"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tanoshi-extension-lib": "^0.1.1",
+    "moment": "^2.29.1"
+  },
+  "targets": {
+    "module": {
+      "includeNodeModules": true,
+      "sourceMap": false
+    }
+  }
+}

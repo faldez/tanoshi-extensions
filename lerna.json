@@ -1,0 +1,7 @@
+{
+  "packages": [
+    "multisrc/*",
+    "src/*"
+  ],
+  "version": "independent"
+}
