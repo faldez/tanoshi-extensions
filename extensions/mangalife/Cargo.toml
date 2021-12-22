@@ -1,8 +1,0 @@
-[package]
-name = "mangalife"
-version = "0.1.5"
-authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-nepnep = { path = "../../lib/nepnep" }

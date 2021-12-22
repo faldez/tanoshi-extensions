@@ -1,8 +1,0 @@
-[package]
-name = "mangasee"
-version = "4.0.4"
-authors = ["Muhammad Fadhlika <fadhlika@gmail.com>"]
-edition = "2018"
-
-[dependencies]
-nepnep = { path = "../../lib/nepnep" }

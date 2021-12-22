@@ -1,0 +1,221 @@
+import * as cheerio from 'cheerio';
+import { Chapter, Extension, Input, Text, Group, Manga, fetch, print } from "tanoshi-extension-lib";
+import * as moment from 'moment';
+
+export abstract class NepNep extends Extension {
+    protected keywordFilter = new Text("Series Name", "");
+    protected includeGenreFilter = new Group("Include Genre", [
+        "Any",
+        "Action",
+        "Adult",
+        "Adventure",
+        "Comedy"
+    ]);
+
+    override getFilterList(): Input[] {
+        return [
+            this.keywordFilter,
+            this.includeGenreFilter
+        ];
+    }
+
+    override getPreferences(): Input[] {
+        return [];
+    }
+
+    protected async getAllManga(): Promise<any[]> {
+        var body = await fetch(`${this.url}/search`).then(res => res.text());
+
+        body = body.substring(body.search("vm.Directory = ") + 15);
+        body = body.substring(0, body.search("];") + 1);
+
+        var data = JSON.parse(body);
+
+        return data;
+    }
+
+    protected mapDataToManga(data: any[], page: number): Manga[] {
+        if (page < 1) {
+            page = 1;
+        }
+
+        var offset = (page - 1) * 20;
+        data = data.slice(offset, offset + 20);
+
+        return data.map(item => <Manga>{
+            sourceId: this.id,
+            title: item['s'],
+            author: item['a'],
+            status: item['ps'],
+            genre: item['g'],
+            path: `/manga/${item['i']}`,
+            coverUrl: `https://cover.nep.li/cover/${item['i']}.jpg`,
+        });
+    }
+
+    override async getPopularManga(page: number): Promise<Manga[]> {
+        var data = await this.getAllManga();
+
+        var data = data.sort((a, b) => {
+            if (a.v > b.v) {
+                return -1;
+            }
+
+            if (a.v < b.v) {
+                return 1;
+            }
+
+            return 0;
+        });
+
+        return Promise.resolve(this.mapDataToManga(data, page));
+    }
+
+    override async getLatestManga(page: number): Promise<Manga[]> {
+        var data = await this.getAllManga();
+
+        var data = data.sort((a, b) => {
+            if (a.lt > b.lt) {
+                return -1;
+            }
+
+            if (a.lt < b.lt) {
+                return 1;
+            }
+
+            return 0;
+        });
+
+        return Promise.resolve(this.mapDataToManga(data, page));
+    }
+
+    protected filterKeyword(data: any[], input: Text): any[] {
+        let state = input.state?.toLowerCase();
+        return data.filter((item) => {
+            return (item.s.toLowerCase().indexOf(state) != -1);
+        });
+    }
+
+    protected filterIncludeGenres(data: any[], input: Group<string>): any[] {
+        let state = input.state;
+        return data.filter((item) => {
+            return (item.g.some((genre: string) => {
+                for (const s of state!) {
+                    if (s === genre) {
+                        return true;
+                    }
+                }
+                return false;
+            }));
+        });
+    }
+
+    override async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
+        if (query === undefined && filter === undefined) {
+            throw new Error("query and filters cannot be both empty");
+        }
+
+        var data = await this.getAllManga();
+
+        if (filter) {
+            for (var input of filter) {
+                if (this.keywordFilter.equals(input)) {
+                    console.log(JSON.stringify(input));
+                    data = this.filterKeyword(data, input);
+                }
+
+                if (this.includeGenreFilter.equals(input)) {
+                    console.log(JSON.stringify(input));
+                    data = this.filterIncludeGenres(data, input);
+                }
+            }
+        } else if (query) {
+            console.log(query);
+            data = data.filter((item) => {
+                return (item.s.toLowerCase().indexOf(query) != -1);
+            });
+        }
+
+        var manga = this.mapDataToManga(data, page);
+
+        return Promise.resolve(manga);
+    }
+
+    override async getMangaDetail(path: string): Promise<Manga> {
+        var body = await fetch(`${this.url}${path}`).then(res => res.text());
+        const $ = cheerio.load(body);
+
+        const title = $('li[class=\"list-group-item d-none d-sm-block\"] h1').text();
+        const description = $('div[class=\"top-5 Content\"]').text();
+        const authors = $('a[href^=\"/search/?author=\"]').toArray().map((el) => $(el).text());
+        const genres = $('a[href^=\"/search/?genre=\"]').toArray().map((el) => $(el).text());
+        const status = $('a[href^=\"/search/?status=\"]').first().attr("href")?.replace("/search/?status=", "");
+        const coverUrl = $('img[class=\"img-fluid bottom-5\"]').attr("src");
+
+        return Promise.resolve({
+            sourceId: this.id,
+            title: title,
+            author: authors,
+            status: status,
+            description: description,
+            genre: genres,
+            path: `${path}`,
+            coverUrl: coverUrl!,
+        });
+    }
+
+    chapterDisplay(e: string): number {
+        var t = e.slice(1, -1), n = e[e.length - 1];
+        return parseFloat(`${t}.${n}`);
+    }
+
+    override async getChapters(path: string): Promise<Chapter[]> {
+        var body = await fetch(`${this.url}${path}`).then(res => res.text());
+        if (!body) {
+            throw new Error("failed to fetch chapters");
+        }
+
+        var indexName = body.match(/(?<=vm\.IndexName = ").*(?=";)/g)![0];
+        var chapters = JSON.parse(body.match(/(?<=vm\.Chapters = )\[.*\](?=;)/g)![0]);
+
+        return Promise.resolve(chapters.map((item: any) => {
+            let number = this.chapterDisplay(item['Chapter']);
+            var ch: Chapter = {
+                sourceId: this.id,
+                title: `${item['Type']} ${number}`,
+                path: `/read-online/${indexName}-chapter-${number}${item['Chapter'][0] != '1' ? '-index-' + item['Chapter'][0] : ''}.html`,
+                number: number,
+                uploaded: moment(item['Date'], moment.ISO_8601).unix(),
+            };
+            return ch;
+        }));
+    }
+
+    chapterImage = (chapterString: string) => {
+        var Chapter = chapterString.slice(1, -1);
+        var Odd = chapterString[chapterString.length - 1];
+        if (Odd == '0') {
+            return Chapter;
+        } else {
+            return Chapter + "." + Odd;
+        }
+    };
+    pageImage = (pageString: string) => {
+        var s = "000" + pageString;
+        return s.substring(s.length - 3);
+    }
+
+    override async getPages(path: string): Promise<string[]> {
+        var body = await fetch(`${this.url}${path}`).then(res => res.text());
+        var curPathName = body.match(/(?<=vm\.CurPathName = ").*(?=";)/g)![0];
+        var curChapter = JSON.parse(body.match(/(?<=vm\.CurChapter = ).*(?=;)/g)![0]);
+        var indexName = body.match(/(?<=vm\.IndexName = ").*(?=";)/g)![0];
+
+        let pages = [];
+        for (let i = 1; i <= parseInt(curChapter['Page']); i++) {
+            pages.push(`https://${curPathName}/manga/${indexName}/${curChapter['Directory'] == '' ? '' : curChapter.Directory + '/'}${this.chapterImage(curChapter['Chapter'])}-${this.pageImage(i.toString())}.png`);
+        }
+
+        return Promise.resolve(pages);
+    }
+}
