@@ -181,12 +181,17 @@ export default class MangaDex extends Extension {
         let chapter = [];
 
         for (const item of body.data!) {
+            let attributes = item.attributes;
+            if (!attributes) {
+                return Promise.reject(`emptry attributes for ${path}`);
+            }
+
             chapter.push(<Chapter>{
                 sourceId: this.id,
-                title: item.attributes?.title,
+                title: `${attributes.volume ? `Volume ${attributes.volume}` : ''} Chapter ${attributes.chapter} - ${attributes.title ? attributes.title : ''}`,
                 path: `/chapter/${item.id}`,
-                number: parseFloat(item.attributes?.chapter!),
-                uploaded: moment(item.attributes?.publishAt, moment.ISO_8601).unix(),
+                number: parseFloat(attributes.chapter!),
+                uploaded: moment(attributes.publishAt, moment.ISO_8601).unix(),
             });
         }
 
