@@ -206,7 +206,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             sourceId: this.id,
             title: data.title.pretty,
             author: tags['artist'] ? tags['artist'] : [],
-            genre: tags['tags'] ? tags['tags'] : [],
+            genre: tags['tag'] ? tags['tag'] : [],
             description: description,
             path: `/api/gallery/${data.id}`,
             coverUrl: `https://t.nhentai.net/galleries/${data.media_id}/cover.${this.imageType[data.images.cover.t]}`
@@ -237,7 +237,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 6;
         this.name = "NHentai";
         this.url = "https://nhentai.net";
-        this.version = "0.1.1";
+        this.version = "0.1.2";
         this.icon = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
         this.languages = "all";
         this.nsfw = true;
