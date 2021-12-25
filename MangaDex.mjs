@@ -3886,9 +3886,8 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             this.titleFilter,
             this.authorsFilter,
             this.yearFilter,
-            this.includeTagsFilter,
+            this.tagsFilter,
             this.includedTagsMode,
-            this.excludeTagsFilter,
             this.excludedTagsMode,
             this.statusFilter
         ];
@@ -3913,31 +3912,31 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
     parseFilter(filter) {
         let param = [];
         for (const input of filter)switch(input.name){
-            case "title":
+            case "Title":
                 {
                     let s = input;
                     param.push(`${s.name}=${s.state}`);
                     break;
                 }
-            case "author":
+            case "Author":
                 {
                     let s = input;
                     param.push(`${s.name}=${s.state}`);
                     break;
                 }
-            case "artist":
+            case "Artist":
                 {
                     let s = input;
                     param.push(`${s.name}=${s.state}`);
                     break;
                 }
-            case "year":
+            case "Year":
                 {
                     let s = input;
                     param.push(`${s.name}=${s.state}`);
                     break;
                 }
-            case "included tags":
+            case "Tags":
                 {
                     let s = input;
                     for (const val of s.state){
@@ -3948,30 +3947,19 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
                     }
                     break;
                 }
-            case "included tags mode":
+            case "Included Tags Mode":
                 {
                     let s = input;
                     param.push(`includedTagsMode=${s.state}`);
                     break;
                 }
-            case "excluded tags":
-                {
-                    let s = input;
-                    for (const val of s.state){
-                        let uuid = $decb13adfe59b551$exports.data.filter((tag)=>tag.attributes.name.en === val
-                        ).map((tag)=>tag.id
-                        )[0];
-                        param.push(`excludedTags[]=${uuid}`);
-                    }
-                    break;
-                }
-            case "excluded tags mode":
+            case "Excluded Tags Mode":
                 {
                     let s = input;
                     param.push(`excludedTagsMode=${s.state}`);
                     break;
                 }
-            case "status":
+            case "Status":
                 {
                     let s = input;
                     for (const val of s.state){
@@ -4058,27 +4046,25 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.1";
+        this.version = "0.1.2";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
-        this.titleFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("title", "");
-        this.authorsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("author", "comma seperataed string");
-        this.artistsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("artist", "comma seperataed string");
-        this.yearFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("year", "year of release");
-        this.includeTagsFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("included tags", $decb13adfe59b551$exports.data.map((tag)=>tag.attributes.name.en
+        this.titleFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Title", "");
+        this.authorsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Author");
+        this.artistsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Artist");
+        this.yearFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Year");
+        this.tagsFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("tags", $decb13adfe59b551$exports.data.map((tag)=>new $f963b40858b26a50$export$7254cc27399e90bd(tag.attributes.name.en)
         ));
-        this.includedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("included tags mode", [
+        this.includedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("Included Tags Mode", [
             "AND",
             "OR"
         ]);
-        this.excludeTagsFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("excluded tags", $decb13adfe59b551$exports.data.map((tag)=>tag.attributes.name.en
-        ));
-        this.excludedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("excluded tags mode", [
+        this.excludedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("Excluded Tags Mode", [
             "AND",
             "OR"
         ]);
-        this.statusFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("status", [
+        this.statusFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("Status", [
             "ongoing",
             "completed",
             "hiatus",
