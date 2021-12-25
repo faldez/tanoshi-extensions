@@ -4017,28 +4017,31 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         return Promise.resolve(manga);
     }
     async getChapters(path1) {
-        var ref, ref9, ref10;
         var body = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}${path1}/feed?limit=500&translatedLanguage[]=en`).then((res)=>res.json()
         );
         let chapter = [];
-        for (const item of body.data)chapter.push({
-            sourceId: this.id,
-            title: (ref = item.attributes) === null || ref === void 0 ? void 0 : ref.title,
-            path: `/chapter/${item.id}`,
-            number: parseFloat((ref9 = item.attributes) === null || ref9 === void 0 ? void 0 : ref9.chapter),
-            uploaded: $e8KVk((ref10 = item.attributes) === null || ref10 === void 0 ? void 0 : ref10.publishAt, $e8KVk.ISO_8601).unix()
-        });
+        for (const item of body.data){
+            let attributes = item.attributes;
+            if (!attributes) return Promise.reject(`emptry attributes for ${path1}`);
+            chapter.push({
+                sourceId: this.id,
+                title: `${attributes.volume ? `Volume ${attributes.volume}` : ''} Chapter ${attributes.chapter} - ${attributes.title ? attributes.title : ''}`,
+                path: `/chapter/${item.id}`,
+                number: parseFloat(attributes.chapter),
+                uploaded: $e8KVk(attributes.publishAt, $e8KVk.ISO_8601).unix()
+            });
+        }
         return Promise.resolve(chapter);
     }
     async getPages(path2) {
-        var ref, ref11, ref12, ref13, ref14;
+        var ref, ref9, ref10, ref11, ref12;
         var body = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}${path2}`).then((res)=>res.json()
         );
         var base = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}/at-home/server/${(ref = body.data) === null || ref === void 0 ? void 0 : ref.id}`).then((res)=>res.json()
         );
         let pages = [];
-        let hash = (ref11 = body.data) === null || ref11 === void 0 ? void 0 : (ref12 = ref11.attributes) === null || ref12 === void 0 ? void 0 : ref12.hash;
-        for (const item of (ref13 = body.data) === null || ref13 === void 0 ? void 0 : (ref14 = ref13.attributes) === null || ref14 === void 0 ? void 0 : ref14.data)pages.push(`${base.baseUrl}/data/${hash}/${item}`);
+        let hash = (ref9 = body.data) === null || ref9 === void 0 ? void 0 : (ref10 = ref9.attributes) === null || ref10 === void 0 ? void 0 : ref10.hash;
+        for (const item of (ref11 = body.data) === null || ref11 === void 0 ? void 0 : (ref12 = ref11.attributes) === null || ref12 === void 0 ? void 0 : ref12.data)pages.push(`${base.baseUrl}/data/${hash}/${item}`);
         return Promise.resolve(pages);
     }
     constructor(...args){
