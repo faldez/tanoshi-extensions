@@ -3974,7 +3974,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         return param.join('&');
     }
     async searchManga(page3, query1, filter1) {
-        let param;
+        let param = undefined;
         if (filter1) param = this.parseFilter(filter1);
         else if (query1) param = `title=${query1}`;
         let manga = await this.getMangaList(page3, param);
@@ -4046,15 +4046,15 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.2";
+        this.version = "0.1.3";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
-        this.titleFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Title", "");
+        this.titleFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Title");
         this.authorsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Author");
         this.artistsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Artist");
         this.yearFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Year");
-        this.tagsFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("tags", $decb13adfe59b551$exports.data.map((tag)=>new $f963b40858b26a50$export$7254cc27399e90bd(tag.attributes.name.en)
+        this.tagsFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("Tags", $decb13adfe59b551$exports.data.map((tag)=>new $f963b40858b26a50$export$7254cc27399e90bd(tag.attributes.name.en)
         ));
         this.includedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("Included Tags Mode", [
             "AND",
@@ -4065,10 +4065,10 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             "OR"
         ]);
         this.statusFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("Status", [
-            "ongoing",
-            "completed",
-            "hiatus",
-            "cancelled"
+            new $f963b40858b26a50$export$48513f6b9f8ce62d("ongoing"),
+            new $f963b40858b26a50$export$48513f6b9f8ce62d("completed"),
+            new $f963b40858b26a50$export$48513f6b9f8ce62d("hiatus"),
+            new $f963b40858b26a50$export$48513f6b9f8ce62d("cancelled"), 
         ]);
     }
 }
