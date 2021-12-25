@@ -14,6 +14,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
+      - name: Clone repo
+        run: git clone https://github.com/faldez/tanoshi-extensions.git -b dist dist
       - run: npm install -g lerna
       - run: npm install
       - run: npm run build
