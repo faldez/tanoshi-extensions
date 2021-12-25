@@ -6,6 +6,7 @@ on:
     paths:
       - src/**
       - multisrc/**
+      - ".github/workflows/publish.yml"
 
 jobs:
   build:
@@ -17,6 +18,8 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm run generate-json
+      - run: ls -la .
+      - run: ls -la ./dist
       - name: Git Commit and Push
         uses: ad-m/github-push-action@v0.6.0
         with:
