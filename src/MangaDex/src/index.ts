@@ -1,5 +1,5 @@
 import * as moment from "moment";
-import { Chapter, Extension, fetch, Group, Input, Manga, Select, Text, State } from "tanoshi-extension-lib"
+import { Chapter, Extension, fetch, Group, Input, Manga, Select, Text, State, Checkbox } from "tanoshi-extension-lib"
 import { paths, components } from './dto';
 import { data as tags } from './tag.json';
 
@@ -23,19 +23,24 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.2";
+    version = "0.1.3";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
 
-    titleFilter = new Text("Title", "");
+    titleFilter = new Text("Title");
     authorsFilter = new Text("Author");
     artistsFilter = new Text("Artist")
     yearFilter = new Text("Year")
-    tagsFilter = new Group("tags", tags.map((tag) => new State(tag.attributes.name.en)));
+    tagsFilter = new Group("Tags", tags.map((tag) => new State(tag.attributes.name.en)));
     includedTagsMode = new Select("Included Tags Mode", ["AND", "OR"]);
     excludedTagsMode = new Select("Excluded Tags Mode", ["AND", "OR"]);
-    statusFilter = new Group("Status", ["ongoing", "completed", "hiatus", "cancelled"]);
+    statusFilter = new Group("Status", [
+        new Checkbox("ongoing"),
+        new Checkbox("completed"),
+        new Checkbox("hiatus"),
+        new Checkbox("cancelled"),
+    ]);
 
     override getFilterList(): Input[] {
         return [
@@ -131,7 +136,7 @@ export default class MangaDex extends Extension {
     }
 
     async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
-        let param;
+        let param = undefined;
         if (filter) {
             param = this.parseFilter(filter);
         } else if (query) {
