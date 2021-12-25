@@ -39718,9 +39718,13 @@ class $740654ef2f483f98$export$436ef8d53f57c1da extends $8e5b7fb3ed8b7bd1$export
     async getChapters(path1) {
         var body = await $8e5b7fb3ed8b7bd1$export$e7aa7bc5c1b3cfb3(`${this.url}${path1}`).then((res)=>res.text()
         );
-        if (!body) throw new Error("failed to fetch chapters");
-        var indexName = body.match(/(?<=vm\.IndexName = ").*(?=";)/g)[0];
-        var chapters = JSON.parse(body.match(/(?<=vm\.Chapters = )\[.*\](?=;)/g)[0]);
+        if (!body) return Promise.reject(`failed to fetch chapters for ${path1}`);
+        let matchIndexName = body.match(/(?<=vm\.IndexName = ").*(?=";)/g);
+        if (!matchIndexName) return Promise.reject(`indexName not found for ${path1}`);
+        var indexName = matchIndexName[0];
+        let matchChapters = body.match(/(?<=vm\.Chapters = )\[.*\](?=;)/g);
+        if (!matchChapters) return Promise.reject(`chapters not found for ${path1}`);
+        var chapters = JSON.parse(matchChapters[0]);
         return Promise.resolve(chapters.map((item)=>{
             let number = this.chapterDisplay(item['Chapter']);
             var ch = {
@@ -39778,7 +39782,7 @@ class $3a210b8ec2dd468e$export$2e2bcd8739ae039 extends $740654ef2f483f98$export$
         this.name = "MangaLife";
         this.url = "https://manga4life.com";
         this.website = undefined;
-        this.version = "0.1.1";
+        this.version = "0.1.2";
         this.icon = "https://manga4life.com/media/favicon.png";
         this.languages = "en";
         this.nsfw = false;
