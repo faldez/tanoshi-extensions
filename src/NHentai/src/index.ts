@@ -6,7 +6,7 @@ export default class NHentai extends Extension {
     id: number = 6;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.0";
+    version: string = "0.1.1";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;

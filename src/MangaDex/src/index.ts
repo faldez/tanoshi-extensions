@@ -24,7 +24,7 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.0";
+    version = "0.1.1";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
