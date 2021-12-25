@@ -6,7 +6,7 @@ export default class NHentai extends Extension {
     id: number = 6;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.1";
+    version: string = "0.1.2";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;
@@ -151,7 +151,7 @@ export default class NHentai extends Extension {
             sourceId: this.id,
             title: data.title.pretty,
             author: tags['artist'] ? tags['artist'] : [],
-            genre: tags['tags'] ? tags['tags'] : [],
+            genre: tags['tag'] ? tags['tag'] : [],
             description: description,
             path: `/api/gallery/${data.id}`,
             coverUrl: `https://t.nhentai.net/galleries/${data.media_id}/cover.${this.imageType[data.images.cover.t]}`,

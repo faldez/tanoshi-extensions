@@ -24,6 +24,10 @@ export async function testSearchManga() {
 export async function testGetMangaDetail() {
     let manga = await s.getMangaDetail("/api/gallery/384090");
 
+    if (manga.genre.length == 0) {
+        throw new Error(`genre empty`);
+    }
+
     if (manga.title !== 'Boku no Osananajimi Again | My Childhood Friend Again') {
         throw new Error(`expect Boku no Osananajimi Again | My Childhood Friend Again got ${manga.title}`)
     }
