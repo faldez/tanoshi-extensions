@@ -1,5 +1,5 @@
 import * as moment from "moment";
-import { Chapter, Extension, fetch, Group, Input, Manga, Select, Text } from "tanoshi-extension-lib"
+import { Chapter, Extension, fetch, Group, Input, Manga, Select, Text, State } from "tanoshi-extension-lib"
 import { paths, components } from './dto';
 import { data as tags } from './tag.json';
 
@@ -19,34 +19,31 @@ type ChapterSuccess = paths["/chapter/{id}"]['get']['responses'][200]['content']
 type ChapterError = paths["/chapter/{id}"]['get']['responses'][404]['content']['application/json'];
 type ChapterResponse = ChapterSuccess | ChapterError;
 
-
 export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.1";
+    version = "0.1.2";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
 
-    titleFilter = new Text("title", "");
-    authorsFilter = new Text("author", "comma seperataed string");
-    artistsFilter = new Text("artist", "comma seperataed string")
-    yearFilter = new Text("year", "year of release")
-    includeTagsFilter = new Group("included tags", tags.map((tag) => tag.attributes.name.en));
-    includedTagsMode = new Select("included tags mode", ["AND", "OR"]);
-    excludeTagsFilter = new Group("excluded tags", tags.map((tag) => tag.attributes.name.en));
-    excludedTagsMode = new Select("excluded tags mode", ["AND", "OR"]);
-    statusFilter = new Group("status", ["ongoing", "completed", "hiatus", "cancelled"]);
+    titleFilter = new Text("Title", "");
+    authorsFilter = new Text("Author");
+    artistsFilter = new Text("Artist")
+    yearFilter = new Text("Year")
+    tagsFilter = new Group("tags", tags.map((tag) => new State(tag.attributes.name.en)));
+    includedTagsMode = new Select("Included Tags Mode", ["AND", "OR"]);
+    excludedTagsMode = new Select("Excluded Tags Mode", ["AND", "OR"]);
+    statusFilter = new Group("Status", ["ongoing", "completed", "hiatus", "cancelled"]);
 
     override getFilterList(): Input[] {
         return [
             this.titleFilter,
             this.authorsFilter,
             this.yearFilter,
-            this.includeTagsFilter,
+            this.tagsFilter,
             this.includedTagsMode,
-            this.excludeTagsFilter,
             this.excludedTagsMode,
             this.statusFilter
         ]
@@ -81,27 +78,27 @@ export default class MangaDex extends Extension {
         let param = [];
         for (const input of filter) {
             switch (input.name) {
-                case "title": {
+                case "Title": {
                     let s = input as Text;
                     param.push(`${s.name}=${s.state!}`);
                     break;
                 }
-                case "author": {
+                case "Author": {
                     let s = input as Text;
                     param.push(`${s.name}=${s.state!}`);
                     break;
                 }
-                case "artist": {
+                case "Artist": {
                     let s = input as Text;
                     param.push(`${s.name}=${s.state!}`);
                     break;
                 }
-                case "year": {
+                case "Year": {
                     let s = input as Text;
                     param.push(`${s.name}=${s.state!}`);
                     break;
                 }
-                case "included tags": {
+                case "Tags": {
                     let s = input as Group<string>;
                     for (const val of s.state!) {
                         let uuid = tags.filter((tag) => tag.attributes.name.en === val).map((tag) => tag.id)[0];
@@ -109,25 +106,17 @@ export default class MangaDex extends Extension {
                     }
                     break;
                 }
-                case "included tags mode": {
+                case "Included Tags Mode": {
                     let s = input as Select<string>;
                     param.push(`includedTagsMode=${s.state!}`);
                     break;
                 }
-                case "excluded tags": {
-                    let s = input as Group<string>;
-                    for (const val of s.state!) {
-                        let uuid = tags.filter((tag) => tag.attributes.name.en === val).map((tag) => tag.id)[0];
-                        param.push(`excludedTags[]=${uuid}`);
-                    }
-                    break;
-                }
-                case "excluded tags mode": {
+                case "Excluded Tags Mode": {
                     let s = input as Select<string>;
                     param.push(`excludedTagsMode=${s.state!}`);
                     break;
                 }
-                case "status": {
+                case "Status": {
                     let s = input as Group<string>;
                     for (const val of s.state!) {
                         let uuid = tags.filter((tag) => tag.attributes.name.en === val).map((tag) => tag.id)[0];
