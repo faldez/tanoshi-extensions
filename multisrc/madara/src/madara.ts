@@ -3,13 +3,6 @@ import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 
 export abstract class Madara extends Extension {
-    getFilterList(): Input[] {
-        throw new Error('Method not implemented.');
-    }
-    getPreferences(): Input[] {
-        throw new Error('Method not implemented.');
-    }
-
     parseMangaList(body: string): Manga[] {
         const $ = cheerio.load(body);
 

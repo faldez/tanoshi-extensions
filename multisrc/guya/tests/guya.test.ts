@@ -9,7 +9,6 @@ export async function testGetLatestManga() {
     }
 }
 
-
 export async function testGetPopularManga() {
     let manga = await s.getPopularManga(1);
     if (manga.length !== 5) {

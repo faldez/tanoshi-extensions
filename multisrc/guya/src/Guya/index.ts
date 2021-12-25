@@ -1,4 +1,4 @@
-import { GuyaBase } from '../guya';
+import { GuyaBase } from '../guyabase';
 
 export default class Guya extends GuyaBase {
     id: number = 7;

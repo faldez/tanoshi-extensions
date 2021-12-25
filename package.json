@@ -31,7 +31,10 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
+    "guya": "file:multisrc\\guya",
+    "madara": "file:multisrc\\madara",
     "mangadex": "file:src\\MangaDex",
-    "nepnep": "file:multisrc\\nepnep"
+    "nepnep": "file:multisrc\\nepnep",
+    "nhentai.net": "file:src\\NHentai"
   }
 }

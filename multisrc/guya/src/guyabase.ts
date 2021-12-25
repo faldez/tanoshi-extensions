@@ -3,14 +3,6 @@ import { Chapter, Extension, fetch, Input, Manga } from "tanoshi-extension-lib";
 import { Detail, Response, Series } from "./dto";
 
 export abstract class GuyaBase extends Extension {
-    getFilterList(): Input[] {
-        throw new Error("Method not implemented.");
-    }
-
-    getPreferences(): Input[] {
-        throw new Error("Method not implemented.");
-    }
-
     async getPopularManga(page: number): Promise<Manga[]> {
         return this.searchManga(page);
     }

@@ -39,7 +39,7 @@ export default class MangaDex extends Extension {
     excludedTagsMode = new Select("excluded tags mode", ["AND", "OR"]);
     statusFilter = new Group("status", ["ongoing", "completed", "hiatus", "cancelled"]);
 
-    getFilterList(): Input[] {
+    override getFilterList(): Input[] {
         return [
             this.titleFilter,
             this.authorsFilter,
@@ -50,9 +50,6 @@ export default class MangaDex extends Extension {
             this.excludedTagsMode,
             this.statusFilter
         ]
-    }
-    getPreferences(): Input[] {
-        throw new Error("Method not implemented.");
     }
 
     async getMangaList(page: number, query?: string): Promise<Manga[]> {

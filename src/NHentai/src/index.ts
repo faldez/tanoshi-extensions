@@ -1,5 +1,6 @@
-import { Chapter, Extension, fetch, Input, Manga } from "tanoshi-extension-lib"
+import { Chapter, Extension, fetch, Input, Manga, Select, Text } from "tanoshi-extension-lib"
 import { Response, Result, Tag } from "./dto";
+
 
 export default class NHentai extends Extension {
     id: number = 6;
@@ -18,12 +19,74 @@ export default class NHentai extends Extension {
             "p": "png",
         };
 
-    getFilterList(): Input[] {
-        throw new Error("Method not implemented.");
+    tagsFilter = new Text("Tags", "");
+    charactersFilter = new Text("Characters", "");
+
+    override preferences: Input[] = [
+        new Select("Language", ["Any", "English", "Japanese", "Chinese"])
+    ];
+
+    override getFilterList(): Input[] {
+        return [
+            this.tagsFilter,
+            this.charactersFilter,
+        ];
     }
-    getPreferences(): Input[] {
-        throw new Error("Method not implemented.");
+
+    buildQuery(filters?: Input[]): string {
+        let query = "";
+        if (this.preferences) {
+            for (const input of this.preferences) {
+                switch (input.name) {
+                    case 'Language': {
+                        let select = input as Select<String>;
+                        if (select.state) {
+                            let lang = select.values[select.state];
+                            if (lang !== 'Any') {
+                                query += `language:${select.values[select.state]}`;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (filters) {
+            for (const filter of filters) {
+                switch (filter.name) {
+                    case 'Tags': {
+                        let input = filter as Text;
+                        input.state?.split(',').reduce((prev: string, current: string) => {
+                            if (current.startsWith('-')) {
+                                return prev += ' ' + `-tag:"${current}"`;
+                            } else {
+                                return prev += ' ' + `tag:"${current}"`;
+                            }
+                        }, query);
+                        break;
+                    }
+                    case 'Characters': {
+                        let input = filter as Text;
+                        input.state?.split(',').reduce((prev: string, current: string) => {
+                            if (current.startsWith('-')) {
+                                return prev += ' ' + `-characters:"${current}"`;
+                            } else {
+                                return prev += ' ' + `characters:"${current}"`;
+                            }
+                        }, query);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (query === "") {
+            query = '""';
+        }
+
+        return query;
     }
+
     async mapDataToManga(data: Response): Promise<Manga[]> {
         let manga = data.result.map((item) => {
             return <Manga>{
@@ -39,16 +102,16 @@ export default class NHentai extends Extension {
     }
 
     async getPopularManga(page: number): Promise<Manga[]> {
-        let data: Response = await fetch(`${this.url}/api/galleries/search?query=""&sort=popular&page=${page}`).then(res => res.json());
+        let data: Response = await fetch(`${this.url}/api/galleries/search?query=${this.buildQuery()}&sort=popular&page=${page}`).then(res => res.json());
         return this.mapDataToManga(data);
     }
 
     async getLatestManga(page: number): Promise<Manga[]> {
-        let data: Response = await fetch(`${this.url}/api/galleries/search?query=""&sort=date&page=${page}`).then(res => res.json());
+        let data: Response = await fetch(`${this.url}/api/galleries/search?query=${this.buildQuery()}&sort=date&page=${page}`).then(res => res.json());
         return this.mapDataToManga(data);
     }
     async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
-        let data: Response = await fetch(`${this.url}/api/galleries/search?query=${query}&sort=date&page=${page}`).then(res => res.json());
+        let data: Response = await fetch(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page}`).then(res => res.json());
         return this.mapDataToManga(data);
     }
 
@@ -91,7 +154,7 @@ export default class NHentai extends Extension {
             genre: tags['tags'] ? tags['tags'] : [],
             description: description,
             path: `/api/gallery/${data.id}`,
-            coverUrl: `https://i.nhentai.net/galleries/${data.media_id}/cover.${this.imageType[data.images.cover.t]}`,
+            coverUrl: `https://t.nhentai.net/galleries/${data.media_id}/cover.${this.imageType[data.images.cover.t]}`,
         })
     }
     async getChapters(path: string): Promise<Chapter[]> {

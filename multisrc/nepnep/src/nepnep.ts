@@ -1,29 +1,28 @@
 import * as cheerio from 'cheerio';
-import { Chapter, Extension, Input, Text, Group, Manga, fetch, print } from "tanoshi-extension-lib";
+import { Chapter, Extension, Input, Text, Group, Manga, fetch, State, Sort, Select, TriState } from "tanoshi-extension-lib";
 import * as moment from 'moment';
+
+import { Genre as GenreList, SortBy, ScanStatus, PublishStatus } from './filters.json';
+import { Directory } from './dto';
 
 export abstract class NepNep extends Extension {
     protected keywordFilter = new Text("Series Name", "");
-    protected includeGenreFilter = new Group("Include Genre", [
-        "Any",
-        "Action",
-        "Adult",
-        "Adventure",
-        "Comedy"
-    ]);
+    protected genreFilter = new Group("Genres", GenreList.map((g) => new State(g)));
+    protected scanStatusFilter = new Select("Scan Status", ["Any", ...ScanStatus]);
+    protected publishStatusFilter = new Select("Publish Status", ["Any", ...PublishStatus]);
+    protected sortByFilter = new Sort("Sort By", SortBy);
 
     override getFilterList(): Input[] {
         return [
             this.keywordFilter,
-            this.includeGenreFilter
+            this.scanStatusFilter,
+            this.publishStatusFilter,
+            this.sortByFilter,
+            this.genreFilter
         ];
     }
 
-    override getPreferences(): Input[] {
-        return [];
-    }
-
-    protected async getAllManga(): Promise<any[]> {
+    protected async getAllManga(): Promise<Directory[]> {
         var body = await fetch(`${this.url}/search`).then(res => res.text());
 
         body = body.substring(body.search("vm.Directory = ") + 15);
@@ -34,7 +33,7 @@ export abstract class NepNep extends Extension {
         return data;
     }
 
-    protected mapDataToManga(data: any[], page: number): Manga[] {
+    protected mapDataToManga(data: Directory[], page: number): Manga[] {
         if (page < 1) {
             page = 1;
         }
@@ -44,12 +43,12 @@ export abstract class NepNep extends Extension {
 
         return data.map(item => <Manga>{
             sourceId: this.id,
-            title: item['s'],
-            author: item['a'],
-            status: item['ps'],
-            genre: item['g'],
+            title: item.s,
+            author: item.a,
+            status: item.ps,
+            genre: item.g,
             path: `/manga/${item['i']}`,
-            coverUrl: `https://cover.nep.li/cover/${item['i']}.jpg`,
+            coverUrl: `https://cover.nep.li/cover/${item.i}.jpg`,
         });
     }
 
@@ -89,25 +88,41 @@ export abstract class NepNep extends Extension {
         return Promise.resolve(this.mapDataToManga(data, page));
     }
 
-    protected filterKeyword(data: any[], input: Text): any[] {
-        let state = input.state?.toLowerCase();
+    protected filterKeyword(data: Directory[], state: string): Directory[] {
         return data.filter((item) => {
             return (item.s.toLowerCase().indexOf(state) != -1);
         });
     }
 
-    protected filterIncludeGenres(data: any[], input: Group<string>): any[] {
+    protected filterIncludeGenres(data: Directory[], input: Group<State>): Directory[] {
         let state = input.state;
-        return data.filter((item) => {
-            return (item.g.some((genre: string) => {
-                for (const s of state!) {
-                    if (s === genre) {
+        let includedGenre = state?.filter((genre) => genre.selected == TriState.Included).map(g => g.name);
+        if (includedGenre?.length! > 0) {
+            data = data.filter((item) => {
+                let set = new Set([...item.g]);
+                for (const genre of includedGenre!) {
+                    if (set.has(genre)) {
                         return true;
                     }
                 }
                 return false;
-            }));
-        });
+            });
+        }
+
+        let excludedGenre = state?.filter((genre) => genre.selected == TriState.Excluded).map(g => g.name);
+        if (excludedGenre?.length! > 0) {
+            data = data.filter((item) => {
+                let set = new Set([...item.g]);
+                for (const genre of excludedGenre!) {
+                    if (set.has(genre)) {
+                        return true;
+                    }
+                }
+                return true;
+            });
+        }
+
+        return data;
     }
 
     override async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
@@ -119,22 +134,18 @@ export abstract class NepNep extends Extension {
 
         if (filter) {
             for (var input of filter) {
-                if (this.keywordFilter.equals(input)) {
-                    console.log(JSON.stringify(input));
-                    data = this.filterKeyword(data, input);
+                if (this.keywordFilter.equals(input) && (input as Text).state! != '') {
+                    data = this.filterKeyword(data, (input as Text).state!);
                 }
 
-                if (this.includeGenreFilter.equals(input)) {
-                    console.log(JSON.stringify(input));
+                if (this.genreFilter.equals(input)) {
                     data = this.filterIncludeGenres(data, input);
                 }
             }
         } else if (query) {
-            console.log(query);
-            data = data.filter((item) => {
-                return (item.s.toLowerCase().indexOf(query) != -1);
-            });
+            data = this.filterKeyword(data, query);
         }
+
 
         var manga = this.mapDataToManga(data, page);
 

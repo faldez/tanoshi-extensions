@@ -1,4 +1,4 @@
-import { print } from 'tanoshi-extension-lib';
+import { print, Select } from 'tanoshi-extension-lib';
 import Source from '../src';
 
 const s = new Source();
@@ -9,7 +9,6 @@ export async function testGetLatestManga() {
         throw new Error("manga is not 25");
     }
 }
-
 
 export async function testGetPopularManga() {
     let manga = await s.getPopularManga(1);
@@ -36,4 +35,15 @@ export async function testGetChapters() {
 
 export async function testGetPages() {
     var pages = await s.getPages("/api/gallery/384090");
+}
+
+export async function testSetPreferences() {
+    let prefs = [
+        new Select("Language", ["Any", "English", "Japanese", "Chinese"], 1),
+    ];
+    s.setPreferences(prefs);
+}
+
+export async function testGetPreferences() {
+    let saved = s.getPreferences();
 }
