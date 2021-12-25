@@ -183,11 +183,19 @@ export abstract class NepNep extends Extension {
     override async getChapters(path: string): Promise<Chapter[]> {
         var body = await fetch(`${this.url}${path}`).then(res => res.text());
         if (!body) {
-            throw new Error("failed to fetch chapters");
+            return Promise.reject(`failed to fetch chapters for ${path}`);
         }
 
-        var indexName = body.match(/(?<=vm\.IndexName = ").*(?=";)/g)![0];
-        var chapters = JSON.parse(body.match(/(?<=vm\.Chapters = )\[.*\](?=;)/g)![0]);
+        let matchIndexName = body.match(/(?<=vm\.IndexName = ").*(?=";)/g);
+        if (!matchIndexName) {
+            return Promise.reject(`indexName not found for ${path}`);
+        }
+        var indexName = matchIndexName[0];
+        let matchChapters = body.match(/(?<=vm\.Chapters = )\[.*\](?=;)/g);
+        if (!matchChapters) {
+            return Promise.reject(`chapters not found for ${path}`);
+        }
+        var chapters = JSON.parse(matchChapters[0]);
 
         return Promise.resolve(chapters.map((item: any) => {
             let number = this.chapterDisplay(item['Chapter']);

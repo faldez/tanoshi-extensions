@@ -5,7 +5,7 @@ export default class MangaSee extends NepNep {
     name = "MangaSee";
     url = "https://mangasee123.com";
     website = undefined;
-    version = "0.1.1";
+    version = "0.1.2";
     icon = "https://mangasee123.com/media/favicon.png";
     languages = "en";
     nsfw = false;

@@ -5,7 +5,7 @@ export default class MangaLife extends NepNep {
     name = "MangaLife";
     url = "https://manga4life.com";
     website = undefined;
-    version = "0.1.1";
+    version = "0.1.2";
     icon = "https://manga4life.com/media/favicon.png";
     languages = "en";
     nsfw = false;
