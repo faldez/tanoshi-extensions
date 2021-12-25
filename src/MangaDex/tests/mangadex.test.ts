@@ -30,17 +30,17 @@ export async function testSearchMangaWithFilter() {
 }
 
 export async function testGetMangaDetail() {
-    let manga = await s.getMangaDetail("/manga/One-Piece");
+    let manga = await s.getMangaDetail("/manga/a96676e5-8ae2-425e-b549-7f15dd34a6d8");
 
-    if (manga.title !== 'One Piece') {
-        throw new Error(`expect One Piece got ${manga.title}`)
+    if (manga.title !== 'Komi-san wa Komyushou Desu.') {
+        throw new Error(`expect Komi-san wa Komyushou Desu. got ${manga.title}`)
     }
 }
 
 export async function testGetChapters() {
-    var chapters = await s.getChapters("/manga/One-Piece");
+    var chapters = await s.getChapters("/manga/a96676e5-8ae2-425e-b549-7f15dd34a6d8");
 }
 
 export async function testGetPages() {
-    var pages = await s.getPages("/read-online/One-Piece-chapter-1035-page-1.html");
+    var pages = await s.getPages("/chapter/d35c7f27-9ad7-43d1-afb8-445dab0cb44e");
 }
