@@ -3954,13 +3954,13 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             case "Included Tags Mode":
                 {
                     let s = input;
-                    if (s.state) param.push(`includedTagsMode=${s.state}`);
+                    if (s.state !== undefined) param.push(`includedTagsMode=${s.values[s.state].toUpperCase()}`);
                     break;
                 }
             case "Excluded Tags Mode":
                 {
                     let s = input;
-                    if (s.state) param.push(`excludedTagsMode=${s.state}`);
+                    if (s.state !== undefined) param.push(`excludedTagsMode=${s.values[s.state].toUpperCase()}`);
                     break;
                 }
             case "Status":
@@ -4053,7 +4053,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.8";
+        this.version = "0.1.9";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
@@ -4066,11 +4066,11 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.includedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("Included Tags Mode", [
             "AND",
             "OR"
-        ]);
+        ], 0);
         this.excludedTagsMode = new $f963b40858b26a50$export$ef9b1a59e592288f("Excluded Tags Mode", [
             "AND",
             "OR"
-        ]);
+        ], 1);
         this.statusFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("Status", [
             new $f963b40858b26a50$export$48513f6b9f8ce62d("ongoing", true),
             new $f963b40858b26a50$export$48513f6b9f8ce62d("completed", true),
