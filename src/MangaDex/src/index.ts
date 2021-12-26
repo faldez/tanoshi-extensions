@@ -23,7 +23,7 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.4";
+    version = "0.1.5";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
@@ -188,9 +188,9 @@ export default class MangaDex extends Extension {
 
             chapter.push(<Chapter>{
                 sourceId: this.id,
-                title: `${attributes.volume ? `Volume ${attributes.volume}` : ''} Chapter ${attributes.chapter} - ${attributes.title ? attributes.title : ''}`,
+                title: `${attributes.volume ? `Volume ${attributes.volume} ` : ''}Chapter ${attributes.chapter ? attributes.chapter : 0}${attributes.title ? ' - ' + attributes.title : ''}`,
                 path: `/chapter/${item.id}`,
-                number: parseFloat(attributes.chapter!),
+                number: parseFloat(attributes.chapter ? attributes.chapter : '0.0'),
                 uploaded: moment(attributes.publishAt, moment.ISO_8601).unix(),
             });
         }
