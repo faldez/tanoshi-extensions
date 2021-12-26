@@ -4074,8 +4074,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.statusFilter = new $f963b40858b26a50$export$eb2fcfdbd7ba97d4("Status", [
             new $f963b40858b26a50$export$48513f6b9f8ce62d("ongoing", true),
             new $f963b40858b26a50$export$48513f6b9f8ce62d("completed", true),
-            new $f963b40858b26a50$export$48513f6b9f8ce62d("hiatus"),
-            true,
+            new $f963b40858b26a50$export$48513f6b9f8ce62d("hiatus", true),
             new $f963b40858b26a50$export$48513f6b9f8ce62d("cancelled", true), 
         ]);
     }
