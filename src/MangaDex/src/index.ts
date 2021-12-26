@@ -23,7 +23,7 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.8";
+    version = "0.1.9";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
@@ -33,8 +33,8 @@ export default class MangaDex extends Extension {
     artistsFilter = new Text("Artist")
     yearFilter = new Text("Year")
     tagsFilter = new Group<State>("Tags", tags.map((tag) => new State(tag.attributes.name.en)));
-    includedTagsMode = new Select("Included Tags Mode", ["AND", "OR"]);
-    excludedTagsMode = new Select("Excluded Tags Mode", ["AND", "OR"]);
+    includedTagsMode = new Select("Included Tags Mode", ["AND", "OR"], 0);
+    excludedTagsMode = new Select("Excluded Tags Mode", ["AND", "OR"], 1);
     statusFilter = new Group<Checkbox>("Status", [
         new Checkbox("ongoing", true),
         new Checkbox("completed", true),
@@ -60,7 +60,6 @@ export default class MangaDex extends Extension {
         }
         let offset = (page - 1) * 20;
         var body: MangaListResponse = await fetch(`${this.url}/manga?limit=20&offset=${offset}&includes[]=author&includes[]=artist&includes[]=cover_art${query ? '&' + query : ''}`).then((res) => res.json());
-
         var manga = [];
         for (const item of (body as MangaListSuccess).data!) {
             manga.push(this.mapItemToManga(item));
@@ -125,15 +124,15 @@ export default class MangaDex extends Extension {
                 }
                 case "Included Tags Mode": {
                     let s = input as Select<string>;
-                    if (s.state) {
-                        param.push(`includedTagsMode=${s.state}`);
+                    if (s.state !== undefined) {
+                        param.push(`includedTagsMode=${s.values[s.state].toUpperCase()}`);
                     }
                     break;
                 }
                 case "Excluded Tags Mode": {
                     let s = input as Select<string>;
-                    if (s.state) {
-                        param.push(`excludedTagsMode=${s.state}`);
+                    if (s.state !== undefined) {
+                        param.push(`excludedTagsMode=${s.values[s.state].toUpperCase()}`);
                     }
                     break;
                 }
