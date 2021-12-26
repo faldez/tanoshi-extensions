@@ -23,7 +23,7 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.6";
+    version = "0.1.7";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
@@ -36,10 +36,10 @@ export default class MangaDex extends Extension {
     includedTagsMode = new Select("Included Tags Mode", ["AND", "OR"]);
     excludedTagsMode = new Select("Excluded Tags Mode", ["AND", "OR"]);
     statusFilter = new Group("Status", [
-        new Checkbox("ongoing"),
-        new Checkbox("completed"),
-        new Checkbox("hiatus"),
-        new Checkbox("cancelled"),
+        new Checkbox("ongoing", true),
+        new Checkbox("completed", true),
+        new Checkbox("hiatus"), true,
+        new Checkbox("cancelled", true),
     ]);
 
     override getFilterList(): Input[] {
@@ -117,7 +117,7 @@ export default class MangaDex extends Extension {
                         for (const val of s.state) {
                             let includedTags = tags.filter((tag) => tag.attributes.name.en === val.name && val.selected === TriState.Included).map((tag) => `includedTags[]=${tag.id}`);
                             param.push(...includedTags);
-                            let excludedTags = tags.filter((tag) => tag.attributes.name.en === val.name && val.selected === TriState.Excluded).map((tag) => `includedTags[]=${tag.id}`);
+                            let excludedTags = tags.filter((tag) => tag.attributes.name.en === val.name && val.selected === TriState.Excluded).map((tag) => `excludedTags[]=${tag.id}`);
                             param.push(...excludedTags);
                         }
                     }
@@ -140,7 +140,7 @@ export default class MangaDex extends Extension {
                 case "Status": {
                     let s = input as Group<Checkbox>;
                     if (s.state) {
-                        let status = s.state.filter((val) => val === undefined || val.state === true).map((val) => `status=${s.state}`)
+                        let status = s.state.filter((val) => val.state === true).map((val) => `status[]=${val.name}`)
                         param.push(...status);
                     }
                     break;
@@ -155,7 +155,6 @@ export default class MangaDex extends Extension {
         let param = undefined;
         if (filter) {
             param = this.parseFilter(filter);
-            console.error(param)
         } else if (query) {
             param = `title=${query}`;
         }
