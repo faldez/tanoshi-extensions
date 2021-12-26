@@ -3,10 +3,10 @@ import { Response, Result, Tag } from "./dto";
 
 
 export default class NHentai extends Extension {
-    id: number = 6;
+    id: number = 9;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.2";
+    version: string = "0.1.4";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;
@@ -170,7 +170,7 @@ export default class NHentai extends Extension {
     }
     async getPages(path: string): Promise<string[]> {
         let data: Result = await fetch(`${this.url}${path}`).then(res => res.json());
-        let pages = data.images.pages.map((p, i) => `https://i.nhentai.net/galleries/${data.media_id}/${i + 1}.${this.imageType[data.images.cover.t]}`)
+        let pages = data.images.pages.map((p, i) => `https://i.nhentai.net/galleries/${data.media_id}/${i + 1}.${this.imageType[p.t]}`)
         return Promise.resolve(pages);
     }
 
