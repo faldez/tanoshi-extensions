@@ -4025,9 +4025,9 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             if (!attributes) return Promise.reject(`emptry attributes for ${path1}`);
             chapter.push({
                 sourceId: this.id,
-                title: `${attributes.volume ? `Volume ${attributes.volume}` : ''} Chapter ${attributes.chapter} - ${attributes.title ? attributes.title : ''}`,
+                title: `${attributes.volume ? `Volume ${attributes.volume} ` : ''}Chapter ${attributes.chapter ? attributes.chapter : 0}${attributes.title ? ' - ' + attributes.title : ''}`,
                 path: `/chapter/${item.id}`,
-                number: parseFloat(attributes.chapter),
+                number: parseFloat(attributes.chapter ? attributes.chapter : '0.0'),
                 uploaded: $e8KVk(attributes.publishAt, $e8KVk.ISO_8601).unix()
             });
         }
@@ -4049,7 +4049,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.4";
+        this.version = "0.1.5";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
