@@ -1,5 +1,5 @@
 import * as moment from "moment";
-import { Chapter, Extension, fetch, Group, Input, Manga, Select, Text, State, Checkbox } from "tanoshi-extension-lib"
+import { Chapter, Extension, fetch, Group, Input, Manga, Select, Text, State, Checkbox, TriState } from "tanoshi-extension-lib"
 import { paths, components } from './dto';
 import { data as tags } from './tag.json';
 
@@ -23,7 +23,7 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.5";
+    version = "0.1.6";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
@@ -79,53 +79,69 @@ export default class MangaDex extends Extension {
         return Promise.resolve(manga);
     }
 
-    parseFilter(filter: Input[]): string {
+    parseFilter(filters: Input[]): string {
         let param = [];
-        for (const input of filter) {
+        for (const input of filters) {
             switch (input.name) {
                 case "Title": {
                     let s = input as Text;
-                    param.push(`${s.name}=${s.state!}`);
+                    if (s.state) {
+                        param.push(`title=${s.state}`);
+                    }
                     break;
                 }
                 case "Author": {
                     let s = input as Text;
-                    param.push(`${s.name}=${s.state!}`);
+                    if (s.state) {
+                        param.push(`authors[]=${s.state}`);
+                    }
                     break;
                 }
                 case "Artist": {
                     let s = input as Text;
-                    param.push(`${s.name}=${s.state!}`);
+                    if (s.state) {
+                        param.push(`artists[]=${s.state}`);
+                    }
                     break;
                 }
                 case "Year": {
                     let s = input as Text;
-                    param.push(`${s.name}=${s.state!}`);
+                    if (s.state) {
+                        param.push(`year=${s.state}`);
+                    }
                     break;
                 }
                 case "Tags": {
-                    let s = input as Group<string>;
-                    for (const val of s.state!) {
-                        let uuid = tags.filter((tag) => tag.attributes.name.en === val).map((tag) => tag.id)[0];
-                        param.push(`includedTags[]=${uuid}`);
+                    let s = input as Group<State>;
+                    if (s.state) {
+                        for (const val of s.state) {
+                            let includedTags = tags.filter((tag) => tag.attributes.name.en === val.name && val.selected === TriState.Included).map((tag) => `includedTags[]=${tag.id}`);
+                            param.push(...includedTags);
+                            let excludedTags = tags.filter((tag) => tag.attributes.name.en === val.name && val.selected === TriState.Excluded).map((tag) => `includedTags[]=${tag.id}`);
+                            param.push(...excludedTags);
+                        }
                     }
                     break;
                 }
                 case "Included Tags Mode": {
                     let s = input as Select<string>;
-                    param.push(`includedTagsMode=${s.state!}`);
+                    if (s.state) {
+                        param.push(`includedTagsMode=${s.state}`);
+                    }
                     break;
                 }
                 case "Excluded Tags Mode": {
                     let s = input as Select<string>;
-                    param.push(`excludedTagsMode=${s.state!}`);
+                    if (s.state) {
+                        param.push(`excludedTagsMode=${s.state}`);
+                    }
                     break;
                 }
                 case "Status": {
-                    let s = input as Group<string>;
-                    for (const val of s.state!) {
-                        let uuid = tags.filter((tag) => tag.attributes.name.en === val).map((tag) => tag.id)[0];
-                        param.push(`${s.name}[]=${uuid}`);
+                    let s = input as Group<Checkbox>;
+                    if (s.state) {
+                        let status = s.state.filter((val) => val === undefined || val.state === true).map((val) => `status=${s.state}`)
+                        param.push(...status);
                     }
                     break;
                 }
@@ -139,6 +155,7 @@ export default class MangaDex extends Extension {
         let param = undefined;
         if (filter) {
             param = this.parseFilter(filter);
+            console.error(param)
         } else if (query) {
             param = `title=${query}`;
         }

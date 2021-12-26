@@ -1,3 +1,4 @@
+import { Text } from 'tanoshi-extension-lib';
 import Source from '../src';
 
 const s = new Source();
