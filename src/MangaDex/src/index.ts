@@ -32,13 +32,13 @@ export default class MangaDex extends Extension {
     authorsFilter = new Text("Author");
     artistsFilter = new Text("Artist")
     yearFilter = new Text("Year")
-    tagsFilter = new Group("Tags", tags.map((tag) => new State(tag.attributes.name.en)));
+    tagsFilter = new Group<State>("Tags", tags.map((tag) => new State(tag.attributes.name.en)));
     includedTagsMode = new Select("Included Tags Mode", ["AND", "OR"]);
     excludedTagsMode = new Select("Excluded Tags Mode", ["AND", "OR"]);
-    statusFilter = new Group("Status", [
+    statusFilter = new Group<Checkbox>("Status", [
         new Checkbox("ongoing", true),
         new Checkbox("completed", true),
-        new Checkbox("hiatus"), true,
+        new Checkbox("hiatus", true),
         new Checkbox("cancelled", true),
     ]);
 
