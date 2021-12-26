@@ -228,16 +228,16 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
     async getPages(path2) {
         let data = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}${path2}`).then((res)=>res.json()
         );
-        let pages = data.images.pages.map((p, i)=>`https://i.nhentai.net/galleries/${data.media_id}/${i + 1}.${this.imageType[data.images.cover.t]}`
+        let pages = data.images.pages.map((p, i)=>`https://i.nhentai.net/galleries/${data.media_id}/${i + 1}.${this.imageType[p.t]}`
         );
         return Promise.resolve(pages);
     }
     constructor(...args){
         super(...args);
-        this.id = 6;
+        this.id = 9;
         this.name = "NHentai";
         this.url = "https://nhentai.net";
-        this.version = "0.1.2";
+        this.version = "0.1.4";
         this.icon = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
         this.languages = "all";
         this.nsfw = true;
