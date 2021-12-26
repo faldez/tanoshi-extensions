@@ -3909,74 +3909,80 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         let manga = await this.getMangaList(page2);
         return Promise.resolve(manga);
     }
-    parseFilter(filter) {
+    parseFilter(filters) {
         let param = [];
-        for (const input of filter)switch(input.name){
+        for (const input of filters)switch(input.name){
             case "Title":
                 {
                     let s = input;
-                    param.push(`${s.name}=${s.state}`);
+                    if (s.state) param.push(`title=${s.state}`);
                     break;
                 }
             case "Author":
                 {
                     let s = input;
-                    param.push(`${s.name}=${s.state}`);
+                    if (s.state) param.push(`authors[]=${s.state}`);
                     break;
                 }
             case "Artist":
                 {
                     let s = input;
-                    param.push(`${s.name}=${s.state}`);
+                    if (s.state) param.push(`artists[]=${s.state}`);
                     break;
                 }
             case "Year":
                 {
                     let s = input;
-                    param.push(`${s.name}=${s.state}`);
+                    if (s.state) param.push(`year=${s.state}`);
                     break;
                 }
             case "Tags":
                 {
                     let s = input;
-                    for (const val of s.state){
-                        let uuid = $decb13adfe59b551$exports.data.filter((tag)=>tag.attributes.name.en === val
-                        ).map((tag)=>tag.id
-                        )[0];
-                        param.push(`includedTags[]=${uuid}`);
+                    if (s.state) for (const val of s.state){
+                        let includedTags = $decb13adfe59b551$exports.data.filter((tag)=>tag.attributes.name.en === val.name && val.selected === $f963b40858b26a50$export$e743037aea74f514.Included
+                        ).map((tag)=>`includedTags[]=${tag.id}`
+                        );
+                        param.push(...includedTags);
+                        let excludedTags = $decb13adfe59b551$exports.data.filter((tag)=>tag.attributes.name.en === val.name && val.selected === $f963b40858b26a50$export$e743037aea74f514.Excluded
+                        ).map((tag)=>`includedTags[]=${tag.id}`
+                        );
+                        param.push(...excludedTags);
                     }
                     break;
                 }
             case "Included Tags Mode":
                 {
                     let s = input;
-                    param.push(`includedTagsMode=${s.state}`);
+                    if (s.state) param.push(`includedTagsMode=${s.state}`);
                     break;
                 }
             case "Excluded Tags Mode":
                 {
                     let s = input;
-                    param.push(`excludedTagsMode=${s.state}`);
+                    if (s.state) param.push(`excludedTagsMode=${s.state}`);
                     break;
                 }
             case "Status":
                 {
                     let s = input;
-                    for (const val of s.state){
-                        let uuid = $decb13adfe59b551$exports.data.filter((tag)=>tag.attributes.name.en === val
-                        ).map((tag)=>tag.id
-                        )[0];
-                        param.push(`${s.name}[]=${uuid}`);
+                    if (s.state) {
+                        let status = s.state.filter((val)=>val === undefined || val.state === true
+                        ).map((val)=>`status=${s.state}`
+                        );
+                        param.push(...status);
                     }
                     break;
                 }
         }
         return param.join('&');
     }
-    async searchManga(page3, query1, filter1) {
+    async searchManga(page3, query1, filter) {
         let param = undefined;
-        if (filter1) param = this.parseFilter(filter1);
-        else if (query1) param = `title=${query1}`;
+        if (filter) {
+            param = this.parseFilter(filter);
+            console.error(param);
+        } else if (query1) param = `title=${query1}`;
         let manga = await this.getMangaList(page3, param);
         return Promise.resolve(manga);
     }
@@ -4049,7 +4055,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.5";
+        this.version = "0.1.6";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
