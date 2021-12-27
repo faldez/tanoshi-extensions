@@ -96,33 +96,83 @@ export abstract class NepNep extends Extension {
 
     protected filterIncludeGenres(data: Directory[], input: Group<State>): Directory[] {
         let state = input.state;
-        let includedGenre = state?.filter((genre) => genre.selected == TriState.Included).map(g => g.name);
-        if (includedGenre?.length! > 0) {
+        let includedGenre = state ? state.filter((genre) => genre.selected == TriState.Included).map(g => g.name) : [];
+        if (includedGenre !== undefined && includedGenre.length! > 0) {
             data = data.filter((item) => {
                 let set = new Set([...item.g]);
-                for (const genre of includedGenre!) {
+                let has = 0;
+                for (const genre of includedGenre) {
                     if (set.has(genre)) {
-                        return true;
+                        has += 1;
                     }
                 }
-                return false;
+                return has == includedGenre.length;
             });
         }
 
-        let excludedGenre = state?.filter((genre) => genre.selected == TriState.Excluded).map(g => g.name);
-        if (excludedGenre?.length! > 0) {
+        let excludedGenre = state ? state.filter((genre) => genre.selected == TriState.Excluded).map(g => g.name) : [];
+        if (excludedGenre.length > 0) {
             data = data.filter((item) => {
                 let set = new Set([...item.g]);
-                for (const genre of excludedGenre!) {
+                let has = 0;
+                for (const genre of excludedGenre) {
                     if (set.has(genre)) {
-                        return true;
+                        has += 1;
                     }
                 }
-                return true;
+                return !(has === excludedGenre.length);
             });
         }
 
         return data;
+    }
+
+    sortByPopularity(data: Directory[], asc: boolean): Directory[] {
+        return data.sort((a, b) => {
+            if (asc) {
+                return parseInt(a.v) - parseInt(b.v);
+            } else {
+                return parseInt(b.v) - parseInt(a.v);
+            }
+        })
+    }
+
+    sortByAlphabeticaly(data: Directory[], asc: boolean): Directory[] {
+        return data.sort((a, b) => {
+            if (asc) {
+                return a.s.localeCompare(b.s)
+            } else {
+                return b.s.localeCompare(a.s)
+            }
+        })
+    }
+
+    sortByYearReleased(data: Directory[], asc: boolean): Directory[] {
+        return data.sort((a, b) => {
+            if (asc) {
+                return parseInt(a.y) - parseInt(b.y);
+            } else {
+                return parseInt(b.y) - parseInt(a.y);
+            }
+        })
+    }
+
+    sortDirectory(data: Directory[], state?: [number, boolean]): Directory[] {
+        if (state) {
+            console.log(JSON.stringify(state[0]));
+            switch (state[0]) {
+                case 0:
+                    return this.sortByAlphabeticaly(data, state[1]);
+                case 1:
+                    return this.sortByYearReleased(data, state[1]);
+                case 2:
+                    return this.sortByPopularity(data, state[1]);
+                default:
+                    return data;
+            }
+        } else {
+            return data;
+        }
     }
 
     override async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
@@ -136,10 +186,10 @@ export abstract class NepNep extends Extension {
             for (var input of filter) {
                 if (this.keywordFilter.equals(input) && (input as Text).state! != '') {
                     data = this.filterKeyword(data, (input as Text).state!);
-                }
-
-                if (this.genreFilter.equals(input)) {
+                } else if (this.genreFilter.equals(input)) {
                     data = this.filterIncludeGenres(data, input);
+                } else if (this.sortByFilter.equals(input)) {
+                    data = this.sortDirectory(data, (input as Sort<String>).selection);
                 }
             }
         } else if (query) {
