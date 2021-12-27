@@ -78,11 +78,11 @@ class $f963b40858b26a50$export$eb2fcfdbd7ba97d4 extends $f963b40858b26a50$export
     }
 }
 class $f963b40858b26a50$export$d43f91ac58cde147 extends $f963b40858b26a50$export$f5b8910cec6cf069 {
-    constructor(name4, values1, state4){
+    constructor(name4, values1, selection){
         super();
         this.name = name4;
         this.values = values1;
-        this.state = state4;
+        this.selection = selection;
         this.type = 'Sort';
     }
 }

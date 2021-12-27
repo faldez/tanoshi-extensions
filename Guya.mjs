@@ -3801,11 +3801,11 @@ class $8e5b7fb3ed8b7bd1$export$eb2fcfdbd7ba97d4 extends $8e5b7fb3ed8b7bd1$export
     }
 }
 class $8e5b7fb3ed8b7bd1$export$d43f91ac58cde147 extends $8e5b7fb3ed8b7bd1$export$f5b8910cec6cf069 {
-    constructor(name4, values1, state4){
+    constructor(name4, values1, selection){
         super();
         this.name = name4;
         this.values = values1;
-        this.state = state4;
+        this.selection = selection;
         this.type = 'Sort';
     }
 }

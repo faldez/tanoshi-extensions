@@ -35787,11 +35787,11 @@ class $8e5b7fb3ed8b7bd1$export$eb2fcfdbd7ba97d4 extends $8e5b7fb3ed8b7bd1$export
     }
 }
 class $8e5b7fb3ed8b7bd1$export$d43f91ac58cde147 extends $8e5b7fb3ed8b7bd1$export$f5b8910cec6cf069 {
-    constructor(name4, values1, state4){
+    constructor(name4, values1, selection){
         super();
         this.name = name4;
         this.values = values1;
-        this.state = state4;
+        this.selection = selection;
         this.type = 'Sort';
     }
 }
@@ -39650,38 +39650,70 @@ class $740654ef2f483f98$export$436ef8d53f57c1da extends $8e5b7fb3ed8b7bd1$export
     }
     filterIncludeGenres(data2, input) {
         let state = input.state;
-        let includedGenre = state === null || state === void 0 ? void 0 : state.filter((genre)=>genre.selected == $8e5b7fb3ed8b7bd1$export$e743037aea74f514.Included
+        let includedGenre = state ? state.filter((genre)=>genre.selected == $8e5b7fb3ed8b7bd1$export$e743037aea74f514.Included
         ).map((g)=>g.name
-        );
-        if ((includedGenre === null || includedGenre === void 0 ? void 0 : includedGenre.length) > 0) data2 = data2.filter((item)=>{
+        ) : [];
+        if (includedGenre !== undefined && includedGenre.length > 0) data2 = data2.filter((item)=>{
             let set = new Set([
                 ...item.g
             ]);
-            for (const genre of includedGenre){
-                if (set.has(genre)) return true;
-            }
-            return false;
+            let has = 0;
+            for (const genre of includedGenre)if (set.has(genre)) has += 1;
+            return has == includedGenre.length;
         });
-        let excludedGenre = state === null || state === void 0 ? void 0 : state.filter((genre)=>genre.selected == $8e5b7fb3ed8b7bd1$export$e743037aea74f514.Excluded
+        let excludedGenre = state ? state.filter((genre)=>genre.selected == $8e5b7fb3ed8b7bd1$export$e743037aea74f514.Excluded
         ).map((g)=>g.name
-        );
-        if ((excludedGenre === null || excludedGenre === void 0 ? void 0 : excludedGenre.length) > 0) data2 = data2.filter((item)=>{
+        ) : [];
+        if (excludedGenre.length > 0) data2 = data2.filter((item)=>{
             let set = new Set([
                 ...item.g
             ]);
-            for (const genre of excludedGenre){
-                if (set.has(genre)) return true;
-            }
-            return true;
+            let has = 0;
+            for (const genre of excludedGenre)if (set.has(genre)) has += 1;
+            return !(has === excludedGenre.length);
         });
         return data2;
+    }
+    sortByPopularity(data3, asc) {
+        return data3.sort((a, b)=>{
+            if (asc) return parseInt(a.v) - parseInt(b.v);
+            else return parseInt(b.v) - parseInt(a.v);
+        });
+    }
+    sortByAlphabeticaly(data4, asc1) {
+        return data4.sort((a, b)=>{
+            if (asc1) return a.s.localeCompare(b.s);
+            else return b.s.localeCompare(a.s);
+        });
+    }
+    sortByYearReleased(data5, asc2) {
+        return data5.sort((a, b)=>{
+            if (asc2) return parseInt(a.y) - parseInt(b.y);
+            else return parseInt(b.y) - parseInt(a.y);
+        });
+    }
+    sortDirectory(data6, state1) {
+        if (state1) {
+            console.log(JSON.stringify(state1[0]));
+            switch(state1[0]){
+                case 0:
+                    return this.sortByAlphabeticaly(data6, state1[1]);
+                case 1:
+                    return this.sortByYearReleased(data6, state1[1]);
+                case 2:
+                    return this.sortByPopularity(data6, state1[1]);
+                default:
+                    return data6;
+            }
+        } else return data6;
     }
     async searchManga(page3, query, filter) {
         if (query === undefined && filter === undefined) throw new Error("query and filters cannot be both empty");
         var data = await this.getAllManga();
         if (filter) for (var input of filter){
             if (this.keywordFilter.equals(input) && input.state != '') data = this.filterKeyword(data, input.state);
-            if (this.genreFilter.equals(input)) data = this.filterIncludeGenres(data, input);
+            else if (this.genreFilter.equals(input)) data = this.filterIncludeGenres(data, input);
+            else if (this.sortByFilter.equals(input)) data = this.sortDirectory(data, input.selection);
         }
         else if (query) data = this.filterKeyword(data, query);
         var manga = this.mapDataToManga(data, page3);
@@ -39782,7 +39814,7 @@ class $3a210b8ec2dd468e$export$2e2bcd8739ae039 extends $740654ef2f483f98$export$
         this.name = "MangaLife";
         this.url = "https://manga4life.com";
         this.website = undefined;
-        this.version = "0.1.2";
+        this.version = "0.1.3";
         this.icon = "https://manga4life.com/media/favicon.png";
         this.languages = "en";
         this.nsfw = false;
