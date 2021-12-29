@@ -6,7 +6,7 @@ export default class NHentai extends Extension {
     id: number = 9;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.4";
+    version: string = "0.1.5";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;
@@ -19,8 +19,8 @@ export default class NHentai extends Extension {
             "p": "png",
         };
 
-    tagsFilter = new Text("Tags", "");
-    charactersFilter = new Text("Characters", "");
+    tagsFilter = new Text("Tags");
+    charactersFilter = new Text("Characters");
 
     override preferences: Input[] = [
         new Select("Language", ["Any", "English", "Japanese", "Chinese"])
@@ -34,7 +34,7 @@ export default class NHentai extends Extension {
     }
 
     buildQuery(filters?: Input[]): string {
-        let query = "";
+        let query = [];
         if (this.preferences) {
             for (const input of this.preferences) {
                 switch (input.name) {
@@ -43,7 +43,7 @@ export default class NHentai extends Extension {
                         if (select.state) {
                             let lang = select.values[select.state];
                             if (lang !== 'Any') {
-                                query += `language:${select.values[select.state]}`;
+                                query.push(`language:${select.values[select.state]}`);
                             }
                         }
                     }
@@ -56,35 +56,42 @@ export default class NHentai extends Extension {
                 switch (filter.name) {
                     case 'Tags': {
                         let input = filter as Text;
-                        input.state?.split(',').reduce((prev: string, current: string) => {
+                        let state = input.state?.split(',').filter((current) => current !== '').map((current: string) => {
                             if (current.startsWith('-')) {
-                                return prev += ' ' + `-tag:"${current}"`;
+                                return `-tag:"${current}"`;
                             } else {
-                                return prev += ' ' + `tag:"${current}"`;
+                                return `tag:"${current}"`;
                             }
-                        }, query);
+                        });
+                        if (state) {
+                            query.push([...state]);
+                        }
                         break;
                     }
                     case 'Characters': {
                         let input = filter as Text;
-                        input.state?.split(',').reduce((prev: string, current: string) => {
+
+                        let state = input.state?.split(',').filter((current) => current !== '').map((current: string) => {
                             if (current.startsWith('-')) {
-                                return prev += ' ' + `-characters:"${current}"`;
+                                return `-characters:"${current}"`;
                             } else {
-                                return prev += ' ' + `characters:"${current}"`;
+                                return `characters:"${current}"`;
                             }
-                        }, query);
+                        });
+                        if (state) {
+                            query.push([...state]);
+                        }
                         break;
                     }
                 }
             }
         }
 
-        if (query === "") {
-            query = '""';
+        if (query.length === 0) {
+            return `""`
         }
 
-        return query;
+        return query.join(' ');
     }
 
     async mapDataToManga(data: Response): Promise<Manga[]> {
