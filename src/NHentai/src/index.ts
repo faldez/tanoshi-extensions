@@ -1,4 +1,4 @@
-import { Chapter, Extension, fetch, Input, Manga, Select, Text } from "tanoshi-extension-lib"
+import { Chapter, Extension, fetch, Input, Manga, Select, Sort, Text } from "tanoshi-extension-lib"
 import { Response, Result, Tag } from "./dto";
 
 
@@ -6,7 +6,7 @@ export default class NHentai extends Extension {
     id: number = 9;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.5";
+    version: string = "0.1.6";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;
@@ -19,79 +19,73 @@ export default class NHentai extends Extension {
             "p": "png",
         };
 
-    tagsFilter = new Text("Tags");
-    charactersFilter = new Text("Characters");
+
+
+    filterLists = [
+        new Text("Tag"),
+        new Text("Characters"),
+        new Text("Categories"),
+        new Text("Parodies"),
+        new Sort<String>("Sort", [
+            "Popular",
+            "Popular Week",
+            "Popular Today",
+            "Recent",
+        ]),
+    ];
 
     override preferences: Input[] = [
         new Select("Language", ["Any", "English", "Japanese", "Chinese"])
     ];
 
     override getFilterList(): Input[] {
-        return [
-            this.tagsFilter,
-            this.charactersFilter,
-        ];
+        return this.filterLists
+    }
+
+    mapQueryText(name: string, input: Text): string[] {
+        if (input.state) {
+            return input.state.split(',').filter((current) => current !== '').map((current: string) => {
+                if (current.startsWith('-')) {
+                    return `-${name}:"${current}"`;
+                } else {
+                    return `${name}:"${current}"`;
+                }
+            });
+        }
+
+        return [];
     }
 
     buildQuery(filters?: Input[]): string {
         let query = [];
+        let sort = '';
         if (this.preferences) {
-            for (const input of this.preferences) {
-                switch (input.name) {
-                    case 'Language': {
-                        let select = input as Select<String>;
-                        if (select.state) {
-                            let lang = select.values[select.state];
-                            if (lang !== 'Any') {
-                                query.push(`language:${select.values[select.state]}`);
-                            }
-                        }
-                    }
+            let lang: Select<String> = this.preferences[0] as Select<String>;
+            if (lang.state) {
+                var state = lang.values[lang.state];
+                if (state !== 'Any') {
+                    query.push(`language:${state.toLowerCase()}`);
                 }
             }
         }
 
         if (filters) {
-            for (const filter of filters) {
-                switch (filter.name) {
-                    case 'Tags': {
-                        let input = filter as Text;
-                        let state = input.state?.split(',').filter((current) => current !== '').map((current: string) => {
-                            if (current.startsWith('-')) {
-                                return `-tag:"${current}"`;
-                            } else {
-                                return `tag:"${current}"`;
-                            }
-                        });
-                        if (state) {
-                            query.push([...state]);
-                        }
-                        break;
-                    }
-                    case 'Characters': {
-                        let input = filter as Text;
-
-                        let state = input.state?.split(',').filter((current) => current !== '').map((current: string) => {
-                            if (current.startsWith('-')) {
-                                return `-characters:"${current}"`;
-                            } else {
-                                return `characters:"${current}"`;
-                            }
-                        });
-                        if (state) {
-                            query.push([...state]);
-                        }
-                        break;
-                    }
+            for (const i in filters) {
+                let state = this.mapQueryText(filters[i].name.toLowerCase(), filters[i]);
+                if (state.length > 0) {
+                    query.push([...state]);
                 }
             }
+
+            let input = filters[4] as Sort<String>;
+            sort = '&sort=' + input.values[input.selection !== undefined ? input.selection[0] : 0].toLowerCase().replace(' ', '-');
         }
 
         if (query.length === 0) {
             return `""`
         }
 
-        return query.join(' ');
+        return query.join(' ') + sort;
     }
 
     async mapDataToManga(data: Response): Promise<Manga[]> {
@@ -118,6 +112,7 @@ export default class NHentai extends Extension {
         return this.mapDataToManga(data);
     }
     async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
+        console.log(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page}`);
         let data: Response = await fetch(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page}`).then(res => res.json());
         return this.mapDataToManga(data);
     }
