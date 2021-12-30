@@ -114,55 +114,38 @@ function $f963b40858b26a50$export$c2d084dc44961371(msg) {
 
 class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$eeddbf09bb970356 {
     getFilterList() {
-        return [
-            this.tagsFilter,
-            this.charactersFilter, 
-        ];
+        return this.filterLists;
+    }
+    mapQueryText(name, input) {
+        if (input.state) return input.state.split(',').filter((current)=>current !== ''
+        ).map((current)=>{
+            if (current.startsWith('-')) return `-${name}:"${current}"`;
+            else return `${name}:"${current}"`;
+        });
+        return [];
     }
     buildQuery(filters) {
         let query = [];
-        if (this.preferences) for (const input of this.preferences)switch(input.name){
-            case 'Language':
-                {
-                    let select = input;
-                    if (select.state) {
-                        let lang = select.values[select.state];
-                        if (lang !== 'Any') query.push(`language:${select.values[select.state]}`);
-                    }
-                }
+        let sort = '';
+        if (this.preferences) {
+            let lang = this.preferences[0];
+            if (lang.state) {
+                var state = lang.values[lang.state];
+                if (state !== 'Any') query.push(`language:${state.toLowerCase()}`);
+            }
         }
-        if (filters) for (const filter of filters)switch(filter.name){
-            case 'Tags':
-                {
-                    var ref;
-                    let input = filter;
-                    let state = (ref = input.state) === null || ref === void 0 ? void 0 : ref.split(',').filter((current)=>current !== ''
-                    ).map((current)=>{
-                        if (current.startsWith('-')) return `-tag:"${current}"`;
-                        else return `tag:"${current}"`;
-                    });
-                    if (state) query.push([
-                        ...state
-                    ]);
-                    break;
-                }
-            case 'Characters':
-                {
-                    var ref1;
-                    let input = filter;
-                    let state = (ref1 = input.state) === null || ref1 === void 0 ? void 0 : ref1.split(',').filter((current)=>current !== ''
-                    ).map((current)=>{
-                        if (current.startsWith('-')) return `-characters:"${current}"`;
-                        else return `characters:"${current}"`;
-                    });
-                    if (state) query.push([
-                        ...state
-                    ]);
-                    break;
-                }
+        if (filters) {
+            for(const i in filters){
+                let state = this.mapQueryText(filters[i].name.toLowerCase(), filters[i]);
+                if (state.length > 0) query.push([
+                    ...state
+                ]);
+            }
+            let input = filters[4];
+            sort = '&sort=' + input.values[input.selection !== undefined ? input.selection[0] : 0].toLowerCase().replace(' ', '-');
         }
         if (query.length === 0) return `""`;
-        return query.join(' ');
+        return query.join(' ') + sort;
     }
     async mapDataToManga(data) {
         let manga = data.result.map((item)=>{
@@ -188,6 +171,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         return this.mapDataToManga(data);
     }
     async searchManga(page2, query, filter) {
+        console.log(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page2}`);
         let data = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page2}`).then((res)=>res.json()
         );
         return this.mapDataToManga(data);
@@ -245,7 +229,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 9;
         this.name = "NHentai";
         this.url = "https://nhentai.net";
-        this.version = "0.1.5";
+        this.version = "0.1.6";
         this.icon = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
         this.languages = "all";
         this.nsfw = true;
@@ -254,8 +238,18 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             "g": "gif",
             "p": "png"
         };
-        this.tagsFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Tags");
-        this.charactersFilter = new $f963b40858b26a50$export$5f1af8db9871e1d6("Characters");
+        this.filterLists = [
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Tag"),
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Characters"),
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Categories"),
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Parodies"),
+            new $f963b40858b26a50$export$d43f91ac58cde147("Sort", [
+                "Popular",
+                "Popular Week",
+                "Popular Today",
+                "Recent", 
+            ]), 
+        ];
         this.preferences = [
             new $f963b40858b26a50$export$ef9b1a59e592288f("Language", [
                 "Any",
