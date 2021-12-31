@@ -12,7 +12,7 @@ export abstract class NepNep extends Extension {
     protected publishStatusFilter = new Select("Publish Status", ["Any", ...PublishStatus]);
     protected sortByFilter = new Sort("Sort By", SortBy);
 
-    override getFilterList(): Input[] {
+    public override filterList(): Input[] {
         return [
             this.keywordFilter,
             this.scanStatusFilter,

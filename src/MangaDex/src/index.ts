@@ -23,7 +23,7 @@ export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.9";
+    version = "0.1.10";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
@@ -42,7 +42,7 @@ export default class MangaDex extends Extension {
         new Checkbox("cancelled", true),
     ]);
 
-    override getFilterList(): Input[] {
+    public override filterList(): Input[] {
         return [
             this.titleFilter,
             this.authorsFilter,
@@ -51,7 +51,7 @@ export default class MangaDex extends Extension {
             this.includedTagsMode,
             this.excludedTagsMode,
             this.statusFilter
-        ]
+        ];
     }
 
     async getMangaList(page: number, query?: string): Promise<Manga[]> {

@@ -1,8 +1,14 @@
-import { Chapter, Extension, fetch, Input, Manga } from 'tanoshi-extension-lib';
+import { Chapter, Extension, fetch, HeaderMap, Input, Manga } from 'tanoshi-extension-lib';
 import * as cheerio from 'cheerio';
 import * as moment from 'moment';
 
 export abstract class Madara extends Extension {
+    public override headers(): HeaderMap {
+        return {
+            "referer": this.url
+        };
+    }
+
     parseMangaList(body: string): Manga[] {
         const $ = cheerio.load(body);
 

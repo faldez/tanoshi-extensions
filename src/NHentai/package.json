@@ -12,7 +12,7 @@
     "license": "ISC",
     "dependencies": {
         "moment": "^2.29.1",
-        "tanoshi-extension-lib": "^0.1.16"
+        "tanoshi-extension-lib": "^0.1.23"
     },
     "targets": {
         "module": {

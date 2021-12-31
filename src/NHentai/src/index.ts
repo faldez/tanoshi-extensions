@@ -6,7 +6,7 @@ export default class NHentai extends Extension {
     id: number = 9;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.7";
+    version: string = "0.1.8";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;
@@ -19,28 +19,24 @@ export default class NHentai extends Extension {
             "p": "png",
         };
 
+    public override filterList(): Input[] {
+        return [
+            new Text("Tag"),
+            new Text("Characters"),
+            new Text("Categories"),
+            new Text("Parodies"),
+            new Sort<String>("Sort", [
+                "Popular",
+                "Popular Week",
+                "Popular Today",
+                "Recent",
+            ]),
+        ]
+    }
 
-
-    filterLists = [
-        new Text("Tag"),
-        new Text("Characters"),
-        new Text("Categories"),
-        new Text("Parodies"),
-        new Sort<String>("Sort", [
-            "Popular",
-            "Popular Week",
-            "Popular Today",
-            "Recent",
-        ]),
-    ];
-
-    override preferences: Input[] = [
+    override _preferences: Input[] = [
         new Select("Language", ["Any", "English", "Japanese", "Chinese"])
     ];
-
-    override getFilterList(): Input[] {
-        return this.filterLists
-    }
 
     mapQueryText(name: string, input: Text): string[] {
         if (input.state) {

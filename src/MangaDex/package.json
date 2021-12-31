@@ -11,7 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "tanoshi-extension-lib": "^0.1.16",
+    "tanoshi-extension-lib": "^0.1.23",
     "moment": "^2.29.1"
   },
   "targets": {
