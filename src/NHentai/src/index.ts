@@ -6,7 +6,7 @@ export default class NHentai extends Extension {
     id: number = 9;
     name: string = "NHentai";
     url: string = "https://nhentai.net";
-    version: string = "0.1.6";
+    version: string = "0.1.7";
     icon: string = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
     languages: string = "all";
     nsfw: boolean = true;
@@ -112,7 +112,6 @@ export default class NHentai extends Extension {
         return this.mapDataToManga(data);
     }
     async searchManga(page: number, query?: string, filter?: Input[]): Promise<Manga[]> {
-        console.log(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page}`);
         let data: Response = await fetch(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page}`).then(res => res.json());
         return this.mapDataToManga(data);
     }

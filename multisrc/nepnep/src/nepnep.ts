@@ -159,7 +159,6 @@ export abstract class NepNep extends Extension {
 
     sortDirectory(data: Directory[], state?: [number, boolean]): Directory[] {
         if (state) {
-            console.log(JSON.stringify(state[0]));
             switch (state[0]) {
                 case 0:
                     return this.sortByAlphabeticaly(data, state[1]);
