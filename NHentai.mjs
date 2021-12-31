@@ -61,29 +61,27 @@ class $f963b40858b26a50$export$7254cc27399e90bd extends $f963b40858b26a50$export
     }
 }
 class $f963b40858b26a50$export$eeddbf09bb970356 {
-    constructor(){
-        this.preferences = [];
+    get preferences() {
+        return this._preferences;
     }
-    /**
-     * @returns list of input or undefined if no filters
-     */ getFilterList() {
-        return [];
-    }
-    /**
-     * @returns preferences class or undefined if no preferences
-     */ getPreferences() {
-        return this.preferences;
-    }
-    /**
-     * @returns 
-     */ setPreferences(inputs) {
+    set preferences(inputs) {
         let saved = new Map();
         for (var pref of inputs)saved.set(`${pref.type}(${pref.name})`, pref);
-        this.preferences = this.preferences.map((field)=>{
+        this._preferences = this.preferences.map((field)=>{
             let f = saved.get(`${field.type}(${field.name})`);
             if (f) field = f;
             return field;
         });
+    }
+    headers() {
+        return {
+        };
+    }
+    filterList() {
+        return [];
+    }
+    constructor(){
+        this._preferences = [];
     }
 }
 class $f963b40858b26a50$var$$71aeeb613c2d384f$export$9f633d56d7ec90d3 {
@@ -113,8 +111,19 @@ function $f963b40858b26a50$export$c2d084dc44961371(msg) {
 
 
 class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$eeddbf09bb970356 {
-    getFilterList() {
-        return this.filterLists;
+    filterList() {
+        return [
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Tag"),
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Characters"),
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Categories"),
+            new $f963b40858b26a50$export$5f1af8db9871e1d6("Parodies"),
+            new $f963b40858b26a50$export$d43f91ac58cde147("Sort", [
+                "Popular",
+                "Popular Week",
+                "Popular Today",
+                "Recent", 
+            ]), 
+        ];
     }
     mapQueryText(name, input) {
         if (input.state) return input.state.split(',').filter((current)=>current !== ''
@@ -228,7 +237,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 9;
         this.name = "NHentai";
         this.url = "https://nhentai.net";
-        this.version = "0.1.7";
+        this.version = "0.1.8";
         this.icon = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
         this.languages = "all";
         this.nsfw = true;
@@ -237,19 +246,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
             "g": "gif",
             "p": "png"
         };
-        this.filterLists = [
-            new $f963b40858b26a50$export$5f1af8db9871e1d6("Tag"),
-            new $f963b40858b26a50$export$5f1af8db9871e1d6("Characters"),
-            new $f963b40858b26a50$export$5f1af8db9871e1d6("Categories"),
-            new $f963b40858b26a50$export$5f1af8db9871e1d6("Parodies"),
-            new $f963b40858b26a50$export$d43f91ac58cde147("Sort", [
-                "Popular",
-                "Popular Week",
-                "Popular Today",
-                "Recent", 
-            ]), 
-        ];
-        this.preferences = [
+        this._preferences = [
             new $f963b40858b26a50$export$ef9b1a59e592288f("Language", [
                 "Any",
                 "English",

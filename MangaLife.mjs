@@ -35811,29 +35811,27 @@ class $8e5b7fb3ed8b7bd1$export$7254cc27399e90bd extends $8e5b7fb3ed8b7bd1$export
     }
 }
 class $8e5b7fb3ed8b7bd1$export$eeddbf09bb970356 {
-    constructor(){
-        this.preferences = [];
+    get preferences() {
+        return this._preferences;
     }
-    /**
-     * @returns list of input or undefined if no filters
-     */ getFilterList() {
-        return [];
-    }
-    /**
-     * @returns preferences class or undefined if no preferences
-     */ getPreferences() {
-        return this.preferences;
-    }
-    /**
-     * @returns 
-     */ setPreferences(inputs) {
+    set preferences(inputs) {
         let saved = new Map();
         for (var pref of inputs)saved.set(`${pref.type}(${pref.name})`, pref);
-        this.preferences = this.preferences.map((field)=>{
+        this._preferences = this.preferences.map((field)=>{
             let f = saved.get(`${field.type}(${field.name})`);
             if (f) field = f;
             return field;
         });
+    }
+    headers() {
+        return {
+        };
+    }
+    filterList() {
+        return [];
+    }
+    constructor(){
+        this._preferences = [];
     }
 }
 class $8e5b7fb3ed8b7bd1$var$$71aeeb613c2d384f$export$9f633d56d7ec90d3 {
@@ -39593,7 +39591,7 @@ $6a3c2bacbc8eff5d$exports = JSON.parse("{\"SortBy\":[\"Alphabetical\",\"Year Rel
 
 
 class $740654ef2f483f98$export$436ef8d53f57c1da extends $8e5b7fb3ed8b7bd1$export$eeddbf09bb970356 {
-    getFilterList() {
+    filterList() {
         return [
             this.keywordFilter,
             this.scanStatusFilter,
@@ -39812,7 +39810,7 @@ class $3a210b8ec2dd468e$export$2e2bcd8739ae039 extends $740654ef2f483f98$export$
         this.name = "MangaLife";
         this.url = "https://manga4life.com";
         this.website = undefined;
-        this.version = "0.1.4";
+        this.version = "0.1.5";
         this.icon = "https://manga4life.com/media/favicon.png";
         this.languages = "en";
         this.nsfw = false;

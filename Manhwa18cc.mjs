@@ -102,29 +102,27 @@ class $f963b40858b26a50$export$7254cc27399e90bd extends $f963b40858b26a50$export
     }
 }
 class $f963b40858b26a50$export$eeddbf09bb970356 {
-    constructor(){
-        this.preferences = [];
+    get preferences() {
+        return this._preferences;
     }
-    /**
-     * @returns list of input or undefined if no filters
-     */ getFilterList() {
-        return [];
-    }
-    /**
-     * @returns preferences class or undefined if no preferences
-     */ getPreferences() {
-        return this.preferences;
-    }
-    /**
-     * @returns 
-     */ setPreferences(inputs) {
+    set preferences(inputs) {
         let saved = new Map();
         for (var pref of inputs)saved.set(`${pref.type}(${pref.name})`, pref);
-        this.preferences = this.preferences.map((field)=>{
+        this._preferences = this.preferences.map((field)=>{
             let f = saved.get(`${field.type}(${field.name})`);
             if (f) field = f;
             return field;
         });
+    }
+    headers() {
+        return {
+        };
+    }
+    filterList() {
+        return [];
+    }
+    constructor(){
+        this._preferences = [];
     }
 }
 class $f963b40858b26a50$var$$71aeeb613c2d384f$export$9f633d56d7ec90d3 {
@@ -39589,6 +39587,11 @@ parcelRequire.register("e8KVk", function(module, exports) {
 
 var $e8KVk = parcelRequire("e8KVk");
 class $7570a8816de662bc$export$c60df1721719adb1 extends $f963b40858b26a50$export$eeddbf09bb970356 {
+    headers() {
+        return {
+            "referer": this.url
+        };
+    }
     parseMangaList(body) {
         const $ = $f9a707fad3dea4d7$exports.load(body);
         let elements = $('.manga-item a[href^="/webtoon"] img').toArray();

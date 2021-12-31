@@ -3825,29 +3825,27 @@ class $f963b40858b26a50$export$7254cc27399e90bd extends $f963b40858b26a50$export
     }
 }
 class $f963b40858b26a50$export$eeddbf09bb970356 {
-    constructor(){
-        this.preferences = [];
+    get preferences() {
+        return this._preferences;
     }
-    /**
-     * @returns list of input or undefined if no filters
-     */ getFilterList() {
-        return [];
-    }
-    /**
-     * @returns preferences class or undefined if no preferences
-     */ getPreferences() {
-        return this.preferences;
-    }
-    /**
-     * @returns 
-     */ setPreferences(inputs) {
+    set preferences(inputs) {
         let saved = new Map();
         for (var pref of inputs)saved.set(`${pref.type}(${pref.name})`, pref);
-        this.preferences = this.preferences.map((field)=>{
+        this._preferences = this.preferences.map((field)=>{
             let f = saved.get(`${field.type}(${field.name})`);
             if (f) field = f;
             return field;
         });
+    }
+    headers() {
+        return {
+        };
+    }
+    filterList() {
+        return [];
+    }
+    constructor(){
+        this._preferences = [];
     }
 }
 class $f963b40858b26a50$var$$71aeeb613c2d384f$export$9f633d56d7ec90d3 {
@@ -3881,7 +3879,7 @@ $decb13adfe59b551$exports = JSON.parse("{\"result\":\"ok\",\"response\":\"collec
 
 
 class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$eeddbf09bb970356 {
-    getFilterList() {
+    filterList() {
         return [
             this.titleFilter,
             this.authorsFilter,
@@ -4053,7 +4051,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.9";
+        this.version = "0.1.10";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
