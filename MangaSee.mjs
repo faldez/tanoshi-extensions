@@ -39693,19 +39693,17 @@ class $740654ef2f483f98$export$436ef8d53f57c1da extends $8e5b7fb3ed8b7bd1$export
         });
     }
     sortDirectory(data6, state1) {
-        if (state1) {
-            console.log(JSON.stringify(state1[0]));
-            switch(state1[0]){
-                case 0:
-                    return this.sortByAlphabeticaly(data6, state1[1]);
-                case 1:
-                    return this.sortByYearReleased(data6, state1[1]);
-                case 2:
-                    return this.sortByPopularity(data6, state1[1]);
-                default:
-                    return data6;
-            }
-        } else return data6;
+        if (state1) switch(state1[0]){
+            case 0:
+                return this.sortByAlphabeticaly(data6, state1[1]);
+            case 1:
+                return this.sortByYearReleased(data6, state1[1]);
+            case 2:
+                return this.sortByPopularity(data6, state1[1]);
+            default:
+                return data6;
+        }
+        else return data6;
     }
     async searchManga(page3, query, filter) {
         if (query === undefined && filter === undefined) throw new Error("query and filters cannot be both empty");
@@ -39814,7 +39812,7 @@ class $4dbadbb0f46e7b50$export$2e2bcd8739ae039 extends $740654ef2f483f98$export$
         this.name = "MangaSee";
         this.url = "https://mangasee123.com";
         this.website = undefined;
-        this.version = "0.1.3";
+        this.version = "0.1.4";
         this.icon = "https://mangasee123.com/media/favicon.png";
         this.languages = "en";
         this.nsfw = false;

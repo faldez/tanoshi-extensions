@@ -171,7 +171,6 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         return this.mapDataToManga(data);
     }
     async searchManga(page2, query, filter) {
-        console.log(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page2}`);
         let data = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}/api/galleries/search?query=${query ? query : this.buildQuery(filter)}&page=${page2}`).then((res)=>res.json()
         );
         return this.mapDataToManga(data);
@@ -229,7 +228,7 @@ class $229e2bdcbb0d391b$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 9;
         this.name = "NHentai";
         this.url = "https://nhentai.net";
-        this.version = "0.1.6";
+        this.version = "0.1.7";
         this.icon = "https://static.nhentai.net/img/logo.090da3be7b51.svg";
         this.languages = "all";
         this.nsfw = true;
