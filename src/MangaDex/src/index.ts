@@ -19,11 +19,15 @@ type ChapterSuccess = paths["/chapter/{id}"]['get']['responses'][200]['content']
 type ChapterError = paths["/chapter/{id}"]['get']['responses'][404]['content']['application/json'];
 type ChapterResponse = ChapterSuccess | ChapterError;
 
+type AtHomeSuccess = paths["/at-home/server/{chapterId}"]["get"]["responses"][200]['content']['application/json'];
+type AtHomeError = paths["/at-home/server/{chapterId}"]["get"]["responses"][200]['content']['application/json'];
+type AtHomeResponse = AtHomeSuccess | AtHomeError;
+
 export default class MangaDex extends Extension {
     id = 2;
     name = "MangaDex";
     url = "https://api.mangadex.org";
-    version = "0.1.10";
+    version = "0.1.11";
     icon = "https://mangadex.org/favicon.ico";
     languages = "all";
     nsfw = true;
@@ -214,14 +218,12 @@ export default class MangaDex extends Extension {
     }
 
     async getPages(path: string): Promise<string[]> {
-        var body: ChapterSuccess = await fetch(`${this.url}${path}`).then(res => res.json());
-
-        var base = await fetch(`${this.url}/at-home/server/${body.data?.id}`).then(res => res.json());
+        let chapter_id = path.replace("/chapter/", "");
+        var base: AtHomeSuccess = await fetch(`${this.url}/at-home/server/${chapter_id}`).then(res => res.json());
 
         let pages = [];
-        let hash = body.data?.attributes?.hash;
-        for (const item of body.data?.attributes?.data!) {
-            pages.push(`${base.baseUrl}/data/${hash}/${item}`);
+        for (const item of base.chapter?.data!) {
+            pages.push(`${base.baseUrl}/data/${base.chapter?.hash}/${item}`);
         }
 
         return Promise.resolve(pages);

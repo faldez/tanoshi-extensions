@@ -11,7 +11,7 @@ export async function testGetLatestManga() {
 }
 
 export async function testGetFilters() {
-    let filters = s.getFilterList();
+    let filters = s.filterList();
 }
 
 export async function testGetPopularManga() {
@@ -26,7 +26,7 @@ export async function testSearchManga() {
 }
 
 export async function testSearchMangaWithFilter() {
-    let filters = s.getFilterList();
+    let filters = s.filterList();
     let manga = await s.searchManga(1, undefined, filters);
 }
 

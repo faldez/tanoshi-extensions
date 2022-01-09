@@ -39,6 +39,7 @@ export interface paths {
         200: {
           content: {
             "application/json": {
+              /** @default ok */
               result?: string;
               volumes?: {
                 [key: string]: {
@@ -47,6 +48,7 @@ export interface paths {
                   chapters?: {
                     [key: string]: {
                       chapter?: string;
+                      /** Format: uuid */
                       id?: string;
                       others?: string[];
                       count?: number;
@@ -233,16 +235,15 @@ export interface paths {
   "/cover": {
     get: operations["get-cover"];
   };
-  "/cover/{mangaId}": {
-    post: operations["upload-cover"];
-  };
-  "/cover/{coverId}": {
+  "/cover/{mangaOrCoverId}": {
     get: operations["get-cover-id"];
     put: operations["edit-cover"];
+    post: operations["upload-cover"];
     delete: operations["delete-cover"];
     parameters: {
       path: {
-        coverId: string;
+        /** Is Manga UUID on POST */
+        mangaOrCoverId: string;
       };
     };
   };
@@ -348,7 +349,7 @@ export interface paths {
     get: operations["get-user-follows-user"];
   };
   "/user/follows/user/{id}": {
-    get: operations["get-user-follows-group-id"];
+    get: operations["get-user-follows-user-id"];
     parameters: {
       path: {
         /** User id */
@@ -503,10 +504,29 @@ export interface paths {
       };
     };
   };
+  "/rating": {
+    get: operations["get-rating"];
+  };
+  "/rating/{mangaId}": {
+    post: operations["post-rating-manga-id"];
+    delete: operations["delete-rating-manga-id"];
+    parameters: {
+      path: {
+        mangaId: string;
+      };
+    };
+  };
+  "/statistics/manga/{uuid}": {
+    get: operations["get-statistics-manga-uuid"];
+  };
+  "/statistics/manga": {
+    get: operations["get-statistics-manga"];
+  };
 }
 
 export interface components {
   schemas: {
+    /** MangaRequest */
     MangaRequest: {
       title?: components["schemas"]["LocalizedString"];
       altTitles?: components["schemas"]["LocalizedString"][];
@@ -521,28 +541,36 @@ export interface components {
         | ("shounen" | "shoujo" | "josei" | "seinen")
         | null;
       status?: "ongoing" | "completed" | "hiatus" | "cancelled";
-      /** Year of release */
+      /** @description Year of release */
       year?: number | null;
       contentRating?: "safe" | "suggestive" | "erotica" | "pornographic";
       tags?: string[];
+      /** Format: uuid */
       primaryCover?: string | null;
       version?: number;
     };
+    /** LocalizedString */
     LocalizedString: { [key: string]: string };
+    /** MangaResponse */
     MangaResponse: {
       result?: "ok" | "error";
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["Manga"];
     };
+    /** ChapterResponse */
     ChapterResponse: {
       result?: "ok" | "error";
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["Chapter"];
     };
+    /** Relationship */
     Relationship: {
+      /** Format: uuid */
       id?: string;
       type?: string;
-      /** Related Manga type, only present if you are on a Manga entity and a Manga relationship */
+      /** @description Related Manga type, only present if you are on a Manga entity and a Manga relationship */
       related?:
         | "monochrome"
         | "main_story"
@@ -556,50 +584,60 @@ export interface components {
         | "sequel"
         | "spin_off"
         | "alternate_story"
+        | "alternate_version"
         | "preserialization"
         | "colored"
         | "serialization";
-      /** If Reference Expansion is applied, contains objects attributes */
+      /** @description If Reference Expansion is applied, contains objects attributes */
       attributes?: { [key: string]: unknown } | null;
     };
+    /** Chapter */
     Chapter: {
+      /** Format: uuid */
       id?: string;
       type?: "chapter";
       attributes?: components["schemas"]["ChapterAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** Manga */
     Manga: {
+      /** Format: uuid */
       id?: string;
       type?: "manga";
       attributes?: components["schemas"]["MangaAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** ErrorResponse */
     ErrorResponse: {
+      /** @default error */
       result?: string;
       errors?: components["schemas"]["Error"][];
     };
+    /** Error */
     Error: {
       id?: string;
       status?: number;
       title?: string;
       detail?: string;
     };
+    /** ChapterAttributes */
     ChapterAttributes: {
       title?: string;
       volume?: string | null;
       chapter?: string | null;
+      /** @description Count of readable images for this chapter */
+      pages?: number;
       translatedLanguage?: string;
-      hash?: string;
-      data?: string[];
-      dataSaver?: string[];
+      /** Format: uuid */
       uploader?: string;
-      /** While hash, data and dataSaver attributes are empty, denotes a chapter that links to an external source. */
+      /** @description Denotes a chapter that links to an external source. */
       externalUrl?: string | null;
       version?: number;
       createdAt?: string;
       updatedAt?: string;
       publishAt?: string;
     };
+    /** MangaAttributes */
     MangaAttributes: {
       title?: components["schemas"]["LocalizedString"];
       altTitles?: components["schemas"]["LocalizedString"][];
@@ -613,7 +651,7 @@ export interface components {
         | ("shounen" | "shoujo" | "josei" | "seinen")
         | null;
       status?: string | null;
-      /** Year of release */
+      /** @description Year of release */
       year?: number | null;
       contentRating?: "safe" | "suggestive" | "erotica" | "pornographic";
       tags?: components["schemas"]["Tag"][];
@@ -625,14 +663,17 @@ export interface components {
     MangaCreate: components["schemas"]["MangaRequest"] & unknown;
     MangaEdit: components["schemas"]["MangaRequest"] & unknown;
     ChapterEdit: components["schemas"]["ChapterRequest"] & unknown;
+    /** Response */
     Response: {
       result?: "ok" | "error";
     };
+    /** Login */
     Login: {
       username?: string;
       email?: string;
       password: string;
     };
+    /** LoginResponse */
     LoginResponse: {
       result?: "ok" | "error";
       token?: {
@@ -640,18 +681,23 @@ export interface components {
         refresh?: string;
       };
     };
+    /** CheckResponse */
     CheckResponse: {
+      /** @default ok */
       result?: string;
       isAuthenticated?: boolean;
       roles?: string[];
       permissions?: string[];
     };
+    /** LogoutResponse */
     LogoutResponse: {
       result?: "ok" | "error";
     };
+    /** RefreshToken */
     RefreshToken: {
       token: string;
     };
+    /** RefreshResponse */
     RefreshResponse: {
       result: "ok" | "error";
       token?: {
@@ -660,25 +706,33 @@ export interface components {
       };
       message?: string;
     };
+    /** AccountActivateResponse */
     AccountActivateResponse: {
       result?: "ok";
     };
+    /** CreateAccount */
     CreateAccount: {
       username: string;
       password: string;
+      /** Format: email */
       email: string;
     };
+    /** ScanlationGroupResponse */
     ScanlationGroupResponse: {
       result?: "ok";
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["ScanlationGroup"];
     };
+    /** ScanlationGroup */
     ScanlationGroup: {
+      /** Format: uuid */
       id?: string;
       type?: "scanlation_group";
       attributes?: components["schemas"]["ScanlationGroupAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** ScanlationGroupAttributes */
     ScanlationGroupAttributes: {
       name?: string;
       altNames?: components["schemas"]["LocalizedString"][];
@@ -688,28 +742,36 @@ export interface components {
       discord?: string | null;
       contactEmail?: string | null;
       description?: string | null;
+      /** Format: uri */
       twitter?: string | null;
       focusedLanguage?: string[] | null;
       locked?: boolean;
       official?: boolean;
       inactive?: boolean;
-      /** Should respected ISO 8601 duration specification: https://en.wikipedia.org/wiki/ISO_8601#Durations */
+      /**
+       * @description Should respected ISO 8601 duration specification: https://en.wikipedia.org/wiki/ISO_8601#Durations
+       * @example P4D
+       */
       publishDelay?: string;
       version?: number;
       createdAt?: string;
       updatedAt?: string;
     };
+    /** User */
     User: {
+      /** Format: uuid */
       id?: string;
       type?: "user";
       attributes?: components["schemas"]["UserAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** UserAttributes */
     UserAttributes: {
       username?: string;
       roles?: string[];
       version?: number;
     };
+    /** CreateScanlationGroup */
     CreateScanlationGroup: {
       name: string;
       website?: string | null;
@@ -718,12 +780,15 @@ export interface components {
       discord?: string | null;
       contactEmail?: string | null;
       description?: string | null;
+      /** Format: uri */
       twitter?: string | null;
       inactive?: boolean;
       publishDelay?: string | null;
     };
+    /** ScanlationGroupEdit */
     ScanlationGroupEdit: {
       name?: string;
+      /** Format: uuid */
       leader?: string;
       members?: string[];
       website?: string | null;
@@ -732,6 +797,7 @@ export interface components {
       discord?: string | null;
       contactEmail?: string | null;
       description?: string | null;
+      /** Format: uri */
       twitter?: string | null;
       focusedLanguages?: string[] | null;
       inactive?: boolean;
@@ -739,45 +805,57 @@ export interface components {
       publishDelay?: string;
       version: number;
     };
+    /** CustomListCreate */
     CustomListCreate: {
       name: string;
       visibility?: "public" | "private";
       manga?: string[];
       version?: number;
     };
+    /** CustomListEdit */
     CustomListEdit: {
       name?: string;
       visibility?: "public" | "private";
       manga?: string[];
       version: number;
     };
+    /** CustomListResponse */
     CustomListResponse: {
       result?: "ok" | "error";
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["CustomList"];
     };
+    /** CustomList */
     CustomList: {
+      /** Format: uuid */
       id?: string;
       type?: "custom_list";
       attributes?: components["schemas"]["CustomListAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** CustomListAttributes */
     CustomListAttributes: {
       name?: string;
       visibility?: "private" | "public";
       version?: number;
     };
+    /** CoverResponse */
     CoverResponse: {
       result?: string;
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["Cover"];
     };
+    /** Cover */
     Cover: {
+      /** Format: uuid */
       id?: string;
       type?: "cover_art";
       attributes?: components["schemas"]["CoverAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** CoverAttributes */
     CoverAttributes: {
       volume?: string | null;
       fileName?: string;
@@ -786,127 +864,200 @@ export interface components {
       createdAt?: string;
       updatedAt?: string;
     };
+    /** CoverEdit */
     CoverEdit: {
       volume: string | null;
       description?: string | null;
       version: number;
     };
+    /** AuthorResponse */
     AuthorResponse: {
       result?: string;
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["Author"];
     };
+    /** Author */
     Author: {
+      /** Format: uuid */
       id?: string;
       type?: "author";
       attributes?: components["schemas"]["AuthorAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** AuthorAttributes */
     AuthorAttributes: {
       name?: string;
       imageUrl?: string;
-      biography?: { [key: string]: string };
+      biography?: components["schemas"]["LocalizedString"];
+      /** Format: uri */
       twitter?: string | null;
+      /** Format: uri */
       pixiv?: string | null;
+      /** Format: uri */
       melonBook?: string | null;
+      /** Format: uri */
       fanBox?: string | null;
+      /** Format: uri */
       booth?: string | null;
+      /** Format: uri */
       nicoVideo?: string | null;
+      /** Format: uri */
       skeb?: string | null;
+      /** Format: uri */
       fantia?: string | null;
+      /** Format: uri */
       tumblr?: string | null;
+      /** Format: uri */
       youtube?: string | null;
+      /** Format: uri */
+      weibo?: string | null;
+      /** Format: uri */
+      naver?: string | null;
+      /** Format: uri */
       website?: string | null;
       version?: number;
       createdAt?: string;
       updatedAt?: string;
     };
+    /** AuthorEdit */
     AuthorEdit: {
       name?: string;
       biography?: components["schemas"]["LocalizedString"];
+      /** Format: uri */
       twitter?: string | null;
+      /** Format: uri */
       pixiv?: string | null;
+      /** Format: uri */
       melonBook?: string | null;
+      /** Format: uri */
       fanBox?: string | null;
+      /** Format: uri */
       booth?: string | null;
+      /** Format: uri */
       nicoVideo?: string | null;
+      /** Format: uri */
       skeb?: string | null;
+      /** Format: uri */
       fantia?: string | null;
+      /** Format: uri */
       tumblr?: string | null;
+      /** Format: uri */
       youtube?: string | null;
+      /** Format: uri */
+      weibo?: string | null;
+      /** Format: uri */
+      naver?: string | null;
+      /** Format: uri */
       website?: string | null;
       version: number;
     };
+    /** AuthorCreate */
     AuthorCreate: {
       name: string;
       biography?: components["schemas"]["LocalizedString"];
+      /** Format: uri */
       twitter?: string | null;
+      /** Format: uri */
       pixiv?: string | null;
+      /** Format: uri */
       melonBook?: string | null;
+      /** Format: uri */
       fanBox?: string | null;
+      /** Format: uri */
       booth?: string | null;
+      /** Format: uri */
       nicoVideo?: string | null;
+      /** Format: uri */
       skeb?: string | null;
+      /** Format: uri */
       fantia?: string | null;
+      /** Format: uri */
       tumblr?: string | null;
+      /** Format: uri */
       youtube?: string | null;
+      /** Format: uri */
+      weibo?: string | null;
+      /** Format: uri */
+      naver?: string | null;
+      /** Format: uri */
       website?: string | null;
       version?: number;
     };
+    /** MappingIdBody */
     MappingIdBody: {
       type?: "group" | "manga" | "chapter" | "tag";
       ids?: number[];
     };
+    /** MappingIdResponse */
     MappingIdResponse: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["MappingId"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** MappingId */
     MappingId: {
+      /** Format: uuid */
       id?: string;
       type?: "mapping_id";
       attributes?: components["schemas"]["MappingIdAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** MappingIdAttributes */
     MappingIdAttributes: {
       type?: "manga" | "chapter" | "group" | "tag";
       legacyId?: number;
+      /** Format: uuid */
       newId?: string;
     };
+    /** TagResponse */
     TagResponse: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["Tag"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** Tag */
     Tag: {
+      /** Format: uuid */
       id?: string;
       type?: "tag";
       attributes?: components["schemas"]["TagAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** TagAttributes */
     TagAttributes: {
       name?: components["schemas"]["LocalizedString"];
       description?: components["schemas"]["LocalizedString"];
       group?: string;
       version?: number;
     };
+    /** UserResponse */
     UserResponse: {
       result?: "ok";
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["User"];
     };
+    /** SendAccountActivationCode */
     SendAccountActivationCode: {
+      /** Format: email */
       email: string;
     };
+    /** RecoverCompleteBody */
     RecoverCompleteBody: {
       newPassword: string;
     };
+    /** UpdateMangaStatus */
     UpdateMangaStatus: {
       status:
         | (
@@ -919,6 +1070,7 @@ export interface components {
           )
         | null;
     };
+    /** ChapterRequest */
     ChapterRequest: {
       title?: string | null;
       volume?: string | null;
@@ -927,32 +1079,44 @@ export interface components {
       groups?: string[];
       version?: number;
     };
+    /** CoverList */
     CoverList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["Cover"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** AuthorList */
     AuthorList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["Author"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** ChapterList */
     ChapterList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["Chapter"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** ScanlationGroupList */
     ScanlationGroupList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["ScanlationGroup"][];
       limit?: number;
@@ -961,7 +1125,9 @@ export interface components {
     };
     MangaRelationCreate: components["schemas"]["MangaRelationRequest"] &
       unknown;
+    /** MangaRelationRequest */
     MangaRelationRequest: {
+      /** Format: uuid */
       targetManga?: string;
       relation?:
         | "monochrome"
@@ -976,29 +1142,38 @@ export interface components {
         | "sequel"
         | "spin_off"
         | "alternate_story"
+        | "alternate_version"
         | "preserialization"
         | "colored"
         | "serialization";
     };
+    /** MangaRelationList */
     MangaRelationList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["MangaRelation"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** MangaRelationResponse */
     MangaRelationResponse: {
       result?: "ok" | "error";
+      /** @default entity */
       response?: string;
       data?: components["schemas"]["MangaRelation"];
     };
+    /** MangaRelation */
     MangaRelation: {
+      /** Format: uuid */
       id?: string;
       type?: "manga_relation";
       attributes?: components["schemas"]["MangaRelationAttributes"];
       relationships?: components["schemas"]["Relationship"][];
     };
+    /** MangaRelationAttributes */
     MangaRelationAttributes: {
       relation?:
         | "monochrome"
@@ -1013,40 +1188,53 @@ export interface components {
         | "sequel"
         | "spin_off"
         | "alternate_story"
+        | "alternate_version"
         | "preserialization"
         | "colored"
         | "serialization";
       version?: number;
     };
+    /** MangaList */
     MangaList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["Manga"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** CustomListList */
     CustomListList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["CustomList"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** UserList */
     UserList: {
+      /** @default ok */
       result?: string;
+      /** @default collection */
       response?: string;
       data?: components["schemas"]["User"][];
       limit?: number;
       offset?: number;
       total?: number;
     };
+    /** UploadSession */
     UploadSession: {
+      /** Format: uuid */
       id?: string;
       type?: "upload_session";
       attributes?: components["schemas"]["UploadSessionAttributes"];
     };
+    /** UploadSessionAttributes */
     UploadSessionAttributes: {
       isCommitted?: boolean;
       isProcessed?: boolean;
@@ -1055,11 +1243,14 @@ export interface components {
       createdAt?: string;
       updatedAt?: string;
     };
+    /** UploadSessionFile */
     UploadSessionFile: {
+      /** Format: uuid */
       id?: string;
       type?: "upload_session_file";
       attributes?: components["schemas"]["UploadSessionFileAttributes"];
     };
+    /** UploadSessionFileAttributes */
     UploadSessionFileAttributes: {
       originalFileName?: string;
       fileHash?: string;
@@ -1068,20 +1259,25 @@ export interface components {
       source?: "local" | "remote";
       version?: number;
     };
-    ChapterReadMarkerBatch: (unknown | unknown | unknown) & {
+    /** ChapterReadMarkersBatch */
+    ChapterReadMarkerBatch: {
       chapterIdsRead?: string[];
       chapterIdsUnread?: string[];
     };
+    /** BeginUploadSession */
     BeginUploadSession: {
       groups: string[];
+      /** Format: uuid */
       manga: string;
     };
+    /** BeginEditSession */
     BeginEditSession: {
       version: number;
     };
+    /** BeginUploadSession */
     CommitUploadSession: {
       chapterDraft?: components["schemas"]["ChapterDraft"];
-      /** ordered list of Upload Session File ids */
+      /** @description ordered list of Upload Session File ids */
       pageOrder?: string[];
     };
     ChapterDraft: {
@@ -2000,6 +2196,7 @@ export interface operations {
     requestBody: {
       content: {
         "application/json": {
+          /** Format: email */
           email: string;
         };
       };
@@ -2015,7 +2212,7 @@ export interface operations {
         "ids[]"?: string[];
         title?: string;
         "groups[]"?: string[];
-        uploader?: string;
+        uploader?: string | string[];
         manga?: string;
         "volume[]"?: string | string[];
         chapter?: string | string[];
@@ -2028,6 +2225,8 @@ export interface operations {
           | "erotica"
           | "pornographic"
         )[];
+        "excludedGroups[]"?: string[];
+        "excludedUploaders[]"?: string[];
         includeFutureUpdates?: "0" | "1";
         createdAtSince?: string;
         updatedAtSince?: string;
@@ -2185,6 +2384,8 @@ export interface operations {
           | "erotica"
           | "pornographic"
         )[];
+        "excludedGroups[]"?: string[];
+        "excludedUploaders[]"?: string[];
         includeFutureUpdates?: "0" | "1";
         createdAtSince?: string;
         updatedAtSince?: string;
@@ -2233,6 +2434,8 @@ export interface operations {
           | "erotica"
           | "pornographic"
         )[];
+        "excludedGroups[]"?: string[];
+        "excludedUploaders[]"?: string[];
         includeFutureUpdates?: "0" | "1";
         createdAtSince?: string;
         updatedAtSince?: string;
@@ -2362,49 +2565,11 @@ export interface operations {
       };
     };
   };
-  "upload-cover": {
-    parameters: {
-      path: {
-        mangaId: string;
-      };
-      header: {
-        "Content-Type": string;
-      };
-    };
-    responses: {
-      /** OK */
-      200: {
-        content: {
-          "application/json": components["schemas"]["CoverResponse"];
-        };
-      };
-      /** Bad Request */
-      400: {
-        content: {
-          "application/json": components["schemas"]["ErrorResponse"];
-        };
-      };
-      /** Forbidden */
-      403: {
-        content: {
-          "application/json": components["schemas"]["ErrorResponse"];
-        };
-      };
-    };
-    requestBody: {
-      content: {
-        "multipart/form-data": {
-          file?: string;
-          volume?: string | null;
-          description?: string;
-        };
-      };
-    };
-  };
   "get-cover-id": {
     parameters: {
       path: {
-        coverId: string;
+        /** Is Manga UUID on POST */
+        mangaOrCoverId: string;
       };
       query: {
         "includes[]"?: string[];
@@ -2440,7 +2605,8 @@ export interface operations {
   "edit-cover": {
     parameters: {
       path: {
-        coverId: string;
+        /** Is Manga UUID on POST */
+        mangaOrCoverId: string;
       };
       header: {
         "Content-Type": string;
@@ -2473,10 +2639,52 @@ export interface operations {
       };
     };
   };
+  "upload-cover": {
+    parameters: {
+      path: {
+        /** Is Manga UUID on POST */
+        mangaOrCoverId: string;
+      };
+      header: {
+        "Content-Type": string;
+      };
+    };
+    responses: {
+      /** OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["CoverResponse"];
+        };
+      };
+      /** Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "multipart/form-data": {
+          /** Format: binary */
+          file?: string;
+          volume?: string | null;
+          description?: string;
+        };
+      };
+    };
+  };
   "delete-cover": {
     parameters: {
       path: {
-        coverId: string;
+        /** Is Manga UUID on POST */
+        mangaOrCoverId: string;
       };
     };
     responses: {
@@ -2715,6 +2923,8 @@ export interface operations {
           | "erotica"
           | "pornographic"
         )[];
+        "excludedGroups[]"?: string[];
+        "excludedUploaders[]"?: string[];
         includeFutureUpdates?: string;
         createdAtSince?: string;
         updatedAtSince?: string;
@@ -2888,12 +3098,18 @@ export interface operations {
       200: {
         content: {
           "application/json": {
+            /** @default ok */
             result?: string;
             /**
-             * The base URL to construct final image URLs from.
+             * @description The base URL to construct final image URLs from.
              * The URL returned is valid for the requested chapter only, and for a duration of 15 minutes from the time of the response.
              */
             baseUrl?: string;
+            chapter?: {
+              hash?: string;
+              data?: string[];
+              dataSaver?: string[];
+            };
           };
         };
       };
@@ -3030,18 +3246,18 @@ export interface operations {
   "get-user-follows-group-id": {
     parameters: {
       path: {
-        /** User id */
+        /** Scanlation Group id */
         id: string;
       };
     };
     responses: {
-      /** The User follow that User */
+      /** The User follow that Group */
       200: {
         content: {
           "application/json": components["schemas"]["Response"];
         };
       };
-      /** The User doesn't follow that User */
+      /** The User doesn't follow that Group */
       404: {
         content: {
           "application/json": components["schemas"]["Response"];
@@ -3061,6 +3277,28 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["UserList"];
+        };
+      };
+    };
+  };
+  "get-user-follows-user-id": {
+    parameters: {
+      path: {
+        /** User id */
+        id: string;
+      };
+    };
+    responses: {
+      /** The User follow that User */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Response"];
+        };
+      };
+      /** The User doesn't follow that User */
+      404: {
+        content: {
+          "application/json": components["schemas"]["Response"];
         };
       };
     };
@@ -3122,6 +3360,7 @@ export interface operations {
       200: {
         content: {
           "application/json": {
+            /** @default ok */
             result?: string;
             statuses?: {
               [key: string]:
@@ -3148,6 +3387,7 @@ export interface operations {
       200: {
         content: {
           "application/json": {
+            /** @default ok */
             result?: string;
             status?:
               | "reading"
@@ -3363,10 +3603,14 @@ export interface operations {
       200: {
         content: {
           "application/json": {
+            /** @default ok */
             result?: string;
+            /** @default collection */
             response?: string;
             data?: {
+              /** Format: uuid */
               id?: string;
+              /** @default report_reason */
               type?: string;
               attributes?: {
                 reason?: components["schemas"]["LocalizedString"];
@@ -3448,7 +3692,9 @@ export interface operations {
             | "user"
             | "scanlation_group"
             | "author";
+          /** Format: uuid */
           reason?: string;
+          /** Format: uuid */
           objectId?: string;
           details?: string;
         };
@@ -3564,6 +3810,7 @@ export interface operations {
     requestBody: {
       content: {
         "multipart/form-data": {
+          /** Format: binary */
           file?: string;
         };
       };
@@ -3653,6 +3900,9 @@ export interface operations {
       path: {
         mangaId: string;
       };
+      query: {
+        "includes[]"?: string[];
+      };
     };
     responses: {
       /** Manga relation list */
@@ -3730,6 +3980,170 @@ export interface operations {
       404: {
         content: {
           "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  "get-rating": {
+    parameters: {
+      query: {
+        manga: string[];
+      };
+    };
+    responses: {
+      /** Self-rating list */
+      200: {
+        content: {
+          "application/json": {
+            /** @default ok */
+            result?: string;
+            ratings?: {
+              [key: string]: {
+                rating?: number;
+                /** Format: date-time */
+                createdAt?: string;
+              };
+            };
+          };
+        };
+      };
+      /** Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  "post-rating-manga-id": {
+    parameters: {
+      path: {
+        mangaId: string;
+      };
+    };
+    responses: {
+      /** OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Response"];
+        };
+      };
+      /** Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+    requestBody: {
+      content: {
+        "application/json": {
+          rating?: number;
+        };
+      };
+    };
+  };
+  "delete-rating-manga-id": {
+    parameters: {
+      path: {
+        mangaId: string;
+      };
+    };
+    responses: {
+      /** Manga rating was deleted */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Response"];
+        };
+      };
+      /** Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+      /** Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["ErrorResponse"];
+        };
+      };
+    };
+  };
+  "get-statistics-manga-uuid": {
+    parameters: {
+      path: {
+        uuid: string;
+      };
+    };
+    responses: {
+      /** Statistics */
+      200: {
+        content: {
+          "application/json": {
+            /** @default ok */
+            result?: string;
+            statistics?: {
+              [key: string]: {
+                rating?: {
+                  /** @description Will be nullable if no ratings has been done */
+                  average?: number | null;
+                  distribution?: {
+                    "1"?: number;
+                    "2"?: number;
+                    "3"?: number;
+                    "4"?: number;
+                    "5"?: number;
+                    "6"?: number;
+                    "7"?: number;
+                    "8"?: number;
+                    "9"?: number;
+                    "10"?: number;
+                  };
+                };
+                follows?: number;
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+  "get-statistics-manga": {
+    parameters: {
+      query: {
+        manga: string[];
+      };
+    };
+    responses: {
+      /** Statistics */
+      200: {
+        content: {
+          "application/json": {
+            /** @default ok */
+            result?: string;
+            statistics?: {
+              [key: string]: {
+                rating?: {
+                  /** @description Will be nullable if no ratings has been done */
+                  average?: number | null;
+                };
+                follows?: number;
+              };
+            };
+          };
         };
       };
     };
