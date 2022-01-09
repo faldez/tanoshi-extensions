@@ -4036,14 +4036,12 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         return Promise.resolve(chapter);
     }
     async getPages(path2) {
-        var ref, ref9, ref10, ref11, ref12;
-        var body = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}${path2}`).then((res)=>res.json()
-        );
-        var base = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}/at-home/server/${(ref = body.data) === null || ref === void 0 ? void 0 : ref.id}`).then((res)=>res.json()
+        var ref, ref9;
+        let chapter_id = path2.replace("/chapter/", "");
+        var base = await $f963b40858b26a50$export$e7aa7bc5c1b3cfb3(`${this.url}/at-home/server/${chapter_id}`).then((res)=>res.json()
         );
         let pages = [];
-        let hash = (ref9 = body.data) === null || ref9 === void 0 ? void 0 : (ref10 = ref9.attributes) === null || ref10 === void 0 ? void 0 : ref10.hash;
-        for (const item of (ref11 = body.data) === null || ref11 === void 0 ? void 0 : (ref12 = ref11.attributes) === null || ref12 === void 0 ? void 0 : ref12.data)pages.push(`${base.baseUrl}/data/${hash}/${item}`);
+        for (const item of (ref = base.chapter) === null || ref === void 0 ? void 0 : ref.data)pages.push(`${base.baseUrl}/data/${(ref9 = base.chapter) === null || ref9 === void 0 ? void 0 : ref9.hash}/${item}`);
         return Promise.resolve(pages);
     }
     constructor(...args){
@@ -4051,7 +4049,7 @@ class $6794cba9c8ce0647$export$2e2bcd8739ae039 extends $f963b40858b26a50$export$
         this.id = 2;
         this.name = "MangaDex";
         this.url = "https://api.mangadex.org";
-        this.version = "0.1.10";
+        this.version = "0.1.11";
         this.icon = "https://mangadex.org/favicon.ico";
         this.languages = "all";
         this.nsfw = true;
