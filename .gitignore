@@ -1,11 +1,2 @@
-/target
-Cargo.lock
-**/.DS_Store
-library/**
-index.json
-.idea/
-repo-*/
-node_modules/
-*.log
-.parcel-cache
-dist/
+target/
+output/

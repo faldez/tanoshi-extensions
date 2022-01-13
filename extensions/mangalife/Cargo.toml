@@ -1,0 +1,12 @@
+[package]
+name = "mangalife"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+nepnep = { path = "../../common/nepnep" }
+tanoshi-lib = { git = "https://github.com/faldez/tanoshi", branch = "libloading" }
+anyhow = "1"

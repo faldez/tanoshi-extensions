@@ -2,35 +2,84 @@ name: Publish
 
 on:
   push:
-    branches: [master]
+    # branches: [master]
     paths:
-      - src/**
-      - multisrc/**
-      - ".github/workflows/publish.yml"
+      - extensions/**
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            extension: so
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            extension: so
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            extension: dylib
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            extension: dll
+    runs-on: ${{ matrix.os }}
+    environment: default
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-      - name: Clone repo
-        run: git clone https://github.com/faldez/tanoshi-extensions.git -b dist dist
-      - run: npm install -g lerna
-      - run: npm install
-      - run: npm run build
-      - run: npm run generate-json
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
+          command: build
+          args: --target ${{ matrix.target }} --release
+      - uses: actions-rs/cargo@v1
+        if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+        with:
+          command: install
+          args: tanoshi-cli --git https://github.com/faldez/tanoshi --branch libloading
+      - if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
+        run: |
+          tanoshi-cli --path target/${{ matrix.target }}/release generate-json
+          mv output/${{ matrix.target }}/index.json output/
+      - if: ${{ matrix.target != 'x86_64-unknown-linux-gnu' }}
+        run: |
+          mkdir -p output/${{ matrix.target }}/
+          cp target/${{ matrix.target }}/release/*.${{ matrix.extension }} output/${{ matrix.target }}/
+      - if: ${{ matrix.target != 'x86_64-unknown-linux-gnu' && matrix.target != 'x86_64-pc-windows-msvc' }}
+        run: cd output/${{ matrix.target }}/ && for f in *.${{ matrix.extension }};do mv $f ${f#lib}; done; cd ../..
+      - name: Upload dist
+        uses: actions/upload-artifact@v2
+        with:
+          name: repo
+          path: output
+  push:
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - uses: actions/checkout@v2
+      - run: git clone -b repository https://github.com/faldez/tanoshi-extensions repository
+      - name: Download dist
+        uses: actions/download-artifact@v2
+        with:
+          name: repo
+          path: repository
       - name: Commit files
         run: |
-          cd dist
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
+          cd repository
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
           git add .
-          git commit -m "Add changes"
-      - name: Push
+          git commit -m "deploy"
+          cd ..
+      - name: Git Commit and Push
         uses: ad-m/github-push-action@v0.6.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          branch: dist
-          force: true
-          directory: dist
+          branch: repository
+          directory: repository
