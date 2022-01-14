@@ -260,7 +260,7 @@ dependencies = [
 
 [[package]]
 name = "guya"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "chrono",
@@ -277,7 +277,7 @@ dependencies = [
 
 [[package]]
 name = "guyalib"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "chrono",
