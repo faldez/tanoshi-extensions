@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+    # branches: [master]
+    paths:
+      - extensions/**
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            extension: so
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            extension: so
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            extension: dylib
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            extension: dll
+    runs-on: ${{ matrix.os }}
+    environment: default
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.58.0
+          target: ${{ matrix.target }}
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
+          command: test
+          args: --target ${{ matrix.target }} --release
