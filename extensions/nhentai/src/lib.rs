@@ -73,7 +73,11 @@ lazy_static! {
         ],
         state: None
     };
-    static ref PREFERENCES: Vec<Input> = vec![LANGUAGE_SELECT.clone()];
+    static ref BLACKLIST_TAG: Input = Input::Text {
+        name: "Blacklist Tag".to_string(),
+        state: None
+    };
+    static ref PREFERENCES: Vec<Input> = vec![LANGUAGE_SELECT.clone(), BLACKLIST_TAG.clone()];
 }
 
 pub struct NHentai {
@@ -91,6 +95,7 @@ impl Default for NHentai {
 impl NHentai {
     fn query(&self, filters: Option<Vec<Input>>) -> String {
         let mut query = vec![];
+        let mut sort = None;
         for pref in self.preferences.iter() {
             if LANGUAGE_SELECT.eq(pref) {
                 if let Input::Select { state, values, .. } = pref {
@@ -107,40 +112,50 @@ impl NHentai {
 
         if let Some(filters) = filters {
             for filter in filters.iter() {
-                if let Input::Text { name, state, .. } = filter {
-                    let state: Option<Vec<String>> = state
-                        .as_ref()
-                        .map(|s| s.split(',').map(|s| s.to_string()).collect());
-                    if let Some(state) = state {
-                        for tag in state {
-                            if tag.starts_with('-') {
-                                query.push(format!(
-                                    "-{}:{}",
-                                    name.to_lowercase(),
-                                    tag.replace("-", "")
-                                ))
-                            } else {
-                                query.push(format!("{}:{}", name.to_lowercase(), tag))
-                            }
+                if let Input::Text {
+                    name,
+                    state: Some(state),
+                    ..
+                } = filter
+                {
+                    let state: Vec<&str> = state.split(',').collect();
+                    for tag in state {
+                        if tag.starts_with('-') {
+                            query.push(format!(
+                                "-{}:{}",
+                                name.to_lowercase(),
+                                tag.trim().replace("-", "")
+                            ))
+                        } else {
+                            query.push(format!("{}:{}", name.to_lowercase(), tag.trim()))
                         }
                     }
                 } else if SORT_FILTER.eq(filter) {
-                    if let Input::Select { values, state, .. } = filter {
-                        if let Some(InputType::String(sort)) =
-                            state.and_then(|i| values.get(i as usize))
-                        {
-                            query.push(format!("sort:{}", sort.replace(" ", "-").to_lowercase()));
+                    if let Input::Select {
+                        values,
+                        state: Some(state),
+                        ..
+                    } = filter
+                    {
+                        if let Some(InputType::String(state)) = values.get(*state as usize) {
+                            sort = Some(format!("sort={}", state.replace(" ", "-").to_lowercase()));
                         }
                     }
                 }
             }
         }
 
-        if query.is_empty() {
+        let mut query_str = if query.is_empty() {
             r#""""#.to_string()
         } else {
-            query.join("&")
+            query.join(" ")
+        };
+
+        if let Some(sort) = sort {
+            query_str = format!("{query_str}&{sort}");
         }
+
+        query_str
     }
 }
 
@@ -260,6 +275,8 @@ impl Extension for NHentai {
             bail!("query and filters can not be empty");
         };
 
+        println!("{url}");
+
         let res: Results = ureq::get(&url).call()?.into_json()?;
         Ok(res.result.iter().map(map_item_to_manga).collect())
     }
@@ -344,6 +361,31 @@ mod test {
             .search_manga(1, Some("azur lane".to_string()), None)
             .unwrap();
         assert!(!res.is_empty());
+    }
+
+    #[test]
+    fn test_search_manga_filter() {
+        let nhentai = NHentai::default();
+        let mut filters = nhentai.filter_list();
+        for filter in filters.iter_mut() {
+            if SORT_FILTER.eq(filter) {
+                if let Input::Select { state, .. } = filter {
+                    *state = Some(1);
+                }
+            } else if TAG_FILTER.eq(filter) {
+                if let Input::Text { state, .. } = filter {
+                    *state = Some("-big breasts".to_string());
+                }
+            } else if PARODIES_FILTER.eq(filter) {
+                if let Input::Text { state, .. } = filter {
+                    *state = Some("azur lane".to_string());
+                }
+            }
+        }
+        let res = nhentai.search_manga(1, None, Some(filters)).unwrap();
+        assert!(!res.is_empty());
+
+        // println!("{:?}", res);
     }
 
     #[test]
