@@ -112,6 +112,7 @@ mod test {
             .get_chapters("/webtoon/private-tutoring-in-these-trying-times".to_string())
             .unwrap();
         assert!(!res.is_empty());
+        println!("{res:?}");
     }
 
     #[test]

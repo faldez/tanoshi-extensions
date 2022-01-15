@@ -155,7 +155,7 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
                     .collect::<Vec<&str>>()
                     .join(""),
                 number: chapter_name
-                    .replace("CHapter ", "")
+                    .replace("Chapter ", "")
                     .parse()
                     .unwrap_or_default(),
                 scanlator: None,
