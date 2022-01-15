@@ -1068,7 +1068,7 @@ dependencies = [
 [[package]]
 name = "tanoshi-lib"
 version = "0.26.0"
-source = "git+https://github.com/faldez/tanoshi?branch=libloading#0bc67657a9fc510fcbc0d452665a4f23998ec674"
+source = "git+https://github.com/faldez/tanoshi?branch=master#e20abb090c20210ada5b6b465af3d6f20627889a"
 dependencies = [
  "anyhow",
  "rustc_version",
