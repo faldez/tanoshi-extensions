@@ -107,6 +107,15 @@ impl NHentai {
                         }
                     }
                 }
+            } else if BLACKLIST_TAG.eq(pref) {
+                if let Input::Text {
+                    state: Some(state), ..
+                } = pref
+                {
+                    for tag in state.split(',') {
+                        query.push(format!("-tag:{}", tag.trim()))
+                    }
+                }
             }
         }
 
@@ -118,8 +127,7 @@ impl NHentai {
                     ..
                 } = filter
                 {
-                    let state: Vec<&str> = state.split(',').collect();
-                    for tag in state {
+                    for tag in state.split(',') {
                         if tag.starts_with('-') {
                             query.push(format!(
                                 "-{}:{}",
@@ -316,7 +324,7 @@ impl Extension for NHentai {
                 format!(
                     "https://i.nhentai.net/galleries/{}/{}.{}",
                     res.media_id,
-                    i,
+                    i + 1,
                     IMAGE_TYPE.get(&p.t).unwrap()
                 )
             })
