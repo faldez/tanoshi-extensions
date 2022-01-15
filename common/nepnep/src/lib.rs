@@ -363,6 +363,13 @@ fn filter_keyword(dirs: &mut Vec<Dir>, keyword: &str) {
     dirs.retain(|dir| dir.s.to_lowercase().contains(&keyword.to_lowercase()))
 }
 
+fn filter_publish_status(dirs: &mut Vec<Dir>, status: &str) {
+    dirs.retain(|dir| dir.ps.to_lowercase().contains(&status.to_lowercase()))
+}
+fn filter_scan_status(dirs: &mut Vec<Dir>, status: &str) {
+    dirs.retain(|dir| dir.ss.to_lowercase().contains(&status.to_lowercase()))
+}
+
 pub fn search_manga(
     source_id: i64,
     url: &str,
@@ -382,25 +389,23 @@ pub fn search_manga(
     let mut dirs = get_all_manga(url)?;
 
     if let Some(filters) = filters {
-        for filter in filters {
+        for filter in filters.iter() {
             println!("filter: {:?}", filter);
-            if KEYWORD_FILTER.eq(&filter) {
-                if let Input::Text {
-                    state: Some(state), ..
-                } = filter
-                {
-                    filter_keyword(&mut dirs, &state);
+            match filter {
+                Input::Text {
+                    name,
+                    state: Some(state),
+                } if name == &KEYWORD_FILTER.name() => {
+                    filter_keyword(&mut dirs, state);
                 }
-            } else if GENRE_FILTER.eq(&filter) {
-                if let Input::Group { state, .. } = filter {
+                Input::Group { name, state } if name == &GENRE_FILTER.name() => {
                     if !state.is_empty() {
-                        filter_genre(&mut dirs, &state);
+                        filter_genre(&mut dirs, state);
                     }
                 }
-            // } else if SCAN_STATUS_FILTER.eq(&filter) {
-            // } else if PUBLISH_STATUS_FILTER.eq(&filter) {
-            } else if SORT_BY_FILTER.eq(&filter) {
-                if let Input::Sort { selection, .. } = filter {
+                Input::Sort {
+                    name, selection, ..
+                } if name == &SORT_BY_FILTER.name() => {
                     let selection = selection.unwrap_or((0, false));
                     match selection {
                         (0, asc) => sort_alphabetically(&mut dirs, asc),
@@ -409,6 +414,25 @@ pub fn search_manga(
                         _ => {}
                     }
                 }
+                Input::Select {
+                    name,
+                    values,
+                    state: Some(state),
+                } if name == &SCAN_STATUS_FILTER.name() => {
+                    if let Some(InputType::String(status)) = values.get(*state as usize) {
+                        filter_scan_status(&mut dirs, status);
+                    }
+                }
+                Input::Select {
+                    name,
+                    values,
+                    state: Some(state),
+                } if name == &PUBLISH_STATUS_FILTER.name() => {
+                    if let Some(InputType::String(status)) = values.get(*state as usize) {
+                        filter_publish_status(&mut dirs, status);
+                    }
+                }
+                _ => {}
             }
         }
     }
