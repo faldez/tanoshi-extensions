@@ -139,13 +139,9 @@ impl NHentai {
                         }
                     }
                 } else if SORT_FILTER.eq(filter) {
-                    if let Input::Select {
-                        values,
-                        state: Some(state),
-                        ..
-                    } = filter
-                    {
-                        if let Some(InputType::String(state)) = values.get(*state as usize) {
+                    if let Input::Select { values, state, .. } = filter {
+                        let state = state.unwrap_or(0);
+                        if let Some(InputType::String(state)) = values.get(state as usize) {
                             sort = Some(format!("sort={}", state.replace(" ", "-").to_lowercase()));
                         }
                     }
