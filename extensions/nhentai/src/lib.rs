@@ -38,6 +38,14 @@ lazy_static! {
         name: "Characters".to_string(),
         state: None
     };
+    static ref ARTISTS_FILTER: Input = Input::Text {
+        name: "Artists".to_string(),
+        state: None
+    };
+    static ref GROUPS_FILTER: Input = Input::Text {
+        name: "Groups".to_string(),
+        state: None
+    };
     static ref CATEGORIES_FILTER: Input = Input::Text {
         name: "Categories".to_string(),
         state: None
@@ -61,6 +69,8 @@ lazy_static! {
         CHARACTERS_FILTER.clone(),
         CATEGORIES_FILTER.clone(),
         PARODIES_FILTER.clone(),
+        ARTISTS_FILTER.clone(),
+        GROUPS_FILTER.clone(),
         SORT_FILTER.clone()
     ];
     static ref LANGUAGE_SELECT: Input = Input::Select {
@@ -121,30 +131,41 @@ impl NHentai {
 
         if let Some(filters) = filters {
             for filter in filters.iter() {
-                if let Input::Text {
-                    name,
-                    state: Some(state),
-                    ..
-                } = filter
-                {
-                    for tag in state.split(',') {
-                        if tag.starts_with('-') {
-                            query.push(format!(
-                                "-{}:{}",
-                                name.to_lowercase(),
-                                tag.trim().replace("-", "")
-                            ))
-                        } else {
-                            query.push(format!("{}:{}", name.to_lowercase(), tag.trim()))
+                match filter {
+                    Input::Text {
+                        name,
+                        state: Some(state),
+                        ..
+                    } if name == &TAG_FILTER.name() => {
+                        for tag in state.split(',') {
+                            if tag.starts_with('-') {
+                                query.push(format!(
+                                    "-{}:{}",
+                                    name.to_lowercase(),
+                                    tag.trim().replace("-", "")
+                                ))
+                            } else {
+                                query.push(format!("{}:{}", name.to_lowercase(), tag.trim()))
+                            }
                         }
                     }
-                } else if SORT_FILTER.eq(filter) {
-                    if let Input::Select { values, state, .. } = filter {
+                    Input::Text {
+                        name,
+                        state: Some(state),
+                        ..
+                    } => query.push(format!("{}:{}", name.to_lowercase(), state.trim())),
+                    Input::Select {
+                        name,
+                        values,
+                        state,
+                        ..
+                    } if name == &SORT_FILTER.name() => {
                         let state = state.unwrap_or(0);
                         if let Some(InputType::String(state)) = values.get(state as usize) {
                             sort = Some(format!("sort={}", state.replace(" ", "-").to_lowercase()));
                         }
                     }
+                    _ => {}
                 }
             }
         }
@@ -388,8 +409,6 @@ mod test {
         }
         let res = nhentai.search_manga(1, None, Some(filters)).unwrap();
         assert!(!res.is_empty());
-
-        // println!("{:?}", res);
     }
 
     #[test]
