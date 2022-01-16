@@ -435,6 +435,8 @@ pub fn search_manga(
                 _ => {}
             }
         }
+    } else if let Some(query) = query {
+        filter_keyword(&mut dirs, &query);
     }
 
     let manga = dirs
