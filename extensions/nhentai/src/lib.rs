@@ -256,11 +256,14 @@ impl Extension for NHentai {
     }
 
     fn get_popular_manga(&self, page: i64) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
-        self.get_manga_list(&format!("{URL}/search/?q=\"\"&sort=popular&page={page}"))
+        self.get_manga_list(&format!(
+            "{URL}/search/?q={}&sort=popular&page={page}",
+            self.query(None)
+        ))
     }
 
     fn get_latest_manga(&self, page: i64) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
-        self.get_manga_list(&format!("{URL}/search/?q=\"\"&page={page}"))
+        self.get_manga_list(&format!("{URL}/search/?q={}&page={page}", self.query(None)))
     }
 
     fn search_manga(
