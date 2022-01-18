@@ -41,7 +41,7 @@ jobs:
         if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
         with:
           command: install
-          args: tanoshi-cli --git https://github.com/faldez/tanoshi --branch master
+          args: tanoshi-cli --version 0.6.0 --locked
       - if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
         run: |
           tanoshi-cli --path target/${{ matrix.target }}/release generate-json
