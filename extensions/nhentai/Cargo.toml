@@ -1,13 +1,13 @@
 [package]
 name = "nhentai"
-version = "0.1.8"
+version = "0.1.9"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-tanoshi-lib = { git = "https://github.com/faldez/tanoshi", branch = "master" }
+tanoshi-lib = "0.27.0"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
 fancy-regex = "0.7.1"

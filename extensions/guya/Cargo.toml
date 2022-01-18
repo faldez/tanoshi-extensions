@@ -1,6 +1,6 @@
 [package]
 name = "guya"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
 
 
@@ -8,7 +8,7 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
-tanoshi-lib = { git = "https://github.com/faldez/tanoshi", branch = "master" }
+tanoshi-lib = "0.27.0"
 guyalib = { path = "../../common/guyalib" }
 chrono = "0.4"
 serde = { version = "1", features = ["derive"] }

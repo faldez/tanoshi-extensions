@@ -1,6 +1,6 @@
 [package]
 name = "mangasee"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 
 [lib]
@@ -8,5 +8,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 nepnep = { path = "../../common/nepnep" }
-tanoshi-lib = { git = "https://github.com/faldez/tanoshi", branch = "master" }
+tanoshi-lib = "0.27.0"
 anyhow = "1"
