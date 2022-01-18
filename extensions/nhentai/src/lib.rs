@@ -272,10 +272,12 @@ impl Extension for NHentai {
         query: Option<String>,
         filters: Option<Vec<tanoshi_lib::prelude::Input>>,
     ) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
-        let url = if let Some(query) = query {
+        let url = if filters.is_some() {
+            format!("{URL}/search/?q={}&page={page}", self.query(filters))
+        } else if let Some(query) = query {
             format!("{URL}/search/?q={query}&sort=popular&page={page}")
         } else {
-            format!("{URL}/search/?q={}&page={page}", self.query(filters))
+            return Err(anyhow!("query and filters cannot be both empty"));
         };
 
         self.get_manga_list(&url)
@@ -485,17 +487,32 @@ mod test {
         let nhentai = NHentai::default();
         let res = nhentai.get_popular_manga(1).unwrap();
         assert!(!res.is_empty());
-        println!("{res:?}");
-        println!("-----------------")
     }
 
     #[test]
     fn test_get_latest_manga() {
-        let nhentai = NHentai::default();
+        let preferences: Vec<Input> = vec![
+            Input::Text {
+                name: "Blacklist Tag".to_string(),
+                state: Some("posession".to_string()),
+            },
+            Input::Select {
+                name: "Language".to_string(),
+                values: vec![
+                    InputType::String("Any".to_string()),
+                    InputType::String("English".to_string()),
+                    InputType::String("Japanese".to_string()),
+                    InputType::String("Chinese".to_string()),
+                ],
+                state: Some(1),
+            },
+        ];
+        let mut nhentai = NHentai::default();
+        nhentai.set_preferences(preferences).unwrap();
+        let preferences = nhentai.get_preferences().unwrap();
+        println!("{preferences:?}");
         let res = nhentai.get_latest_manga(1).unwrap();
         assert!(!res.is_empty());
-        println!("{res:?}");
-        println!("-----------------")
     }
 
     #[test]
@@ -505,8 +522,6 @@ mod test {
             .search_manga(1, Some("azur lane".to_string()), None)
             .unwrap();
         assert!(!res.is_empty());
-        println!("{res:?}");
-        println!("-----------------")
     }
 
     #[test]
@@ -530,8 +545,6 @@ mod test {
         }
         let res = nhentai.search_manga(1, None, Some(filters)).unwrap();
         assert!(!res.is_empty());
-        println!("{res:?}");
-        println!("-----------------")
     }
 
     #[test]
@@ -539,8 +552,6 @@ mod test {
         let nhentai = NHentai::default();
         let res = nhentai.get_manga_detail("/g/385965".to_string());
         assert!(res.is_ok());
-        println!("{res:?}");
-        println!("-----------------")
     }
 
     #[test]
@@ -548,8 +559,6 @@ mod test {
         let nhentai = NHentai::default();
         let res = nhentai.get_chapters("/g/385965".to_string()).unwrap();
         assert!(!res.is_empty());
-        println!("{res:?}");
-        println!("-----------------")
     }
 
     #[test]
@@ -557,7 +566,5 @@ mod test {
         let nhentai = NHentai::default();
         let res = nhentai.get_pages("/g/385965".to_string()).unwrap();
         assert!(!res.is_empty());
-        println!("{res:?}");
-        println!("-----------------")
     }
 }
