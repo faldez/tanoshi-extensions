@@ -5,6 +5,7 @@ on:
     # branches: [master]
     paths:
       - extensions/**
+      - ".github/workflows/test.yml"
 
 jobs:
   test:
