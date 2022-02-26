@@ -109,7 +109,7 @@ mod test {
     fn test_get_chapters() {
         let guya = Guya::default();
         let res = guya
-            .get_chapters("/api/series/Kaguya-Wants-To-Be-Confessed-To/".to_string())
+            .get_chapters("/api/series/Kaguya-Wants-To-Be-Confessed-To".to_string())
             .unwrap();
         assert!(!res.is_empty());
     }

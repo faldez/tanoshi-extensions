@@ -54,7 +54,7 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
         chapters.push(ChapterInfo {
             source_id,
             title: chapter.title.clone(),
-            path: format!("{}{}", path, number),
+            path: format!("{}/{}", path, number),
             number: number.parse().unwrap_or_default(),
             scanlator: if let Some(group) = chapter.groups.into_keys().next() {
                 series.groups.clone().get(&group).cloned()
