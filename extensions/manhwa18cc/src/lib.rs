@@ -72,8 +72,18 @@ mod test {
     fn test_get_latest_manga() {
         let manhwa18cc = Manhwa18cc::default();
 
-        let res = manhwa18cc.get_latest_manga(1).unwrap();
-        assert!(!res.is_empty());
+        let res1 = manhwa18cc.get_latest_manga(1).unwrap();
+        assert!(!res1.is_empty());
+
+        let res2 = manhwa18cc.get_latest_manga(2).unwrap();
+        assert!(!res2.is_empty());
+
+        assert!(
+            res1[0].path != res2[0].path,
+            "{} should be different than {}",
+            res1[0].path,
+            res2[0].path
+        );
     }
 
     #[test]

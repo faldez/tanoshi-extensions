@@ -46,14 +46,14 @@ fn parse_manga_list(source_id: i64, body: &str) -> Result<Vec<MangaInfo>> {
 }
 
 pub fn get_latest_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<MangaInfo>> {
-    let body = ureq::get(&format!("{}/webtoons/{}orderby=latest", url, page))
+    let body = ureq::get(&format!("{}/webtoons/{}?orderby=latest", url, page))
         .call()?
         .into_string()?;
     parse_manga_list(source_id, &body)
 }
 
 pub fn get_popular_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<MangaInfo>> {
-    let body = ureq::get(&format!("{}/webtoons/{}orderby=trending", url, page))
+    let body = ureq::get(&format!("{}/webtoons/{}?orderby=trending", url, page))
         .call()?
         .into_string()?;
     parse_manga_list(source_id, &body)
