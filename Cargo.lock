@@ -187,6 +187,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "fancy-regex"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d95b4efe5be9104a4a18a9916e86654319895138be727b229820c39257c30dda"
+dependencies = [
+ "bit-set",
+ "regex",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -264,7 +274,7 @@ version = "0.1.4"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.7.1",
  "guyalib",
  "lazy_static",
  "log",
@@ -281,7 +291,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.7.1",
  "lazy_static",
  "log",
  "scraper",
@@ -388,7 +398,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.7.1",
  "lazy_static",
  "log",
  "scraper",
@@ -404,7 +414,7 @@ version = "0.1.2"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.7.1",
  "lazy_static",
  "log",
  "phf 0.10.1",
@@ -440,7 +450,7 @@ version = "0.1.4"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.7.1",
  "lazy_static",
  "log",
  "madara",
@@ -493,7 +503,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.7.1",
  "lazy_static",
  "log",
  "scraper",
@@ -511,11 +521,11 @@ checksum = "e4a24736216ec316047a1fc4252e27dabb04218aa4a3f37c6e7ddbf1f9782b54"
 
 [[package]]
 name = "nhentai"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex",
+ "fancy-regex 0.8.0",
  "lazy_static",
  "log",
  "phf 0.10.1",

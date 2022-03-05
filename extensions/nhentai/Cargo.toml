@@ -1,6 +1,6 @@
 [package]
 name = "nhentai"
-version = "0.1.9"
+version = "0.1.10"
 edition = "2021"
 
 [lib]
@@ -10,7 +10,7 @@ crate-type = ["cdylib"]
 tanoshi-lib = "0.27.0"
 chrono = { version = "0.4", features = ["serde"] }
 serde = { version = "1", features = ["derive"] }
-fancy-regex = "0.7.1"
+fancy-regex = "0.8.0"
 scraper = "0.12.0"
 anyhow = "1"
 ureq = { version = "2", features = ["json"] }

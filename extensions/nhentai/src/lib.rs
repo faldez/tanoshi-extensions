@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
-use fancy_regex::Regex;
+use fancy_regex::{Captures, Regex};
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::{
     ChapterInfo, Extension, Input, InputType, Lang, MangaInfo, PluginRegistrar,
@@ -452,13 +452,16 @@ impl Extension for NHentai {
             .map_err(|e| anyhow!("failed to parse selector: {e:?}"))?;
 
         let mut pages = vec![];
+        let re = Regex::new(r"^https:\/\/t(\d*)\..+\/(\d+)\/(\d+)t.(.+)$")?;
         for thumb in document.select(&page_selector) {
             if let Some(url) = thumb.value().attr("data-src") {
-                let page = Regex::new(r#"(\d+)\/(\d+)t.(.+)$"#)
-                    .unwrap()
-                    .replace_all(url, "${1}/${2}.${3}")
-                    .to_string();
-                pages.push(page.replace("t.nhentai", "i.nhentai"));
+                let cap = re
+                    .captures(url)?
+                    .ok_or(anyhow::anyhow!("no captured regex for {url}"))?;
+                pages.push(format!(
+                    "https://i{}.nhentai.net/galleries/{}/{}.{}",
+                    &cap[1], &cap[2], &cap[3], &cap[4]
+                ));
             }
         }
 
@@ -566,5 +569,6 @@ mod test {
         let nhentai = NHentai::default();
         let res = nhentai.get_pages("/g/385965".to_string()).unwrap();
         assert!(!res.is_empty());
+        assert_eq!(res[0], "https://i.nhentai.net/galleries/2099700/1.jpg");
     }
 }
