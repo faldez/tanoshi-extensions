@@ -395,6 +395,7 @@ lazy_static! {
         INCLUDED_TAGS_MODE.clone(),
         EXCLUDED_TAGS_MODE.clone(),
         STATUS_FILTER.clone(),
+        CONTENT_RATING_FILTER.clone(),
     ];
 }
 
