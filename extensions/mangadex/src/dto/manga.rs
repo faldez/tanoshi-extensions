@@ -80,6 +80,31 @@ pub enum Rating {
     Pornographic,
 }
 
+impl Display for Rating {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Rating::Safe => write!(f, "safe"),
+            Rating::Suggestive => write!(f, "suggestive"),
+            Rating::Erotica => write!(f, "erotica"),
+            Rating::Pornographic => write!(f, "pornographic"),
+        }
+    }
+}
+
+impl FromStr for Rating {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "safe" => Ok(Rating::Safe),
+            "suggestive" => Ok(Rating::Suggestive),
+            "erotica" => Ok(Rating::Erotica),
+            "pornographic" => Ok(Rating::Pornographic),
+            _ => Err(anyhow::anyhow!("no such rating")),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Order {
@@ -300,6 +325,7 @@ pub mod request {
             let mut excluded_tags = vec![];
             let mut excluded_tags_mode = None;
             let mut status = vec![];
+            let mut content_rating = vec![];
             let mut title = None;
             let mut year = None;
             let mut artists = vec![];
@@ -381,14 +407,38 @@ pub mod request {
                             });
                     }
                 } else if STATUS_FILTER.eq(&filter) {
-                    if let Input::Text { state, .. } = filter {
+                    if let Input::Group { state, .. } = filter {
                         status = state
-                            .map(|s| {
-                                s.split(',')
-                                    .filter_map(|s| Status::from_str(s).ok())
-                                    .collect()
+                            .iter()
+                            .filter_map(|input| {
+                                if let Input::Checkbox { name, state } = input {
+                                    if state.unwrap_or(false) {
+                                        Status::from_str(name).ok()
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    None
+                                }
                             })
-                            .unwrap_or_default();
+                            .collect();
+                    }
+                } else if CONTENT_RATING_FILTER.eq(&filter) {
+                    if let Input::Group { state, .. } = filter {
+                        content_rating = state
+                            .iter()
+                            .filter_map(|input| {
+                                if let Input::Checkbox { name, state } = input {
+                                    if state.unwrap_or(false) {
+                                        Rating::from_str(name).ok()
+                                    } else {
+                                        None
+                                    }
+                                } else {
+                                    None
+                                }
+                            })
+                            .collect();
                     }
                 }
             }
@@ -403,6 +453,7 @@ pub mod request {
                 excluded_tags,
                 excluded_tags_mode,
                 status,
+                content_rating,
                 ..Default::default()
             }
         }
@@ -425,5 +476,64 @@ pub mod request {
         pub published_at_since: Option<DateTime<Utc>>,
         pub order: Option<ListOrder>,
         pub includes: Vec<String>,
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use tanoshi_lib::prelude::Input;
+
+    use super::request::MangaList;
+
+    #[test]
+    fn test_input_to_manga_list_request() {
+        let input = vec![
+            Input::Group {
+                name: "Status".to_string(),
+                state: vec![
+                    Input::Checkbox {
+                        name: "ongoing".to_string(),
+                        state: Some(true),
+                    },
+                    Input::Checkbox {
+                        name: "completed".to_string(),
+                        state: Some(true),
+                    },
+                    Input::Checkbox {
+                        name: "hiatus".to_string(),
+                        state: Some(true),
+                    },
+                    Input::Checkbox {
+                        name: "canceled".to_string(),
+                        state: Some(true),
+                    },
+                ],
+            },
+            Input::Group {
+                name: "Content Rating".to_string(),
+                state: vec![
+                    Input::Checkbox {
+                        name: "safe".to_string(),
+                        state: Some(true),
+                    },
+                    Input::Checkbox {
+                        name: "suggestive".to_string(),
+                        state: Some(true),
+                    },
+                    Input::Checkbox {
+                        name: "erotica".to_string(),
+                        state: Some(true),
+                    },
+                    Input::Checkbox {
+                        name: "pornographic".to_string(),
+                        state: Some(true),
+                    },
+                ],
+            },
+        ];
+
+        let manga_list: MangaList = input.into();
+        let query = manga_list.to_query_string().unwrap();
+        assert_eq!("limit=0&offset=0&status[0]=ongoing&status[1]=completed&status[2]=hiatus&status[3]=cancelled&contentRating[0]=safe&contentRating[1]=suggestive&contentRating[2]=erotica&contentRating[3]=pornographic&includes[0]=cover_art&includes[1]=author&includes[2]=artist&includes[3]=scanlation_group", query, "expected got {query}");
     }
 }

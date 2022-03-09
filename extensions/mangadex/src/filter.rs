@@ -56,6 +56,27 @@ lazy_static! {
             }
         ]
     };
+    pub static ref CONTENT_RATING_FILTER: Input = Input::Group {
+        name: "Content Rating".to_string(),
+        state: vec![
+            Input::Checkbox {
+                name: "safe".to_string(),
+                state: Some(true)
+            },
+            Input::Checkbox {
+                name: "suggestive".to_string(),
+                state: Some(true)
+            },
+            Input::Checkbox {
+                name: "erotica".to_string(),
+                state: Some(true)
+            },
+            Input::Checkbox {
+                name: "pornographic".to_string(),
+                state: Some(false)
+            }
+        ]
+    };
     pub static ref TAG_FILTERS: Input = Input::Group {
         name: "Tags".to_string(),
         state: vec![
