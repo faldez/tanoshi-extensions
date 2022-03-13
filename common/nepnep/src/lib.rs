@@ -556,6 +556,16 @@ pub fn get_chapters(source_id: i64, url: &str, path: String) -> Result<Vec<Chapt
         let mut chapter = ch.chapter.clone();
         let t = chapter.remove(0);
 
+        /*
+        vm.ChapterURLEncode = function(e) {
+            Index = "";
+            var t = e.substring(0,1);
+            1 != t && (Index = "-index-" + t);
+            var n = parseInt(e.slice(1,-1)), m = "", a = e[e.length-1]
+            return 0 != a && (m = "." + a),"-chapter-" + n + m + Index + vm.PageOne + ".html"
+        }
+        */
+
         let index = if t != '1' {
             format!("-index-{}", t)
         } else {
@@ -568,14 +578,9 @@ pub fn get_chapters(source_id: i64, url: &str, path: String) -> Result<Vec<Chapt
         chapters.push(ChapterInfo {
             source_id,
             title: format!("{} {}", ch.type_field, number.to_string()),
-            path: format!(
-                "/read-online/{}-chapter-{}{}.html",
-                &index_name,
-                number.to_string(),
-                index,
-            ),
+            path: format!("/read-online/{index_name}-chapter-{number}{index}.html"),
             uploaded: ch.date.timestamp(),
-            number: number + if index.is_empty() { 0.0 } else { 10000.0 },
+            number: ch.chapter.parse::<f64>().unwrap_or_default(),
             scanlator: None,
         })
     }
