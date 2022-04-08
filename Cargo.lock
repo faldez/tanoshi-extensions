@@ -302,6 +302,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "html2text"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de2444cdc9d7e23756d000d9f49513bed8bb4e3743072fb45c63e6493e277bed"
+dependencies = [
+ "html5ever",
+ "markup5ever_rcdom",
+ "unicode-width",
+]
+
+[[package]]
 name = "html5ever"
 version = "0.25.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -427,12 +438,64 @@ dependencies = [
 ]
 
 [[package]]
+name = "mangakakalot"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.8.0",
+ "lazy_static",
+ "log",
+ "mangakakalot-common",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
+
+[[package]]
+name = "mangakakalot-common"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.8.0",
+ "html2text",
+ "lazy_static",
+ "log",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+ "url",
+]
+
+[[package]]
 name = "mangalife"
 version = "0.1.5"
 dependencies = [
  "anyhow",
  "nepnep",
  "tanoshi-lib",
+]
+
+[[package]]
+name = "manganato"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.8.0",
+ "lazy_static",
+ "log",
+ "mangakakalot-common",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
 ]
 
 [[package]]
@@ -473,6 +536,18 @@ dependencies = [
  "string_cache",
  "string_cache_codegen",
  "tendril",
+]
+
+[[package]]
+name = "markup5ever_rcdom"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f015da43bcd8d4f144559a3423f4591d69b8ce0652c905374da7205df336ae2b"
+dependencies = [
+ "html5ever",
+ "markup5ever",
+ "tendril",
+ "xml5ever",
 ]
 
 [[package]]
@@ -1346,3 +1421,15 @@ name = "winapi-x86_64-pc-windows-gnu"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
+
+[[package]]
+name = "xml5ever"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9234163818fd8e2418fcde330655e757900d4236acd8cc70fef345ef91f6d865"
+dependencies = [
+ "log",
+ "mac",
+ "markup5ever",
+ "time",
+]
