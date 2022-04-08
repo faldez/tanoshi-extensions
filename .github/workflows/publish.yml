@@ -6,6 +6,7 @@ on:
     paths:
       - extensions/**
       - ".github/workflows/publish.yml"
+      - "!**/*.md"
 
 jobs:
   build:
