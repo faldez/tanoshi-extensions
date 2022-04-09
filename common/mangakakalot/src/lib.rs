@@ -167,6 +167,13 @@ pub fn get_chapters(path: &str, source_id: i64) -> Result<Vec<ChapterInfo>> {
             .and_then(|el| el.value().attr("title"))
             .map(|title| title.to_string())
             .unwrap_or_else(|| "".to_string());
+
+        let number = chapter_re
+            .captures(&chapter_name)?
+            .and_then(|cap| cap.get(1))
+            .map(|num| num.as_str().to_string())
+            .unwrap_or_default();
+
         chapters.push(ChapterInfo {
             source_id,
             title: chapter_name.clone(),
@@ -181,11 +188,7 @@ pub fn get_chapters(path: &str, source_id: i64) -> Result<Vec<ChapterInfo>> {
                 .flatten()
                 .collect::<Vec<String>>()
                 .join(""),
-            number: chapter_re
-                .captures(&chapter_name)?
-                .and_then(|cap| cap.get(0))
-                .and_then(|num| num.as_str().parse().ok())
-                .unwrap_or_default(),
+            number: number.parse().unwrap_or_default(),
             scanlator: None,
             uploaded: NaiveDateTime::parse_from_str(&chapter_time, "%b %d,%Y %H:%M")
                 .unwrap_or_else(|_| NaiveDateTime::from_timestamp(0, 0))
