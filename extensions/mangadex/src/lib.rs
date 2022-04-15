@@ -97,8 +97,12 @@ pub fn map_result_to_manga(data: Relationship) -> Option<MangaInfo> {
                     .and_then(|attr| {
                         if let Some(title) = attr.title.get("en").cloned() {
                             Some(title)
+                        } else if let Some(title) = attr.title.get("ja-ro").cloned() {
+                            Some(title)
+                        } else if let Some(title) = attr.title.get("ja").cloned() {
+                            Some(title)
                         } else {
-                            attr.title.get("ja").cloned()
+                            attr.title.values().next().cloned()
                         }
                     })
                     .unwrap_or_else(String::new),
