@@ -14,3 +14,6 @@ This repository host extenstions for tanoshi
 | 9   | Nhentai      | Use nhentai api with different path than 6 | Removed |
 | 10  | Mangakakalot |                                            | Active  |
 | 11  | Manganato    |                                            | Active  |
+
+## Diclaimer
+The developer of this application does not host any content and does not have affiliation with any content provider.
