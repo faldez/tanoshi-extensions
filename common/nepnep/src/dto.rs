@@ -168,13 +168,14 @@ mod date_format {
     use chrono::NaiveDateTime;
     use serde::{self, Deserialize, Deserializer};
 
-    const FORMAT: &str = "%Y-%m-%d %H:%M:%S";
+    const FORMAT: &str = "%Y-%m-%d %H:%M:%S %z";
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<NaiveDateTime, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer).unwrap();
-        NaiveDateTime::parse_from_str(&s, FORMAT).map_err(serde::de::Error::custom)
+        NaiveDateTime::parse_from_str(&format!("{s} +0600"), FORMAT)
+            .map_err(serde::de::Error::custom)
     }
 }

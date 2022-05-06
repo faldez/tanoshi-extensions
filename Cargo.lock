@@ -474,7 +474,7 @@ dependencies = [
 
 [[package]]
 name = "mangalife"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "nepnep",
@@ -500,7 +500,7 @@ dependencies = [
 
 [[package]]
 name = "mangasee"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "nepnep",
