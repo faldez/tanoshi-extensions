@@ -15,7 +15,7 @@ This repository host extenstions for tanoshi
 | 10  | Mangakakalot |                                            | Active  |
 | 11  | Manganato    |                                            | Active  |
 | 12  | ManhuaFast   |                                            | Active  |
-| 13  | MangaTx      |                                            | Active  |
+| 13  | MangaTX      |                                            | Active  |
 
 
 ## Diclaimer
