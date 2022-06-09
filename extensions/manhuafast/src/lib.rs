@@ -78,7 +78,11 @@ mod test {
         let res2 = ManhuaFast.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
-        assert_ne!(res1[0].path, res2[0].path, "{} should be different than {}", res1[0].path, res2[0].path);
+        assert_ne!(
+            res1[0].path, res2[0].path,
+            "{} should be different than {}",
+            res1[0].path, res2[0].path
+        );
     }
 
     #[test]

@@ -1,6 +1,8 @@
 use anyhow::{anyhow, bail};
+use madara::{
+    get_chapters_old, get_manga_detail, parse_manga_list, search_manga, search_manga_old,
+};
 use scraper::{Html, Selector};
-use madara::{get_chapters_old, get_manga_detail, parse_manga_list, search_manga, search_manga_old};
 use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
 tanoshi_lib::export_plugin!(register);
@@ -37,7 +39,7 @@ impl Extension for Manhwa18cc {
         let selector = Selector::parse(r#".manga-item a[href^="/webtoon"] img"#)
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-        parse_manga_list(URL,ID, &body, &selector)
+        parse_manga_list(URL, ID, &body, &selector)
     }
 
     fn get_latest_manga(&self, page: i64) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {

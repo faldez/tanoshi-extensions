@@ -1,8 +1,8 @@
 use anyhow::{anyhow, Result};
 use chrono::{NaiveDateTime, Utc};
 use log::error;
-use scraper::{ElementRef, Html, Selector};
 use scraper::Node::Text;
+use scraper::{ElementRef, Html, Selector};
 use tanoshi_lib::prelude::{ChapterInfo, MangaInfo};
 
 fn get_title(el: &ElementRef) -> Option<String> {
@@ -25,7 +25,12 @@ fn get_data_src(el: &ElementRef) -> Option<String> {
     el.value().attr("data-src").map(|s| s.to_string())
 }
 
-pub fn parse_manga_list(url: &str, source_id: i64, body: &str, selector: &Selector) -> Result<Vec<MangaInfo>> {
+pub fn parse_manga_list(
+    url: &str,
+    source_id: i64,
+    body: &str,
+    selector: &Selector,
+) -> Result<Vec<MangaInfo>> {
     let mut manga = vec![];
 
     let doc = Html::parse_document(&body);
@@ -92,7 +97,12 @@ pub fn get_popular_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Man
     parse_manga_list(url, source_id, &body, &selector)
 }
 
-pub fn search_manga_old(url: &str, source_id: i64, page: i64, query: &str) -> Result<Vec<MangaInfo>> {
+pub fn search_manga_old(
+    url: &str,
+    source_id: i64,
+    page: i64,
+    query: &str,
+) -> Result<Vec<MangaInfo>> {
     let body = ureq::get(&format!("{}/search?q={}&page={}", url, query, page))
         .call()?
         .into_string()?;
@@ -136,8 +146,8 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
     let selector_name = Selector::parse(r#"div.post-title h3, div.post-title h1"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_img = Selector::parse("a img")
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_img =
+        Selector::parse("a img").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_artist = Selector::parse(".artist-content a")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
@@ -155,7 +165,8 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
             .and_then(|item| item.last_child())
             .and_then(|t| t.value().as_text())
             .unwrap()
-            .trim().to_string(),
+            .trim()
+            .to_string(),
         author: doc
             .select(&selector_artist)
             .flat_map(|el| el.text())
@@ -167,11 +178,14 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
             .map(|s| s.to_string())
             .collect(),
         status: None,
-        description: Option::from(doc
-            .select(&selector_desc)
-            .flat_map(|el| el.text())
-            .collect::<Vec<&str>>()
-            .join("").trim().to_string()),
+        description: Option::from(
+            doc.select(&selector_desc)
+                .flat_map(|el| el.text())
+                .collect::<Vec<&str>>()
+                .join("")
+                .trim()
+                .to_string(),
+        ),
         path: path.to_string().replace(url, ""),
         cover_url: doc
             .select(&selector_img)
@@ -181,7 +195,14 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
     })
 }
 
-fn parse_chapters(url: &str, doc: &Html, selector: &Selector, selector_chapter_name: &Selector, selector_chapter_time: &Selector, source_id: i64) -> Result<Vec<ChapterInfo>> {
+fn parse_chapters(
+    url: &str,
+    doc: &Html,
+    selector: &Selector,
+    selector_chapter_name: &Selector,
+    selector_chapter_time: &Selector,
+    source_id: i64,
+) -> Result<Vec<ChapterInfo>> {
     let chapters: Vec<ChapterInfo> = doc
         .select(&selector)
         .map(|el| {
@@ -189,7 +210,9 @@ fn parse_chapters(url: &str, doc: &Html, selector: &Selector, selector_chapter_n
                 .select(&selector_chapter_name)
                 .flat_map(|el| el.text())
                 .collect::<Vec<&str>>()
-                .join("").trim().to_string();
+                .join("")
+                .trim()
+                .to_string();
             let chapter_time = el
                 .select(&selector_chapter_time)
                 .flat_map(|el| el.text())
@@ -215,8 +238,8 @@ fn parse_chapters(url: &str, doc: &Html, selector: &Selector, selector_chapter_n
                     &format!("{} 00:00", chapter_time.trim()),
                     "%B %d, %Y %H:%M",
                 )
-                    .unwrap_or_else(|_| Utc::now().naive_utc())
-                    .timestamp(),
+                .unwrap_or_else(|_| Utc::now().naive_utc())
+                .timestamp(),
             }
         })
         .collect();
@@ -240,7 +263,14 @@ pub fn get_chapters_old(url: &str, path: &str, source_id: i64) -> Result<Vec<Cha
     let selector_chapter_time = Selector::parse(r#".chapter-time"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    parse_chapters(url, &doc, &selector, &selector_chapter_name, &selector_chapter_time, source_id)
+    parse_chapters(
+        url,
+        &doc,
+        &selector,
+        &selector_chapter_name,
+        &selector_chapter_time,
+        source_id,
+    )
 }
 
 pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<ChapterInfo>> {
@@ -253,13 +283,20 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
     let selector = Selector::parse("li.wp-manga-chapter")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_chapter_name = Selector::parse(r#"a"#)
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_chapter_name =
+        Selector::parse(r#"a"#).map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_chapter_time = Selector::parse(r#".chapter-release-date"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    parse_chapters(url, &doc, &selector, &selector_chapter_name, &selector_chapter_time, source_id)
+    parse_chapters(
+        url,
+        &doc,
+        &selector,
+        &selector_chapter_name,
+        &selector_chapter_time,
+        source_id,
+    )
 }
 
 pub fn get_pages(url: &str, path: &str) -> Result<Vec<String>> {
@@ -269,8 +306,9 @@ pub fn get_pages(url: &str, path: &str) -> Result<Vec<String>> {
 
     let doc = Html::parse_document(&body);
 
-    let selector = Selector::parse(r#"div.page-break, li.blocks-gallery-item, .reading-content img"#)
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector =
+        Selector::parse(r#"div.page-break, li.blocks-gallery-item, .reading-content img"#)
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     Ok(doc
         .select(&selector)
