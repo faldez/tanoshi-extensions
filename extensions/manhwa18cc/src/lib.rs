@@ -1,7 +1,6 @@
-use anyhow::bail;
-use madara::{
-    get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga,
-};
+use anyhow::{anyhow, bail};
+use scraper::{Html, Selector};
+use madara::{get_chapters_old, get_manga_detail, parse_manga_list, search_manga, search_manga_old};
 use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
 tanoshi_lib::export_plugin!(register);
@@ -18,7 +17,7 @@ const URL: &str = "https://manhwa18.cc";
 pub struct Manhwa18cc;
 
 impl Extension for Manhwa18cc {
-    fn get_source_info(&self) -> tanoshi_lib::prelude::SourceInfo {
+    fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
             name: NAME.to_string(),
@@ -31,11 +30,25 @@ impl Extension for Manhwa18cc {
     }
 
     fn get_popular_manga(&self, page: i64) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
-        get_popular_manga(URL, ID, page)
+        let body = ureq::get(&format!("{}/webtoons/{}?orderby=latest", URL, page))
+            .call()?
+            .into_string()?;
+
+        let selector = Selector::parse(r#".manga-item a[href^="/webtoon"] img"#)
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
+        parse_manga_list(URL,ID, &body, &selector)
     }
 
     fn get_latest_manga(&self, page: i64) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
-        get_latest_manga(URL, ID, page)
+        let body = ureq::get(&format!("{}/webtoons/{}?orderby=latest", URL, page))
+            .call()?
+            .into_string()?;
+
+        let selector = Selector::parse(r#".manga-item a[href^="/webtoon"] img"#)
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
+        parse_manga_list(URL, ID, &body, &selector)
     }
 
     fn search_manga(
@@ -45,7 +58,7 @@ impl Extension for Manhwa18cc {
         _: Option<Vec<tanoshi_lib::prelude::Input>>,
     ) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
         if let Some(query) = query {
-            search_manga(URL, ID, page, &query)
+            search_manga_old(URL, ID, page, &query)
         } else {
             bail!("query can not be empty")
         }
@@ -56,11 +69,24 @@ impl Extension for Manhwa18cc {
     }
 
     fn get_chapters(&self, path: String) -> anyhow::Result<Vec<tanoshi_lib::prelude::ChapterInfo>> {
-        get_chapters(URL, &path, ID)
+        get_chapters_old(URL, &path, ID)
     }
 
     fn get_pages(&self, path: String) -> anyhow::Result<Vec<String>> {
-        get_pages(URL, &path)
+        let body = ureq::get(&format!("{}{}", URL, path))
+            .call()?
+            .into_string()?;
+
+        let doc = Html::parse_document(&body);
+
+        let selector = Selector::parse(r#".read-content img"#)
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
+        Ok(doc
+            .select(&selector)
+            .flat_map(|el| el.value().attr("data-src").or(el.value().attr("src")))
+            .map(|p| p.to_string())
+            .collect())
     }
 }
 

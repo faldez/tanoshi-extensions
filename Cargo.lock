@@ -508,6 +508,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "mangatx"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
+
+[[package]]
+name = "manhuafast"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
+
+[[package]]
 name = "manhwa18cc"
 version = "0.1.4"
 dependencies = [
