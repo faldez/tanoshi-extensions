@@ -126,11 +126,7 @@ mod test {
         let res = manganato
             .get_manga_detail("/manga-hs951953".to_string())
             .unwrap();
-        assert_eq!(
-            res.title,
-            "READ CHAPTER LIST
-        Shokugeki No Soma"
-        );
+        assert_eq!(res.title, "Shokugeki no Soma");
         assert_eq!(
             res.cover_url,
             "https://avt.mkklcdnv6temp.com/22/k/1-1583464578.jpg"
