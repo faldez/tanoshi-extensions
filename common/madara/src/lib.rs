@@ -30,7 +30,7 @@ pub fn parse_manga_list(
         })
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-        let selector_url = Selector::parse("div.data, div.post-title, div.item-summary a")
+        let selector_url = Selector::parse("div.data a, div.post-title a, div.item-thumb a")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
         let selector_img =
@@ -87,6 +87,8 @@ pub fn get_latest_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Mang
             ("vars[meta_query][0][value]", "manga"),
         ])?
         .into_string()?;
+
+    println!("{}", body);
 
     let selector = Selector::parse("div.page-item-detail")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
