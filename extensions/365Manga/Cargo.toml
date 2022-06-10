@@ -1,6 +1,6 @@
 [package]
-name = "manhwa18cc"
-version = "0.1.6"
+name = "three_sixty_five_manga"
+version = "0.1.0"
 edition = "2021"
 
 [lib]
@@ -10,5 +10,3 @@ crate-type = ["cdylib"]
 tanoshi-lib = "0.27.0"
 madara = { path = "../../common/madara" }
 anyhow = "1"
-scraper = "0.13"
-ureq = { version = "2", features = ["json"] }
