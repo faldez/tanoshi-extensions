@@ -28,7 +28,7 @@ pub fn parse_manga_list(
         } else {
             "div.item-summary > a > h3, div.data > h3 > a, div.post-title > h3 > a"
         })
-            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
         let selector_url = Selector::parse("div.data a, div.post-title a, div.item-thumb a")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
@@ -280,8 +280,8 @@ fn parse_chapters(
                     &format!("{} 00:00", chapter_time.trim()),
                     "%B %d, %Y %H:%M",
                 )
-                    .unwrap_or_else(|_| Utc::now().naive_utc())
-                    .timestamp(),
+                .unwrap_or_else(|_| Utc::now().naive_utc())
+                .timestamp(),
             }
         })
         .collect();
