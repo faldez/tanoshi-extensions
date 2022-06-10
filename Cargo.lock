@@ -188,16 +188,6 @@ dependencies = [
 
 [[package]]
 name = "fancy-regex"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d95b4efe5be9104a4a18a9916e86654319895138be727b229820c39257c30dda"
-dependencies = [
- "bit-set",
- "regex",
-]
-
-[[package]]
-name = "fancy-regex"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0678ab2d46fa5195aaf59ad034c083d351377d4af57f3e073c074d0da3e3c766"
@@ -439,15 +429,15 @@ dependencies = [
 
 [[package]]
 name = "mangadex"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.8.0",
+ "fancy-regex 0.10.0",
  "lazy_static",
  "log",
  "phf 0.10.1",
- "scraper 0.12.0",
+ "scraper 0.13.0",
  "serde",
  "serde_json",
  "serde_qs",
