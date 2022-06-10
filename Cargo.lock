@@ -178,16 +178,6 @@ checksum = "3a68a4904193147e0a8dec3314640e6db742afd5f6e634f428a6af230d9b3591"
 
 [[package]]
 name = "fancy-regex"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d6b8560a05112eb52f04b00e5d3790c0dd75d9d980eb8a122fb23b92a623ccf"
-dependencies = [
- "bit-set",
- "regex",
-]
-
-[[package]]
-name = "fancy-regex"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0678ab2d46fa5195aaf59ad034c083d351377d4af57f3e073c074d0da3e3c766"
@@ -283,10 +273,10 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "lazy_static",
  "log",
- "scraper 0.13.0",
+ "scraper",
  "serde",
  "serde_json",
  "tanoshi-lib",
@@ -299,25 +289,11 @@ version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "617dbbb43af195e64f03eef3b9e412d8374764d88a554332624d83d782da7267"
 dependencies = [
- "html5ever 0.26.0",
- "markup5ever 0.11.0",
+ "html5ever",
+ "markup5ever",
  "tendril",
  "unicode-width",
  "xml5ever",
-]
-
-[[package]]
-name = "html5ever"
-version = "0.25.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aafcf38a1a36118242d29b92e1b08ef84e67e4a5ed06e0a80be20e6a32bfed6b"
-dependencies = [
- "log",
- "mac",
- "markup5ever 0.10.1",
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]
@@ -328,7 +304,7 @@ checksum = "bea68cab48b8459f17cf1c944c67ddc572d272d9f2b274140f223ecb1da4a3b7"
 dependencies = [
  "log",
  "mac",
- "markup5ever 0.11.0",
+ "markup5ever",
  "proc-macro2",
  "quote",
  "syn",
@@ -417,10 +393,10 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "lazy_static",
  "log",
- "scraper 0.13.0",
+ "scraper",
  "serde",
  "serde_json",
  "tanoshi-lib",
@@ -433,11 +409,11 @@ version = "0.1.6"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "lazy_static",
  "log",
  "phf 0.10.1",
- "scraper 0.13.0",
+ "scraper",
  "serde",
  "serde_json",
  "serde_qs",
@@ -461,11 +437,11 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "html2text",
  "lazy_static",
  "log",
- "scraper 0.13.0",
+ "scraper",
  "serde",
  "serde_json",
  "tanoshi-lib",
@@ -475,7 +451,7 @@ dependencies = [
 
 [[package]]
 name = "mangalife"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anyhow",
  "nepnep",
@@ -494,7 +470,7 @@ dependencies = [
 
 [[package]]
 name = "mangasee"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "anyhow",
  "nepnep",
@@ -508,20 +484,6 @@ dependencies = [
  "anyhow",
  "madara",
  "tanoshi-lib",
-]
-
-[[package]]
-name = "markup5ever"
-version = "0.10.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a24f40fb03852d1cdd84330cddcaf98e9ec08a7b7768e952fad3b4cf048ec8fd"
-dependencies = [
- "log",
- "phf 0.8.0",
- "phf_codegen 0.8.0",
- "string_cache",
- "string_cache_codegen",
- "tendril",
 ]
 
 [[package]]
@@ -566,10 +528,10 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.7.1",
+ "fancy-regex",
  "lazy_static",
  "log",
- "scraper 0.12.0",
+ "scraper",
  "serde",
  "serde_json",
  "tanoshi-lib",
@@ -588,11 +550,11 @@ version = "0.1.11"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.10.0",
+ "fancy-regex",
  "lazy_static",
  "log",
  "phf 0.10.1",
- "scraper 0.13.0",
+ "scraper",
  "serde",
  "serde-aux",
  "serde_json",
@@ -974,22 +936,6 @@ checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 
 [[package]]
 name = "scraper"
-version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "48e02aa790c80c2e494130dec6a522033b6a23603ffc06360e9fe6c611ea2c12"
-dependencies = [
- "cssparser",
- "ego-tree",
- "getopts",
- "html5ever 0.25.1",
- "matches",
- "selectors",
- "smallvec",
- "tendril",
-]
-
-[[package]]
-name = "scraper"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5684396b456f3eb69ceeb34d1b5cb1a2f6acf7ca4452131efa3ba0ee2c2d0a70"
@@ -997,7 +943,7 @@ dependencies = [
  "cssparser",
  "ego-tree",
  "getopts",
- "html5ever 0.26.0",
+ "html5ever",
  "matches",
  "selectors",
  "smallvec",
@@ -1433,5 +1379,5 @@ checksum = "4034e1d05af98b51ad7214527730626f019682d797ba38b51689212118d8e650"
 dependencies = [
  "log",
  "mac",
- "markup5ever 0.11.0",
+ "markup5ever",
 ]
