@@ -56,7 +56,7 @@ impl Extension for TritiniaScans {
     }
 
     fn get_chapters(&self, path: String) -> anyhow::Result<Vec<tanoshi_lib::prelude::ChapterInfo>> {
-        get_chapters(URL, &path, ID, Option::from(".chapter-title-date p"))
+        get_chapters(URL, &path, ID, None)
     }
 
     fn get_pages(&self, path: String) -> anyhow::Result<Vec<String>> {
