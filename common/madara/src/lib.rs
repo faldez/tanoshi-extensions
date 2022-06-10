@@ -88,7 +88,7 @@ pub fn get_latest_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Mang
             ("vars[meta_query][0][value]", "manga"),
         ])?
         .into_string()?;
-    
+
     let selector = Selector::parse("div.page-item-detail")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
