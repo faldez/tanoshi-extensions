@@ -6,8 +6,8 @@ use tanoshi_lib::prelude::{ChapterInfo, MangaInfo};
 fn get_data_src(el: &ElementRef) -> Option<String> {
     el.value()
         .attr("data-lazy-src")
-        .or(el.value().attr("data-src"))
-        .or(el.value().attr("src"))
+        .or_else(|| el.value().attr("data-src"))
+        .or_else(|| el.value().attr("src"))
         .map(|s| s.to_string())
 }
 
@@ -20,9 +20,9 @@ pub fn parse_manga_list(
 ) -> Result<Vec<MangaInfo>> {
     let mut manga = vec![];
 
-    let doc = Html::parse_document(&body);
+    let doc = Html::parse_document(body);
 
-    for el in doc.select(&selector) {
+    for el in doc.select(selector) {
         let selector_name = Selector::parse(if is_selector_url {
             "div.item-summary h3, div.data h3 a, div.post-title h3"
         } else {
@@ -230,7 +230,6 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
         cover_url: doc
             .select(&selector_img)
             .find_map(|el| get_data_src(&el))
-            .map(|s| s.to_string())
             .unwrap_or_default(),
     })
 }
@@ -245,17 +244,17 @@ fn parse_chapters(
     source_id: i64,
 ) -> Result<Vec<ChapterInfo>> {
     let chapters: Vec<ChapterInfo> = doc
-        .select(&selector)
+        .select(selector)
         .map(|el| {
             let chapter_name = el
-                .select(&selector_chapter_name)
+                .select(selector_chapter_name)
                 .flat_map(|el| el.text())
                 .collect::<Vec<&str>>()
                 .join("")
                 .trim()
                 .to_string();
             let chapter_time = el
-                .select(&selector_chapter_time)
+                .select(selector_chapter_time)
                 .flat_map(|el| el.text())
                 .collect::<Vec<&str>>()
                 .join("");
@@ -264,9 +263,8 @@ fn parse_chapters(
                 source_id,
                 title: chapter_name.clone(),
                 path: el
-                    .select(&selector_chapter_url)
-                    .map(|el| el.value().attr("href"))
-                    .flatten()
+                    .select(selector_chapter_url)
+                    .filter_map(|el| el.value().attr("href"))
                     .collect::<Vec<&str>>()
                     .join("")
                     .replace(url, ""),
@@ -373,6 +371,6 @@ pub fn get_pages(url: &str, path: &str) -> Result<Vec<String>> {
     Ok(doc
         .select(&selector)
         .flat_map(|el| get_data_src(&el))
-        .map(|p| p.to_string().trim().to_string())
+        .map(|p| p.trim().to_string())
         .collect())
 }
