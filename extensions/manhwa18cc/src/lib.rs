@@ -39,7 +39,7 @@ impl Extension for Manhwa18cc {
         let selector = Selector::parse(".manga-item")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-        parse_manga_list(URL, ID, &body, &selector)
+        parse_manga_list(URL, ID, &body, &selector, false)
     }
 
     fn get_latest_manga(&self, page: i64) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
@@ -50,7 +50,7 @@ impl Extension for Manhwa18cc {
         let selector = Selector::parse(".manga-item")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-        parse_manga_list(URL, ID, &body, &selector)
+        parse_manga_list(URL, ID, &body, &selector, false)
     }
 
     fn search_manga(

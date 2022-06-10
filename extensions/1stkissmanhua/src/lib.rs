@@ -5,25 +5,25 @@ use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 tanoshi_lib::export_plugin!(register);
 
 fn register(registrar: &mut dyn PluginRegistrar) {
-    registrar.register_function(Box::new(ManhuaFast::default()));
+    registrar.register_function(Box::new(FirstKissManhua::default()));
 }
 
-const ID: i64 = 14;
-const NAME: &str = "Leviatan Scans";
-const URL: &str = "https://leviatanscans.com";
+const ID: i64 = 16;
+const NAME: &str = "1st Kiss Manhua";
+const URL: &str = "https://1stkissmanhua.com";
 
 #[derive(Default)]
-pub struct ManhuaFast;
+pub struct FirstKissManhua;
 
-impl Extension for ManhuaFast {
+impl Extension for FirstKissManhua {
     fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
             name: NAME.to_string(),
             url: URL.to_string(),
             version: env!("CARGO_PKG_VERSION"),
-            icon: "https://i.imgur.com/UhrXXFv.png",
-            languages: Lang::Multi(vec!["en".to_string(), "es".to_string()]),
+            icon: "https://i.imgur.com/xQw2lDY.png",
+            languages: Lang::Single("en".to_string()),
             nsfw: false,
         }
     }
@@ -68,12 +68,12 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKissManhua = FirstKissManhua::default();
 
-        let res1 = ManhuaFast.get_latest_manga(1).unwrap();
+        let res1 = FirstKissManhua.get_latest_manga(1).unwrap();
         assert!(!res1.is_empty());
 
-        let res2 = ManhuaFast.get_latest_manga(2).unwrap();
+        let res2 = FirstKissManhua.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
         assert_ne!(
@@ -85,17 +85,17 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKissManhua = FirstKissManhua::default();
 
-        let res = ManhuaFast.get_popular_manga(1).unwrap();
+        let res = FirstKissManhua.get_popular_manga(1).unwrap();
         assert!(!res.is_empty());
     }
 
     #[test]
     fn test_search_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKissManhua = FirstKissManhua::default();
 
-        let res = ManhuaFast
+        let res = FirstKissManhua
             .search_manga(1, Some("the+only".to_string()), None)
             .unwrap();
 
@@ -104,32 +104,33 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKissManhua = FirstKissManhua::default();
 
-        let res = ManhuaFast
-            .get_manga_detail("/hm/manga/bug-player/".to_string())
+        let res = FirstKissManhua
+            .get_manga_detail("/manga/matchless-emperor/".to_string())
             .unwrap();
 
-        assert_eq!(res.title, "Bug Player");
+        assert_eq!(res.title, "Matchless Emperor");
     }
 
     #[test]
     fn test_get_chapters() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKissManhua = FirstKissManhua::default();
 
-        let res = ManhuaFast
-            .get_chapters("/hm/manga/bug-player/".to_string())
+        let res = FirstKissManhua
+            .get_chapters("/manga/matchless-emperor/".to_string())
             .unwrap();
+
         assert!(!res.is_empty());
         println!("{res:?}");
     }
 
     #[test]
     fn test_get_pages() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKissManhua = FirstKissManhua::default();
 
-        let res = ManhuaFast
-            .get_pages("/hm/manga/bug-player/chapter-94/".to_string())
+        let res = FirstKissManhua
+            .get_pages("/manga/matchless-emperor/chapter-9/".to_string())
             .unwrap();
 
         assert!(!res.is_empty());

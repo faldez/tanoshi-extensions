@@ -197,6 +197,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "firstkissmanhua"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
+
+[[package]]
 name = "flate2"
 version = "1.0.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -352,6 +369,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "isekaiscan"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
 ]
 
 [[package]]
@@ -611,6 +645,23 @@ checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
 dependencies = [
  "adler",
  "autocfg",
+]
+
+[[package]]
+name = "mmscans"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
 ]
 
 [[package]]
@@ -1284,6 +1335,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "three_sixty_five_manga"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
+
+[[package]]
 name = "time"
 version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1307,6 +1375,23 @@ name = "tinyvec_macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
+
+[[package]]
+name = "tritiniascans"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
 
 [[package]]
 name = "unicode-bidi"

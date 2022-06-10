@@ -5,25 +5,25 @@ use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 tanoshi_lib::export_plugin!(register);
 
 fn register(registrar: &mut dyn PluginRegistrar) {
-    registrar.register_function(Box::new(ManhuaFast::default()));
+    registrar.register_function(Box::new(FirstKiss::default()));
 }
 
-const ID: i64 = 14;
-const NAME: &str = "Leviatan Scans";
-const URL: &str = "https://leviatanscans.com";
+const ID: i64 = 19;
+const NAME: &str = "MMScans";
+const URL: &str = "https://mm-scans.org";
 
 #[derive(Default)]
-pub struct ManhuaFast;
+pub struct FirstKiss;
 
-impl Extension for ManhuaFast {
+impl Extension for FirstKiss {
     fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
             name: NAME.to_string(),
             url: URL.to_string(),
             version: env!("CARGO_PKG_VERSION"),
-            icon: "https://i.imgur.com/UhrXXFv.png",
-            languages: Lang::Multi(vec!["en".to_string(), "es".to_string()]),
+            icon: "https://i.imgur.com/5R7QX58.png",
+            languages: Lang::Single("en".to_string()),
             nsfw: false,
         }
     }
@@ -43,7 +43,7 @@ impl Extension for ManhuaFast {
         _: Option<Vec<tanoshi_lib::prelude::Input>>,
     ) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
         if let Some(query) = query {
-            search_manga(URL, ID, page, &query, false)
+            search_manga(URL, ID, page, &query, true)
         } else {
             bail!("query can not be empty")
         }
@@ -54,7 +54,7 @@ impl Extension for ManhuaFast {
     }
 
     fn get_chapters(&self, path: String) -> anyhow::Result<Vec<tanoshi_lib::prelude::ChapterInfo>> {
-        get_chapters(URL, &path, ID, None)
+        get_chapters(URL, &path, ID, Option::from(".chapter-title-date p"))
     }
 
     fn get_pages(&self, path: String) -> anyhow::Result<Vec<String>> {
@@ -68,12 +68,12 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKiss = FirstKiss::default();
 
-        let res1 = ManhuaFast.get_latest_manga(1).unwrap();
+        let res1 = FirstKiss.get_latest_manga(1).unwrap();
         assert!(!res1.is_empty());
 
-        let res2 = ManhuaFast.get_latest_manga(2).unwrap();
+        let res2 = FirstKiss.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
         assert_ne!(
@@ -85,18 +85,19 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKiss = FirstKiss::default();
 
-        let res = ManhuaFast.get_popular_manga(1).unwrap();
+        let res = FirstKiss.get_popular_manga(1).unwrap();
+
         assert!(!res.is_empty());
     }
 
     #[test]
     fn test_search_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKiss = FirstKiss::default();
 
-        let res = ManhuaFast
-            .search_manga(1, Some("the+only".to_string()), None)
+        let res = FirstKiss
+            .search_manga(1, Some("study".to_string()), None)
             .unwrap();
 
         assert!(!res.is_empty());
@@ -104,33 +105,36 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKiss = FirstKiss::default();
 
-        let res = ManhuaFast
-            .get_manga_detail("/hm/manga/bug-player/".to_string())
+        let res = FirstKiss
+            .get_manga_detail("/manga/ygret/".to_string())
             .unwrap();
 
-        assert_eq!(res.title, "Bug Player");
+        assert_eq!(res.title, "Ygret");
     }
 
     #[test]
     fn test_get_chapters() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKiss = FirstKiss::default();
 
-        let res = ManhuaFast
-            .get_chapters("/hm/manga/bug-player/".to_string())
+        let res = FirstKiss
+            .get_chapters("/manga/ygret/".to_string())
             .unwrap();
+
         assert!(!res.is_empty());
         println!("{res:?}");
     }
 
     #[test]
     fn test_get_pages() {
-        let ManhuaFast = ManhuaFast::default();
+        let FirstKiss = FirstKiss::default();
 
-        let res = ManhuaFast
-            .get_pages("/hm/manga/bug-player/chapter-94/".to_string())
+        let res = FirstKiss
+            .get_pages("/manga/ygret/1/".to_string())
             .unwrap();
+
+        println!("{res:?}");
 
         assert!(!res.is_empty());
     }

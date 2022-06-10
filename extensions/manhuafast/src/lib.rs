@@ -45,7 +45,7 @@ impl Extension for ManhuaFast {
         _: Option<Vec<tanoshi_lib::prelude::Input>>,
     ) -> anyhow::Result<Vec<tanoshi_lib::prelude::MangaInfo>> {
         if let Some(query) = query {
-            search_manga(URL, ID, page, &query)
+            search_manga(URL, ID, page, &query, false)
         } else {
             bail!("query can not be empty")
         }
@@ -100,6 +100,7 @@ mod test {
         let res = ManhuaFast
             .search_manga(1, Some("the+challenger".to_string()), None)
             .unwrap();
+
         assert!(!res.is_empty());
     }
 
