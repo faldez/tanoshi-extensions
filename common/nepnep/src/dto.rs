@@ -165,7 +165,7 @@ pub struct CurChapter {
 }
 
 mod date_format {
-    use chrono::NaiveDateTime;
+    use chrono::{DateTime, NaiveDateTime};
     use serde::{self, Deserialize, Deserializer};
 
     const FORMAT: &str = "%Y-%m-%d %H:%M:%S %z";
@@ -174,8 +174,12 @@ mod date_format {
     where
         D: Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer).unwrap();
-        NaiveDateTime::parse_from_str(&format!("{s} +0600"), FORMAT)
-            .map_err(serde::de::Error::custom)
+        let s = String::deserialize(deserializer).map_err(serde::de::Error::custom)?;
+
+        let dt = DateTime::parse_from_str(&format!("{s} +0600"), FORMAT)
+            .map_err(serde::de::Error::custom)?
+            .naive_utc();
+
+        Ok(dt)
     }
 }
