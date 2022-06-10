@@ -324,7 +324,7 @@ pub fn get_chapters(
     source_id: i64,
     chapter_name_selector: Option<&str>,
 ) -> Result<Vec<ChapterInfo>> {
-    let body = ureq::post(&format!("{}{}ajax/chapters/", url, path))
+    let body = ureq::post(&format!("{}{}ajax/chapters", url, path))
         .set("Referer", url)
         .set("Content-Length", "0")
         .set("X-Requested-With", "XMLHttpRequest")
