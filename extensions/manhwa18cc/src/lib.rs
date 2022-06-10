@@ -84,7 +84,11 @@ impl Extension for Manhwa18cc {
 
         Ok(doc
             .select(&selector)
-            .flat_map(|el| el.value().attr("data-src").or_else(|| el.value().attr("src")))
+            .flat_map(|el| {
+                el.value()
+                    .attr("data-src")
+                    .or_else(|| el.value().attr("src"))
+            })
             .map(|p| p.to_string())
             .collect())
     }
