@@ -11,21 +11,17 @@ fn get_data_src(el: &ElementRef) -> Option<String> {
         .map(|s| s.to_string())
 }
 
-pub fn parse_manga_list(
-    url: &str,
-    source_id: i64,
-    body: &str
-) -> Result<Vec<MangaInfo>> {
+pub fn parse_manga_list(url: &str, source_id: i64, body: &str) -> Result<Vec<MangaInfo>> {
     let mut manga = vec![];
 
     let doc = Html::parse_document(body);
 
-    let selector =
-        Selector::parse(".utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector = Selector::parse(".utao .uta .imgu, .listupd .bs .bsx, .listo .bs .bsx")
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     for el in doc.select(&selector) {
-        let selector_name = Selector::parse("a")
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+        let selector_name =
+            Selector::parse("a").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
         let selector_img =
             Selector::parse("img").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
@@ -78,12 +74,7 @@ pub fn get_popular_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Man
     parse_manga_list(url, source_id, &body)
 }
 
-pub fn search_manga(
-    url: &str,
-    source_id: i64,
-    page: i64,
-    query: &str,
-) -> Result<Vec<MangaInfo>> {
+pub fn search_manga(url: &str, source_id: i64, page: i64, query: &str) -> Result<Vec<MangaInfo>> {
     let body = ureq::get(&format!("{}/page/{}/?s={}", url, page, query))
         .set("Referer", url)
         .call()?
@@ -100,9 +91,8 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
 
     let doc = Html::parse_document(&body);
 
-    let selector_name =
-        Selector::parse(r#"h1.entry-title"#)
-            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_name = Selector::parse(r#"h1.entry-title"#)
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_img = Selector::parse(".infomanga > div[itemprop=image] img, .thumb img")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
@@ -164,8 +154,8 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
     let selector_chapter_time = Selector::parse(r#".chapterdate"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_chapter_url = Selector::parse("a")
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_chapter_url =
+        Selector::parse("a").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let chapters: Vec<ChapterInfo> = doc
         .select(&selector)
@@ -201,8 +191,8 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
                     &format!("{} 00:00", chapter_time.trim()),
                     "%B %d, %Y %H:%M",
                 )
-                    .unwrap_or_else(|_| Utc::now().naive_utc())
-                    .timestamp(),
+                .unwrap_or_else(|_| Utc::now().naive_utc())
+                .timestamp(),
             }
         })
         .collect();
@@ -218,9 +208,8 @@ pub fn get_pages(url: &str, path: &str) -> Result<Vec<String>> {
 
     let doc = Html::parse_document(&body);
 
-    let selector =
-        Selector::parse(r#"div#readerarea img"#)
-            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector = Selector::parse(r#"div#readerarea img"#)
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     Ok(doc
         .select(&selector)

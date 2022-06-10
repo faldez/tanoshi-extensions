@@ -1,8 +1,8 @@
 use anyhow::bail;
+use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 use wpmangareader::{
     get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga,
 };
-use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
 tanoshi_lib::export_plugin!(register);
 
