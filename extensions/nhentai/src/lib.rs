@@ -487,6 +487,8 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let nhentai = NHentai::default();
         let res = nhentai.get_popular_manga(1).unwrap();
         assert!(!res.is_empty());
@@ -494,6 +496,8 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let preferences: Vec<Input> = vec![
             Input::Text {
                 name: "Blacklist Tag".to_string(),
@@ -520,6 +524,8 @@ mod test {
 
     #[test]
     fn test_search_manga() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let nhentai = NHentai::default();
         let res = nhentai
             .search_manga(1, Some("azur lane".to_string()), None)
@@ -529,6 +535,8 @@ mod test {
 
     #[test]
     fn test_search_manga_filter() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let nhentai = NHentai::default();
         let mut filters = nhentai.filter_list();
         for filter in filters.iter_mut() {
@@ -552,13 +560,18 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let nhentai = NHentai::default();
-        let res = nhentai.get_manga_detail("/g/385965".to_string());
-        assert!(res.is_ok());
+        let res = nhentai.get_manga_detail("/g/385965".to_string()).unwrap();
+
+        assert_eq!(res.title, "Lady, Maid ni datsu");
     }
 
     #[test]
     fn test_get_chapters() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let nhentai = NHentai::default();
         let res = nhentai.get_chapters("/g/385965".to_string()).unwrap();
         assert!(!res.is_empty());
@@ -566,9 +579,13 @@ mod test {
 
     #[test]
     fn test_get_pages() {
+        std::thread::sleep(std::time::Duration::from_secs(2));
+
         let nhentai = NHentai::default();
         let res = nhentai.get_pages("/g/385965".to_string()).unwrap();
         assert!(!res.is_empty());
-        assert_eq!(res[0], "https://i.nhentai.net/galleries/2099700/1.jpg");
+        let re = Regex::new(r"https://i\d*.nhentai.net/galleries/2099700/1.jpg").unwrap();
+
+        assert!(re.is_match(&res[0]).unwrap());
     }
 }
