@@ -1,6 +1,6 @@
 [package]
 name = "guya"
-version = "0.1.4"
+version = "0.1.5"
 edition = "2021"
 
 
@@ -10,12 +10,4 @@ crate-type = ["cdylib"]
 [dependencies]
 tanoshi-lib = "0.27.0"
 guyalib = { path = "../../common/guyalib" }
-chrono = "0.4"
-serde = { version = "1", features = ["derive"] }
-fancy-regex = "0.7.1"
-scraper = "0.12.0"
 anyhow = "1"
-ureq = { version = "2", features = ["json"] }
-serde_json = "1"
-lazy_static = "1"
-log = "0.4"

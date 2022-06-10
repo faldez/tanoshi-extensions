@@ -280,19 +280,11 @@ dependencies = [
 
 [[package]]
 name = "guya"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "anyhow",
- "chrono",
- "fancy-regex 0.7.1",
  "guyalib",
- "lazy_static",
- "log",
- "scraper 0.12.0",
- "serde",
- "serde_json",
  "tanoshi-lib",
- "ureq",
 ]
 
 [[package]]
@@ -301,10 +293,10 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "chrono",
- "fancy-regex 0.7.1",
+ "fancy-regex 0.10.0",
  "lazy_static",
  "log",
- "scraper 0.12.0",
+ "scraper 0.13.0",
  "serde",
  "serde_json",
  "tanoshi-lib",
