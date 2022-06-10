@@ -24,11 +24,11 @@ pub fn parse_manga_list(
 
     for el in doc.select(selector) {
         let selector_name = Selector::parse(if is_selector_url {
-            "div.item-summary h3, div.data h3 a, div.post-title h3"
+            "div.item-summary > a > h3, div.data > h3 > a, div.post-title > h3"
         } else {
-            "div.item-summary h3, div.data h3 a, div.post-title a"
+            "div.item-summary > a > h3, div.data > h3 > a, div.post-title > h3 > a"
         })
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
         let selector_url = Selector::parse("div.data a, div.post-title a, div.item-thumb a")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
@@ -264,9 +264,12 @@ fn parse_chapters(
                 title: chapter_name.clone(),
                 path: el
                     .select(selector_chapter_url)
-                    .filter_map(|el| el.value().attr("href"))
-                    .collect::<Vec<&str>>()
-                    .join("")
+                    .next()
+                    .unwrap()
+                    .value()
+                    .attr("href")
+                    .unwrap()
+                    .to_string()
                     .replace(url, ""),
                 number: chapter_name
                     .replace("Chapter ", "")
@@ -277,8 +280,8 @@ fn parse_chapters(
                     &format!("{} 00:00", chapter_time.trim()),
                     "%B %d, %Y %H:%M",
                 )
-                .unwrap_or_else(|_| Utc::now().naive_utc())
-                .timestamp(),
+                    .unwrap_or_else(|_| Utc::now().naive_utc())
+                    .timestamp(),
             }
         })
         .collect();
