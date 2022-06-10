@@ -382,6 +382,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
+name = "leviatanscan"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
+
+[[package]]
 name = "libc"
 version = "0.2.112"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -932,6 +949,23 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "16abd0c1b639e9eb4d7c50c0b8100b0d0f849be2349829c740fe8e6eb4816429"
 dependencies = [
  "rand_core 0.5.1",
+]
+
+[[package]]
+name = "reaperscan"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "fancy-regex 0.7.1",
+ "lazy_static",
+ "log",
+ "madara",
+ "scraper 0.12.0",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
 ]
 
 [[package]]

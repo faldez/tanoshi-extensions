@@ -4,7 +4,7 @@ use scraper::{ElementRef, Html, Selector};
 use tanoshi_lib::prelude::{ChapterInfo, MangaInfo};
 
 fn get_data_src(el: &ElementRef) -> Option<String> {
-    el.value().attr("data-src").map(|s| s.to_string())
+    el.value().attr("data-src").map(|s| s.to_string()).or(el.value().attr("src").map(|s| s.to_string()))
 }
 
 pub fn parse_manga_list(
@@ -56,22 +56,23 @@ pub fn get_latest_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Mang
     let body = ureq::post(&format!("{}/wp-admin/admin-ajax.php", url))
         .send_form(&[
             ("action", "madara_load_more"),
-            ("template", "madara-core/content/content-search"),
+            ("page", &(page - 1).to_string()),
+            ("template", "madara-core/content/content-archive"),
+            ("vars[orderby]", "meta_value_num"),
             ("vars[paged]", "1"),
-            ("vars[template]", "archive"),
+            ("vars[posts_per_page]", "20"),
             ("vars[post_type]", "wp-manga"),
             ("vars[post_status]", "publish"),
+            ("vars[meta_key]", "_latest_update"),
+            ("vars[order]", "desc"),
             ("vars[sidebar]", "right"),
             ("vars[manga_archives_item_layout]", "big_thumbnail"),
-            ("vars[posts_per_page]", "20"),
-            ("vars[meta_key]", "_latest_update"),
             ("vars[meta_query][0][key]", "_wp_manga_chapter_type"),
             ("vars[meta_query][0][value]", "manga"),
-            ("page", &(page - 1).to_string()),
         ])?
         .into_string()?;
 
-    let selector = Selector::parse(".c-tabs-item__content")
+    let selector = Selector::parse("div.page-item-detail")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector)
@@ -81,22 +82,23 @@ pub fn get_popular_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Man
     let body = ureq::post(&format!("{}/wp-admin/admin-ajax.php", url))
         .send_form(&[
             ("action", "madara_load_more"),
-            ("template", "madara-core/content/content-search"),
+            ("page", &(page - 1).to_string()),
+            ("template", "madara-core/content/content-archive"),
+            ("vars[orderby]", "meta_value_num"),
             ("vars[paged]", "1"),
-            ("vars[template]", "archive"),
+            ("vars[posts_per_page]", "20"),
             ("vars[post_type]", "wp-manga"),
             ("vars[post_status]", "publish"),
+            ("vars[meta_key]", "_wp_manga_views"),
+            ("vars[order]", "desc"),
             ("vars[sidebar]", "full"),
             ("vars[manga_archives_item_layout]", "big_thumbnail"),
-            ("vars[posts_per_page]", "20"),
-            ("vars[meta_key]", "_wp_manga_views"),
             ("vars[meta_query][0][key]", "_wp_manga_chapter_type"),
             ("vars[meta_query][0][value]", "manga"),
-            ("page", &(page - 1).to_string()),
         ])?
         .into_string()?;
 
-    let selector = Selector::parse(".c-tabs-item__content")
+    let selector = Selector::parse("div.page-item-detail")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector)
@@ -154,13 +156,14 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_img =
-        Selector::parse("a img").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+        Selector::parse(".summary_image img").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_artist = Selector::parse(".artist-content a")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_genre = Selector::parse(r#".genres-content a"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
     let selector_desc = Selector::parse("div.description-summary div.summary__content, div.summary_content div.post-content_item > h5 + div, div.summary_content div.manga-excerpt")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
@@ -196,7 +199,7 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
         path: path.to_string().replace(url, ""),
         cover_url: doc
             .select(&selector_img)
-            .find_map(|el| el.value().attr("data-src"))
+            .find_map(|el| el.value().attr("data-src").or(el.value().attr("src")))
             .map(|s| s.to_string())
             .unwrap_or_default(),
     })
@@ -208,6 +211,7 @@ fn parse_chapters(
     selector: &Selector,
     selector_chapter_name: &Selector,
     selector_chapter_time: &Selector,
+    selector_chapter_url: &Selector,
     source_id: i64,
 ) -> Result<Vec<ChapterInfo>> {
     let chapters: Vec<ChapterInfo> = doc
@@ -230,7 +234,7 @@ fn parse_chapters(
                 source_id,
                 title: chapter_name.clone(),
                 path: el
-                    .select(&selector_chapter_name)
+                    .select(&selector_chapter_url)
                     .map(|el| el.value().attr("href"))
                     .flatten()
                     .collect::<Vec<&str>>()
@@ -270,17 +274,21 @@ pub fn get_chapters_old(url: &str, path: &str, source_id: i64) -> Result<Vec<Cha
     let selector_chapter_time = Selector::parse(r#".chapter-time"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
+    let selector_chapter_url =
+        Selector::parse(".chapter-name").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
     parse_chapters(
         url,
         &doc,
         &selector,
         &selector_chapter_name,
         &selector_chapter_time,
+        &selector_chapter_url,
         source_id,
     )
 }
 
-pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<ChapterInfo>> {
+pub fn get_chapters(url: &str, path: &str, source_id: i64, chapter_name_selector: Option<&str>) -> Result<Vec<ChapterInfo>> {
     let body = ureq::post(&format!("{}{}ajax/chapters/", url, path))
         .call()?
         .into_string()?;
@@ -291,9 +299,12 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_chapter_name =
-        Selector::parse(r#"a"#).map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+        Selector::parse(chapter_name_selector.unwrap_or("a")).map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_chapter_time = Selector::parse(r#".chapter-release-date"#)
+    let selector_chapter_url =
+        Selector::parse("a").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
+    let selector_chapter_time = Selector::parse(".chapter-release-date")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_chapters(
@@ -302,6 +313,7 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
         &selector,
         &selector_chapter_name,
         &selector_chapter_time,
+        &selector_chapter_url,
         source_id,
     )
 }

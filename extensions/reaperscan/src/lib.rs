@@ -1,7 +1,5 @@
 use anyhow::bail;
-use madara::{
-    get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga,
-};
+use madara::{get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga};
 use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
 tanoshi_lib::export_plugin!(register);
@@ -10,9 +8,9 @@ fn register(registrar: &mut dyn PluginRegistrar) {
     registrar.register_function(Box::new(ManhuaFast::default()));
 }
 
-const ID: i64 = 12;
-const NAME: &str = "ManhuaFast";
-const URL: &str = "https://manhuafast.com";
+const ID: i64 = 15;
+const NAME: &str = "Reaper Scans";
+const URL: &str = "https://reaperscans.com/";
 
 #[derive(Default)]
 pub struct ManhuaFast;
@@ -24,8 +22,8 @@ impl Extension for ManhuaFast {
             name: NAME.to_string(),
             url: URL.to_string(),
             version: env!("CARGO_PKG_VERSION"),
-            icon: "https://manhuafast.com/wp-content/uploads/2021/01/cropped-Dark-Star-Emperor-Manga-193x278-1-192x192.jpg",
-            languages: Lang::Single("en".to_string()),
+            icon: "https://i.imgur.com/WX3l13S.png",
+            languages: Lang::Multi(vec!["en".to_string(), "pt-BR".to_string(), "fr".to_string(), "id".to_string(), "tr".to_string()]),
             nsfw: false,
         }
     }
@@ -56,7 +54,7 @@ impl Extension for ManhuaFast {
     }
 
     fn get_chapters(&self, path: String) -> anyhow::Result<Vec<tanoshi_lib::prelude::ChapterInfo>> {
-        get_chapters(URL, &path, ID, None)
+        get_chapters(URL, &path, ID, Option::from("p.chapter-manhwa-title"))
     }
 
     fn get_pages(&self, path: String) -> anyhow::Result<Vec<String>> {
@@ -98,8 +96,9 @@ mod test {
         let ManhuaFast = ManhuaFast::default();
 
         let res = ManhuaFast
-            .search_manga(1, Some("the+challenger".to_string()), None)
+            .search_manga(1, Some("the+only".to_string()), None)
             .unwrap();
+
         assert!(!res.is_empty());
     }
 
@@ -108,9 +107,10 @@ mod test {
         let ManhuaFast = ManhuaFast::default();
 
         let res = ManhuaFast
-            .get_manga_detail("/manga/my-apprentices-are-all-female/".to_string())
+            .get_manga_detail("/series/kill-the-dragon/".to_string())
             .unwrap();
-        assert_eq!(res.title, "My Apprentices are all Female Devils");
+
+        assert_eq!(res.title, "Kill the Dragon");
     }
 
     #[test]
@@ -118,8 +118,9 @@ mod test {
         let ManhuaFast = ManhuaFast::default();
 
         let res = ManhuaFast
-            .get_chapters("/manga/my-apprentices-are-all-female/".to_string())
+            .get_chapters("/series/kill-the-dragon/".to_string())
             .unwrap();
+
         assert!(!res.is_empty());
         println!("{res:?}");
     }
@@ -129,7 +130,7 @@ mod test {
         let ManhuaFast = ManhuaFast::default();
 
         let res = ManhuaFast
-            .get_pages("/manga/my-apprentices-are-all-female/chapter-1/".to_string())
+            .get_pages("/series/kill-the-dragon/chapter-4/".to_string())
             .unwrap();
 
         assert!(!res.is_empty());

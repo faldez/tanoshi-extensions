@@ -26,7 +26,7 @@ impl Extension for MangaTX {
             version: env!("CARGO_PKG_VERSION"),
             icon: "https://i.imgur.com/5f6GHXM.png",
             languages: Lang::Single("en".to_string()),
-            nsfw: true,
+            nsfw: false,
         }
     }
 
@@ -56,7 +56,7 @@ impl Extension for MangaTX {
     }
 
     fn get_chapters(&self, path: String) -> anyhow::Result<Vec<tanoshi_lib::prelude::ChapterInfo>> {
-        get_chapters(URL, &path, ID)
+        get_chapters(URL, &path, ID, None)
     }
 
     fn get_pages(&self, path: String) -> anyhow::Result<Vec<String>> {
