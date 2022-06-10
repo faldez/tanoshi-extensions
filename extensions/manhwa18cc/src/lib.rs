@@ -1,7 +1,5 @@
 use anyhow::{anyhow, bail};
-use madara::{
-    get_chapters_old, get_manga_detail, parse_manga_list, search_manga_old,
-};
+use madara::{get_chapters_old, get_manga_detail, parse_manga_list, search_manga_old};
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
@@ -106,7 +104,11 @@ mod test {
         let res2 = manhwa18cc.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
-        assert_ne!(res1[0].path, res2[0].path, "{} should be different than {}", res1[0].path, res2[0].path);
+        assert_ne!(
+            res1[0].path, res2[0].path,
+            "{} should be different than {}",
+            res1[0].path, res2[0].path
+        );
     }
 
     #[test]

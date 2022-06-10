@@ -1,5 +1,7 @@
 use anyhow::bail;
-use madara::{get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga};
+use madara::{
+    get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga,
+};
 use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
 tanoshi_lib::export_plugin!(register);
@@ -118,9 +120,7 @@ mod test {
     fn test_get_chapters() {
         let FirstKiss = FirstKiss::default();
 
-        let res = FirstKiss
-            .get_chapters("/manga/ygret/".to_string())
-            .unwrap();
+        let res = FirstKiss.get_chapters("/manga/ygret/".to_string()).unwrap();
 
         assert!(!res.is_empty());
         println!("{res:?}");
@@ -130,9 +130,7 @@ mod test {
     fn test_get_pages() {
         let FirstKiss = FirstKiss::default();
 
-        let res = FirstKiss
-            .get_pages("/manga/ygret/1/".to_string())
-            .unwrap();
+        let res = FirstKiss.get_pages("/manga/ygret/1/".to_string()).unwrap();
 
         println!("{res:?}");
 

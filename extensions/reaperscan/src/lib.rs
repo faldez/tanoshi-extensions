@@ -1,5 +1,7 @@
 use anyhow::bail;
-use madara::{get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga};
+use madara::{
+    get_chapters, get_latest_manga, get_manga_detail, get_pages, get_popular_manga, search_manga,
+};
 use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 
 tanoshi_lib::export_plugin!(register);
@@ -23,7 +25,13 @@ impl Extension for ManhuaFast {
             url: URL.to_string(),
             version: env!("CARGO_PKG_VERSION"),
             icon: "https://i.imgur.com/WX3l13S.png",
-            languages: Lang::Multi(vec!["en".to_string(), "pt-BR".to_string(), "fr".to_string(), "id".to_string(), "tr".to_string()]),
+            languages: Lang::Multi(vec![
+                "en".to_string(),
+                "pt-BR".to_string(),
+                "fr".to_string(),
+                "id".to_string(),
+                "tr".to_string(),
+            ]),
             nsfw: false,
         }
     }

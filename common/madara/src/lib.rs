@@ -4,7 +4,11 @@ use scraper::{ElementRef, Html, Selector};
 use tanoshi_lib::prelude::{ChapterInfo, MangaInfo};
 
 fn get_data_src(el: &ElementRef) -> Option<String> {
-    el.value().attr("data-lazy-src").or(el.value().attr("data-src")).or(el.value().attr("src")).map(|s| s.to_string())
+    el.value()
+        .attr("data-lazy-src")
+        .or(el.value().attr("data-src"))
+        .or(el.value().attr("src"))
+        .map(|s| s.to_string())
 }
 
 pub fn parse_manga_list(
@@ -24,13 +28,13 @@ pub fn parse_manga_list(
         } else {
             "div.item-summary h3, div.data h3 a, div.post-title a"
         })
-            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
         let selector_url = Selector::parse("div.data, div.post-title, div.item-summary a")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-        let selector_img = Selector::parse("img")
-            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+        let selector_img =
+            Selector::parse("img").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
         manga.push(MangaInfo {
             source_id,
@@ -47,16 +51,9 @@ pub fn parse_manga_list(
             status: None,
             description: None,
             path: if is_selector_url {
-                el
-                    .value()
-                    .attr("href")
-                    .unwrap()
-                    .replace(url, "")
+                el.value().attr("href").unwrap().replace(url, "")
             } else {
-                el
-                    .select(
-                        &selector_url
-                    )
+                el.select(&selector_url)
                     .map(|el| el.value().attr("href"))
                     .flatten()
                     .collect::<Vec<&str>>()
@@ -134,13 +131,19 @@ pub fn search_manga_old(
         .call()?
         .into_string()?;
 
-    let selector = Selector::parse(".manga-item")
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector =
+        Selector::parse(".manga-item").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector, false)
 }
 
-pub fn search_manga(url: &str, source_id: i64, page: i64, query: &str, is_selector_url: bool,) -> Result<Vec<MangaInfo>> {
+pub fn search_manga(
+    url: &str,
+    source_id: i64,
+    page: i64,
+    query: &str,
+    is_selector_url: bool,
+) -> Result<Vec<MangaInfo>> {
     let body = ureq::post(&format!("{}/wp-admin/admin-ajax.php", url))
         .set("Referer", url)
         .send_form(&[
@@ -161,13 +164,11 @@ pub fn search_manga(url: &str, source_id: i64, page: i64, query: &str, is_select
         .into_string()?;
 
     let selector = if is_selector_url {
-        Selector::parse("a")
-            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?
+        Selector::parse("a").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?
     } else {
         Selector::parse("div.c-tabs-item__content")
             .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?
     };
-
 
     parse_manga_list(url, source_id, &body, &selector, is_selector_url)
 }
@@ -179,11 +180,12 @@ pub fn get_manga_detail(url: &str, path: &str, source_id: i64) -> Result<MangaIn
 
     let doc = Html::parse_document(&body);
 
-    let selector_name = Selector::parse(r#"div.post-title h3, div.post-title h1, div.series-title h1"#)
-        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_name =
+        Selector::parse(r#"div.post-title h3, div.post-title h1, div.series-title h1"#)
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_img =
-        Selector::parse(".summary_image img, .series-img img").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_img = Selector::parse(".summary_image img, .series-img img")
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_artist = Selector::parse(".artist-content a")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
@@ -276,8 +278,8 @@ fn parse_chapters(
                     &format!("{} 00:00", chapter_time.trim()),
                     "%B %d, %Y %H:%M",
                 )
-                    .unwrap_or_else(|_| Utc::now().naive_utc())
-                    .timestamp(),
+                .unwrap_or_else(|_| Utc::now().naive_utc())
+                .timestamp(),
             }
         })
         .collect();
@@ -303,8 +305,8 @@ pub fn get_chapters_old(url: &str, path: &str, source_id: i64) -> Result<Vec<Cha
     let selector_chapter_time = Selector::parse(r#".chapter-time"#)
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_chapter_url =
-        Selector::parse(".chapter-name").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_chapter_url = Selector::parse(".chapter-name")
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_chapters(
         url,
@@ -317,7 +319,12 @@ pub fn get_chapters_old(url: &str, path: &str, source_id: i64) -> Result<Vec<Cha
     )
 }
 
-pub fn get_chapters(url: &str, path: &str, source_id: i64, chapter_name_selector: Option<&str>) -> Result<Vec<ChapterInfo>> {
+pub fn get_chapters(
+    url: &str,
+    path: &str,
+    source_id: i64,
+    chapter_name_selector: Option<&str>,
+) -> Result<Vec<ChapterInfo>> {
     let body = ureq::post(&format!("{}{}ajax/chapters/", url, path))
         .set("Referer", url)
         .set("Content-Length", "0")
@@ -330,8 +337,8 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64, chapter_name_selector
     let selector = Selector::parse("li.wp-manga-chapter,li.chapter-li")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
-    let selector_chapter_name =
-        Selector::parse(chapter_name_selector.unwrap_or("a")).map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+    let selector_chapter_name = Selector::parse(chapter_name_selector.unwrap_or("a"))
+        .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     let selector_chapter_url =
         Selector::parse("a").map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
