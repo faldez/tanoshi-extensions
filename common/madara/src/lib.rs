@@ -54,10 +54,11 @@ pub fn parse_manga_list(
                 el.value().attr("href").unwrap().replace(url, "")
             } else {
                 el.select(&selector_url)
-                    .map(|el| el.value().attr("href"))
-                    .flatten()
-                    .collect::<Vec<&str>>()
-                    .join("")
+                    .next()
+                    .unwrap()
+                    .value()
+                    .attr("href")
+                    .unwrap_or_default()
                     .replace(url, "")
             },
             cover_url: get_data_src(&el.select(&selector_img).next().unwrap()).unwrap_or_default(),
@@ -87,9 +88,7 @@ pub fn get_latest_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Mang
             ("vars[meta_query][0][value]", "manga"),
         ])?
         .into_string()?;
-
-    println!("{}", body);
-
+    
     let selector = Selector::parse("div.page-item-detail")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
