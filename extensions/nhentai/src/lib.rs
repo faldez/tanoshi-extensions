@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use chrono::NaiveDateTime;
-use fancy_regex::{Captures, Regex};
+use fancy_regex::Regex;
 use scraper::{Html, Selector};
 use tanoshi_lib::prelude::{
     ChapterInfo, Extension, Input, InputType, Lang, MangaInfo, PluginRegistrar,
