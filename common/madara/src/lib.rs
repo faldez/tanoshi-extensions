@@ -1,25 +1,7 @@
 use anyhow::{anyhow, Result};
 use chrono::{NaiveDateTime, Utc};
-use log::error;
-use scraper::Node::Text;
 use scraper::{ElementRef, Html, Selector};
 use tanoshi_lib::prelude::{ChapterInfo, MangaInfo};
-
-fn get_title(el: &ElementRef) -> Option<String> {
-    el.parent()?
-        .value()
-        .as_element()?
-        .attr("title")
-        .map(|s| s.to_string())
-}
-
-fn get_href(el: &ElementRef) -> Option<String> {
-    el.parent()?
-        .value()
-        .as_element()?
-        .attr("href")
-        .map(|s| s.to_string())
-}
 
 fn get_data_src(el: &ElementRef) -> Option<String> {
     el.value().attr("data-src").map(|s| s.to_string())
@@ -36,15 +18,34 @@ pub fn parse_manga_list(
     let doc = Html::parse_document(&body);
 
     for el in doc.select(&selector) {
+        let selector_name = Selector::parse("div.data > h3 > a, div.post-title a")
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
+        let selector_img = Selector::parse("img")
+            .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
+
         manga.push(MangaInfo {
             source_id,
-            title: get_title(&el).unwrap_or_default(),
+            title: el
+                .select(&selector_name)
+                .next()
+                .and_then(|item| item.last_child())
+                .and_then(|t| t.value().as_text())
+                .unwrap()
+                .trim()
+                .to_string(),
             author: vec![],
             genre: vec![],
             status: None,
             description: None,
-            path: get_href(&el).unwrap_or_default().replace(url, ""),
-            cover_url: get_data_src(&el).unwrap_or_default(),
+            path: el
+                .select(&selector_name)
+                .map(|el| el.value().attr("href"))
+                .flatten()
+                .collect::<Vec<&str>>()
+                .join("")
+                .replace(url, ""),
+            cover_url: get_data_src(&el.select(&selector_img).next().unwrap()).unwrap_or_default(),
         })
     }
 
@@ -64,11 +65,13 @@ pub fn get_latest_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Mang
             ("vars[manga_archives_item_layout]", "big_thumbnail"),
             ("vars[posts_per_page]", "20"),
             ("vars[meta_key]", "_latest_update"),
+            ("vars[meta_query][0][key]", "_wp_manga_chapter_type"),
+            ("vars[meta_query][0][value]", "manga"),
             ("page", &(page - 1).to_string()),
         ])?
         .into_string()?;
 
-    let selector = Selector::parse(".tab-thumb a img")
+    let selector = Selector::parse(".c-tabs-item__content")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector)
@@ -87,11 +90,13 @@ pub fn get_popular_manga(url: &str, source_id: i64, page: i64) -> Result<Vec<Man
             ("vars[manga_archives_item_layout]", "big_thumbnail"),
             ("vars[posts_per_page]", "20"),
             ("vars[meta_key]", "_wp_manga_views"),
+            ("vars[meta_query][0][key]", "_wp_manga_chapter_type"),
+            ("vars[meta_query][0][value]", "manga"),
             ("page", &(page - 1).to_string()),
         ])?
         .into_string()?;
 
-    let selector = Selector::parse(".tab-thumb a img")
+    let selector = Selector::parse(".c-tabs-item__content")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector)
@@ -107,7 +112,7 @@ pub fn search_manga_old(
         .call()?
         .into_string()?;
 
-    let selector = Selector::parse(".manga-item a img")
+    let selector = Selector::parse(".manga-item")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector)
@@ -126,11 +131,13 @@ pub fn search_manga(url: &str, source_id: i64, page: i64, query: &str) -> Result
             ("vars[sidebar]", "right"),
             ("vars[manga_archives_item_layout]", "big_thumbnail"),
             ("vars[posts_per_page]", "20"),
+            ("vars[meta_query][0][key]", "_wp_manga_chapter_type"),
+            ("vars[meta_query][0][value]", "manga"),
             ("page", &(page - 1).to_string()),
         ])?
         .into_string()?;
 
-    let selector = Selector::parse("div.c-tabs-item__content a img")
+    let selector = Selector::parse("div.c-tabs-item__content")
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
     parse_manga_list(url, source_id, &body, &selector)

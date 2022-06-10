@@ -10,3 +10,5 @@ crate-type = ["cdylib"]
 tanoshi-lib = "0.27.0"
 madara = { path = "../../common/madara" }
 anyhow = "1"
+scraper = "0.13"
+ureq = { version = "2", features = ["json"] }

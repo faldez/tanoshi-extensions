@@ -98,8 +98,9 @@ mod test {
         let MangaTX = MangaTX::default();
 
         let res = MangaTX
-            .search_manga(1, Some("the+challenger".to_string()), None)
+            .search_manga(1, Some("martial".to_string()), None)
             .unwrap();
+
         assert!(!res.is_empty());
     }
 
@@ -110,6 +111,7 @@ mod test {
         let res = MangaTX
             .get_manga_detail("/manga/the-challenger/".to_string())
             .unwrap();
+
         assert_eq!(res.title, "The Challenger");
     }
 
