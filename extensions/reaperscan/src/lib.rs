@@ -7,7 +7,7 @@ use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 tanoshi_lib::export_plugin!(register);
 
 fn register(registrar: &mut dyn PluginRegistrar) {
-    registrar.register_function(Box::new(ManhuaFast::default()));
+    registrar.register_function(Box::new(ReaperScans::default()));
 }
 
 const ID: i64 = 15;
@@ -15,9 +15,9 @@ const NAME: &str = "Reaper Scans";
 const URL: &str = "https://reaperscans.com/";
 
 #[derive(Default)]
-pub struct ManhuaFast;
+pub struct ReaperScans;
 
-impl Extension for ManhuaFast {
+impl Extension for ReaperScans {
     fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
@@ -76,12 +76,12 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let ReaperScans = ReaperScans::default();
 
-        let res1 = ManhuaFast.get_latest_manga(1).unwrap();
+        let res1 = ReaperScans.get_latest_manga(1).unwrap();
         assert!(!res1.is_empty());
 
-        let res2 = ManhuaFast.get_latest_manga(2).unwrap();
+        let res2 = ReaperScans.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
         assert_ne!(
@@ -93,17 +93,17 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let ReaperScans = ReaperScans::default();
 
-        let res = ManhuaFast.get_popular_manga(1).unwrap();
+        let res = ReaperScans.get_popular_manga(1).unwrap();
         assert!(!res.is_empty());
     }
 
     #[test]
     fn test_search_manga() {
-        let ManhuaFast = ManhuaFast::default();
+        let ReaperScans = ReaperScans::default();
 
-        let res = ManhuaFast
+        let res = ReaperScans
             .search_manga(1, Some("the+only".to_string()), None)
             .unwrap();
 
@@ -112,9 +112,9 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
-        let ManhuaFast = ManhuaFast::default();
+        let ReaperScans = ReaperScans::default();
 
-        let res = ManhuaFast
+        let res = ReaperScans
             .get_manga_detail("/series/kill-the-dragon/".to_string())
             .unwrap();
 
@@ -123,9 +123,9 @@ mod test {
 
     #[test]
     fn test_get_chapters() {
-        let ManhuaFast = ManhuaFast::default();
+        let ReaperScans = ReaperScans::default();
 
-        let res = ManhuaFast
+        let res = ReaperScans
             .get_chapters("/series/kill-the-dragon/".to_string())
             .unwrap();
 
@@ -135,9 +135,9 @@ mod test {
 
     #[test]
     fn test_get_pages() {
-        let ManhuaFast = ManhuaFast::default();
+        let ReaperScans = ReaperScans::default();
 
-        let res = ManhuaFast
+        let res = ReaperScans
             .get_pages("/series/kill-the-dragon/chapter-4/".to_string())
             .unwrap();
 

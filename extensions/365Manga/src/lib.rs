@@ -7,7 +7,7 @@ use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 tanoshi_lib::export_plugin!(register);
 
 fn register(registrar: &mut dyn PluginRegistrar) {
-    registrar.register_function(Box::new(FirstKiss::default()));
+    registrar.register_function(Box::new(ThreeSixtyFiveManga::default()));
 }
 
 const ID: i64 = 17;
@@ -15,9 +15,9 @@ const NAME: &str = "365Manga";
 const URL: &str = "https://365manga.com";
 
 #[derive(Default)]
-pub struct FirstKiss;
+pub struct ThreeSixtyFiveManga;
 
-impl Extension for FirstKiss {
+impl Extension for ThreeSixtyFiveManga {
     fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
@@ -70,12 +70,12 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
-        let FirstKiss = FirstKiss::default();
+        let ThreeSixtyFiveManga = ThreeSixtyFiveManga::default();
 
-        let res1 = FirstKiss.get_latest_manga(1).unwrap();
+        let res1 = ThreeSixtyFiveManga.get_latest_manga(1).unwrap();
         assert!(!res1.is_empty());
 
-        let res2 = FirstKiss.get_latest_manga(2).unwrap();
+        let res2 = ThreeSixtyFiveManga.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
         assert_ne!(
@@ -87,17 +87,17 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
-        let FirstKiss = FirstKiss::default();
+        let ThreeSixtyFiveManga = ThreeSixtyFiveManga::default();
 
-        let res = FirstKiss.get_popular_manga(1).unwrap();
+        let res = ThreeSixtyFiveManga.get_popular_manga(1).unwrap();
         assert!(!res.is_empty());
     }
 
     #[test]
     fn test_search_manga() {
-        let FirstKiss = FirstKiss::default();
+        let ThreeSixtyFiveManga = ThreeSixtyFiveManga::default();
 
-        let res = FirstKiss
+        let res = ThreeSixtyFiveManga
             .search_manga(1, Some("the+only".to_string()), None)
             .unwrap();
 
@@ -106,9 +106,9 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
-        let FirstKiss = FirstKiss::default();
+        let ThreeSixtyFiveManga = ThreeSixtyFiveManga::default();
 
-        let res = FirstKiss
+        let res = ThreeSixtyFiveManga
             .get_manga_detail("/manga/matchless-emperor/".to_string())
             .unwrap();
 
@@ -117,9 +117,9 @@ mod test {
 
     #[test]
     fn test_get_chapters() {
-        let FirstKiss = FirstKiss::default();
+        let ThreeSixtyFiveManga = ThreeSixtyFiveManga::default();
 
-        let res = FirstKiss
+        let res = ThreeSixtyFiveManga
             .get_chapters("/manga/matchless-emperor/".to_string())
             .unwrap();
 
@@ -129,9 +129,9 @@ mod test {
 
     #[test]
     fn test_get_pages() {
-        let FirstKiss = FirstKiss::default();
+        let ThreeSixtyFiveManga = ThreeSixtyFiveManga::default();
 
-        let res = FirstKiss
+        let res = ThreeSixtyFiveManga
             .get_pages("/manga/matchless-emperor/chapter-9/".to_string())
             .unwrap();
 

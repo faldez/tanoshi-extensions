@@ -7,7 +7,7 @@ use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 tanoshi_lib::export_plugin!(register);
 
 fn register(registrar: &mut dyn PluginRegistrar) {
-    registrar.register_function(Box::new(FirstKiss::default()));
+    registrar.register_function(Box::new(MMScans::default()));
 }
 
 const ID: i64 = 19;
@@ -15,9 +15,9 @@ const NAME: &str = "MMScans";
 const URL: &str = "https://mm-scans.org";
 
 #[derive(Default)]
-pub struct FirstKiss;
+pub struct MMScans;
 
-impl Extension for FirstKiss {
+impl Extension for MMScans {
     fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
@@ -70,12 +70,12 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
-        let FirstKiss = FirstKiss::default();
+        let MMScans = MMScans::default();
 
-        let res1 = FirstKiss.get_latest_manga(1).unwrap();
+        let res1 = MMScans.get_latest_manga(1).unwrap();
         assert!(!res1.is_empty());
 
-        let res2 = FirstKiss.get_latest_manga(2).unwrap();
+        let res2 = MMScans.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
         assert_ne!(
@@ -87,18 +87,18 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
-        let FirstKiss = FirstKiss::default();
+        let MMScans = MMScans::default();
 
-        let res = FirstKiss.get_popular_manga(1).unwrap();
+        let res = MMScans.get_popular_manga(1).unwrap();
 
         assert!(!res.is_empty());
     }
 
     #[test]
     fn test_search_manga() {
-        let FirstKiss = FirstKiss::default();
+        let MMScans = MMScans::default();
 
-        let res = FirstKiss
+        let res = MMScans
             .search_manga(1, Some("study".to_string()), None)
             .unwrap();
 
@@ -107,9 +107,9 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
-        let FirstKiss = FirstKiss::default();
+        let MMScans = MMScans::default();
 
-        let res = FirstKiss
+        let res = MMScans
             .get_manga_detail("/manga/ygret/".to_string())
             .unwrap();
 
@@ -118,9 +118,9 @@ mod test {
 
     #[test]
     fn test_get_chapters() {
-        let FirstKiss = FirstKiss::default();
+        let MMScans = MMScans::default();
 
-        let res = FirstKiss.get_chapters("/manga/ygret/".to_string()).unwrap();
+        let res = MMScans.get_chapters("/manga/ygret/".to_string()).unwrap();
 
         assert!(!res.is_empty());
         println!("{res:?}");
@@ -128,9 +128,9 @@ mod test {
 
     #[test]
     fn test_get_pages() {
-        let FirstKiss = FirstKiss::default();
+        let MMScans = MMScans::default();
 
-        let res = FirstKiss.get_pages("/manga/ygret/1/".to_string()).unwrap();
+        let res = MMScans.get_pages("/manga/ygret/1/".to_string()).unwrap();
 
         println!("{res:?}");
 

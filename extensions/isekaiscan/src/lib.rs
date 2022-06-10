@@ -7,7 +7,7 @@ use tanoshi_lib::prelude::{Extension, Lang, PluginRegistrar, SourceInfo};
 tanoshi_lib::export_plugin!(register);
 
 fn register(registrar: &mut dyn PluginRegistrar) {
-    registrar.register_function(Box::new(FirstKiss::default()));
+    registrar.register_function(Box::new(IsekaiScan::default()));
 }
 
 const ID: i64 = 18;
@@ -15,9 +15,9 @@ const NAME: &str = "IsekaiScan.com";
 const URL: &str = "https://isekaiscan.com";
 
 #[derive(Default)]
-pub struct FirstKiss;
+pub struct IsekaiScan;
 
-impl Extension for FirstKiss {
+impl Extension for IsekaiScan {
     fn get_source_info(&self) -> SourceInfo {
         SourceInfo {
             id: ID,
@@ -70,12 +70,12 @@ mod test {
 
     #[test]
     fn test_get_latest_manga() {
-        let FirstKiss = FirstKiss::default();
+        let IsekaiScan = IsekaiScan::default();
 
-        let res1 = FirstKiss.get_latest_manga(1).unwrap();
+        let res1 = IsekaiScan.get_latest_manga(1).unwrap();
         assert!(!res1.is_empty());
 
-        let res2 = FirstKiss.get_latest_manga(2).unwrap();
+        let res2 = IsekaiScan.get_latest_manga(2).unwrap();
         assert!(!res2.is_empty());
 
         assert_ne!(
@@ -87,17 +87,17 @@ mod test {
 
     #[test]
     fn test_get_popular_manga() {
-        let FirstKiss = FirstKiss::default();
+        let IsekaiScan = IsekaiScan::default();
 
-        let res = FirstKiss.get_popular_manga(1).unwrap();
+        let res = IsekaiScan.get_popular_manga(1).unwrap();
         assert!(!res.is_empty());
     }
 
     #[test]
     fn test_search_manga() {
-        let FirstKiss = FirstKiss::default();
+        let IsekaiScan = IsekaiScan::default();
 
-        let res = FirstKiss
+        let res = IsekaiScan
             .search_manga(1, Some("the+only".to_string()), None)
             .unwrap();
 
@@ -106,9 +106,9 @@ mod test {
 
     #[test]
     fn test_get_manga_detail() {
-        let FirstKiss = FirstKiss::default();
+        let IsekaiScan = IsekaiScan::default();
 
-        let res = FirstKiss
+        let res = IsekaiScan
             .get_manga_detail("/manga/infinite-level-up-in-murim/".to_string())
             .unwrap();
 
@@ -117,9 +117,9 @@ mod test {
 
     #[test]
     fn test_get_chapters() {
-        let FirstKiss = FirstKiss::default();
+        let IsekaiScan = IsekaiScan::default();
 
-        let res = FirstKiss
+        let res = IsekaiScan
             .get_chapters("/manga/infinite-level-up-in-murim/".to_string())
             .unwrap();
 
@@ -129,9 +129,9 @@ mod test {
 
     #[test]
     fn test_get_pages() {
-        let FirstKiss = FirstKiss::default();
+        let IsekaiScan = IsekaiScan::default();
 
-        let res = FirstKiss
+        let res = IsekaiScan
             .get_pages("/manga/infinite-level-up-in-murim/chapter-116/".to_string())
             .unwrap();
 
