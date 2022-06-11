@@ -184,7 +184,9 @@ pub fn get_chapters(url: &str, path: &str, source_id: i64) -> Result<Vec<Chapter
                     .replace(url, ""),
                 number: chapter_name
                     .replace("Chapter ", "")
-                    .parse()
+                    .split(' ')
+                    .next()
+                    .and_then(|s| s.parse::<f64>().ok())
                     .unwrap_or_default(),
                 scanlator: None,
                 uploaded: NaiveDateTime::parse_from_str(
