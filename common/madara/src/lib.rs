@@ -260,8 +260,6 @@ fn parse_chapters(
                 .join("");
             let chapter_time = format!("{} 00:00", chapter_time.trim());
 
-            println!("chapter time {chapter_time}");
-
             let uploaded = if let Ok(uploaded) =
                 NaiveDateTime::parse_from_str(&chapter_time, "%B %d, %Y %H:%M")
             {
