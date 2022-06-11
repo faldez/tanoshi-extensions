@@ -4,6 +4,7 @@ on:
   push:
     branches: [master]
     paths:
+      - common/**
       - extensions/**
       - ".github/workflows/publish.yml"
       - "!**/*.md"

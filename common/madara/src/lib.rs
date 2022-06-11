@@ -24,9 +24,9 @@ pub fn parse_manga_list(
 
     for el in doc.select(selector) {
         let selector_name = Selector::parse(if is_selector_url {
-            "div.item-summary h3, div.data h3 a, div.post-title h3"
+            "div.item-summary > a > h3, div.data > h3 > a, div.post-title > h3"
         } else {
-            "div.item-summary h3, div.data h3 a, div.post-title a"
+            "div.item-summary > a > h3, div.data > h3 > a, div.post-title > h3 > a"
         })
         .map_err(|e| anyhow!("failed to parse selector: {:?}", e))?;
 
@@ -258,27 +258,39 @@ fn parse_chapters(
                 .flat_map(|el| el.text())
                 .collect::<Vec<&str>>()
                 .join("");
+            let chapter_time = format!("{} 00:00", chapter_time.trim());
+
+            let uploaded = if let Ok(uploaded) =
+                NaiveDateTime::parse_from_str(&chapter_time, "%B %d, %Y %H:%M")
+            {
+                uploaded
+            } else if let Ok(uploaded) =
+                NaiveDateTime::parse_from_str(&chapter_time, "%d %b %Y %H:%M")
+            {
+                uploaded
+            } else {
+                Utc::now().naive_utc()
+            }
+            .timestamp();
 
             ChapterInfo {
                 source_id,
                 title: chapter_name.clone(),
                 path: el
                     .select(selector_chapter_url)
-                    .filter_map(|el| el.value().attr("href"))
-                    .collect::<Vec<&str>>()
-                    .join("")
+                    .next()
+                    .unwrap()
+                    .value()
+                    .attr("href")
+                    .unwrap()
+                    .to_string()
                     .replace(url, ""),
                 number: chapter_name
                     .replace("Chapter ", "")
                     .parse()
                     .unwrap_or_default(),
                 scanlator: None,
-                uploaded: NaiveDateTime::parse_from_str(
-                    &format!("{} 00:00", chapter_time.trim()),
-                    "%B %d, %Y %H:%M",
-                )
-                .unwrap_or_else(|_| Utc::now().naive_utc())
-                .timestamp(),
+                uploaded,
             }
         })
         .collect();
