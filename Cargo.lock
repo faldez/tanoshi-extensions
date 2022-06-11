@@ -188,7 +188,7 @@ dependencies = [
 
 [[package]]
 name = "firstkissmanhua"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -330,7 +330,7 @@ dependencies = [
 
 [[package]]
 name = "isekaiscan"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -366,7 +366,7 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "leviatanscan"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -495,7 +495,7 @@ dependencies = [
 
 [[package]]
 name = "mangatx"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -504,7 +504,7 @@ dependencies = [
 
 [[package]]
 name = "manhuafast"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -513,7 +513,7 @@ dependencies = [
 
 [[package]]
 name = "manhwa18cc"
-version = "0.1.6"
+version = "0.1.8"
 dependencies = [
  "anyhow",
  "madara",
@@ -559,7 +559,7 @@ dependencies = [
 
 [[package]]
 name = "mmscans"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -894,7 +894,7 @@ dependencies = [
 
 [[package]]
 name = "reaperscan"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",
@@ -1202,7 +1202,7 @@ dependencies = [
 
 [[package]]
 name = "three_sixty_five_manga"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "madara",
@@ -1236,7 +1236,7 @@ checksum = "cda74da7e1a664f795bb1f8a87ec406fb89a02522cf6e50620d016add6dbbf5c"
 
 [[package]]
 name = "tritiniascans"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "anyhow",
  "madara",

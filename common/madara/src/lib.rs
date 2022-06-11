@@ -258,6 +258,22 @@ fn parse_chapters(
                 .flat_map(|el| el.text())
                 .collect::<Vec<&str>>()
                 .join("");
+            let chapter_time = format!("{} 00:00", chapter_time.trim());
+
+            println!("chapter time {chapter_time}");
+
+            let uploaded = if let Ok(uploaded) =
+                NaiveDateTime::parse_from_str(&chapter_time, "%B %d, %Y %H:%M")
+            {
+                uploaded
+            } else if let Ok(uploaded) =
+                NaiveDateTime::parse_from_str(&chapter_time, "%d %b %Y %H:%M")
+            {
+                uploaded
+            } else {
+                Utc::now().naive_utc()
+            }
+            .timestamp();
 
             ChapterInfo {
                 source_id,
@@ -276,12 +292,7 @@ fn parse_chapters(
                     .parse()
                     .unwrap_or_default(),
                 scanlator: None,
-                uploaded: NaiveDateTime::parse_from_str(
-                    &format!("{} 00:00", chapter_time.trim()),
-                    "%B %d, %Y %H:%M",
-                )
-                .unwrap_or_else(|_| Utc::now().naive_utc())
-                .timestamp(),
+                uploaded,
             }
         })
         .collect();
