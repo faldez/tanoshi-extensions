@@ -1,0 +1,17 @@
+[package]
+name = "wpmangastream"
+version = "0.0.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tanoshi-lib = "0.27.0"
+chrono = "0.4"
+serde = { version = "1", features = ["derive"] }
+scraper = "0.13"
+anyhow = "1"
+ureq = { version = "2", features = ["json"] }
+serde_json = "1"
+lazy_static = "1"
+log = "0.4"

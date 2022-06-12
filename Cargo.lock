@@ -24,6 +24,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
+name = "asurascans"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "tanoshi-lib",
+ "wpmangastream",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1472,6 +1481,21 @@ name = "windows_x86_64_msvc"
 version = "0.36.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c811ca4a8c853ef420abd8592ba53ddbbac90410fab6903b3e79972a631f7680"
+
+[[package]]
+name = "wpmangastream"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "lazy_static",
+ "log",
+ "scraper",
+ "serde",
+ "serde_json",
+ "tanoshi-lib",
+ "ureq",
+]
 
 [[package]]
 name = "xml5ever"

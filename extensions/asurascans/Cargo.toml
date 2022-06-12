@@ -1,0 +1,12 @@
+[package]
+name = "asurascans"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+tanoshi-lib = "0.27.0"
+wpmangastream = { path = "../../common/wpmangastream" }
+anyhow = "1"
