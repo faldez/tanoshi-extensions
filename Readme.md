@@ -24,6 +24,7 @@ This repository host extenstions for tanoshi
 | 19  | MMScans         |                                            | Active  |
 | 20  | TritiniaScans   |                                            | Active  |
 | 21  | AlphaScans      |                                            | Active  |
+| 22  | AsuraScans      |                                            | Active  |
 
 
 ## Diclaimer

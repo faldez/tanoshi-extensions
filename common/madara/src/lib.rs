@@ -287,7 +287,9 @@ fn parse_chapters(
                     .replace(url, ""),
                 number: chapter_name
                     .replace("Chapter ", "")
-                    .parse()
+                    .split(' ')
+                    .next()
+                    .and_then(|s| s.parse::<f64>().ok())
                     .unwrap_or_default(),
                 scanlator: None,
                 uploaded,

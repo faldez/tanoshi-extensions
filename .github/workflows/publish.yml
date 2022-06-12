@@ -40,14 +40,14 @@ jobs:
           use-cross: ${{ matrix.target == 'aarch64-unknown-linux-gnu' }}
           command: build
           args: --target ${{ matrix.target }} --release
-      - uses: actions-rs/cargo@v1
+      - name: Download tanoshi-cli
         if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
-        with:
-          command: install
-          args: tanoshi-cli --version 0.6.2 --locked
+        run: |
+          curl https://objectstorage.ap-singapore-1.oraclecloud.com/n/ax3e5of0ojcf/b/tanoshi/o/tanoshi-cli%2F0.6.3%2Ftanoshi-cli -o $HOME/.cargo/bin/tanoshi-cli
+          chmod +x $HOME/.cargo/bin/tanoshi-cli
       - if: ${{ matrix.target == 'x86_64-unknown-linux-gnu' }}
         run: |
-          tanoshi-cli --path target/${{ matrix.target }}/release generate-json
+          $HOME/.cargo/bin/tanoshi-cli --path target/${{ matrix.target }}/release generate-json
           mv output/${{ matrix.target }}/index.json output/
       - if: ${{ matrix.target != 'x86_64-unknown-linux-gnu' }}
         run: |
